@@ -40,8 +40,8 @@ public final class GlazedBrand {
             // over a bright panorama.
             int accent = stops[0];
             this.dark = ConfigColorScheme.tinted(accent).toBuilder()
-                    .panel(ConfigStyle.withAlpha(ConfigStyle.mix(0xFF0B0D14, accent, 0.16F), 0xE8))
-                    .bar(ConfigStyle.withAlpha(ConfigStyle.mix(0xFF080A10, accent, 0.18F), 0xF0))
+                    .panel(ConfigStyle.withAlpha(ConfigStyle.mix(0xFF0B0D14, accent, 0.16F), 0xD2))
+                    .bar(ConfigStyle.withAlpha(ConfigStyle.mix(0xFF080A10, accent, 0.18F), 0xDC))
                     .popup(ConfigStyle.withAlpha(ConfigStyle.mix(0xFF0B0D14, accent, 0.14F), 0xF7))
                     .panelBorder(ConfigStyle.mix(0xFF2A313F, accent, 0.4F))
                     .build();

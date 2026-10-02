@@ -96,6 +96,7 @@ public final class ConfigStyle {
     public static void panel(GuiGraphicsExtractor graphics, int x, int y, int width, int height) {
         rect(graphics, x, y, width, height, translucent(colors().panel()));
         glaze(graphics, x, y, width, height);
+        glass(graphics, x, y, width, height);
         outline(graphics, x, y, width, height, colors().panelBorder());
         graphics.fillGradient(x + 1, y + 1, x + width - 1, y + Math.min(10, height - 1), withAlpha(accent(), 0x14), withAlpha(accent(), 0));
     }
@@ -103,7 +104,49 @@ public final class ConfigStyle {
     public static void bar(GuiGraphicsExtractor graphics, int x, int y, int width, int height) {
         rect(graphics, x, y, width, height, translucent(colors().bar()));
         glaze(graphics, x, y, width, height);
+        glass(graphics, x, y, width, height);
         outline(graphics, x, y, width, height, colors().panelBorder());
+    }
+
+    // --- Glass ---
+
+    // A panel as a slab of frosted glass: a soft reflection down from its top, a bright edge along its top and left and a
+    // darker one along its bottom, and two faint diagonal streaks of light, placed by the screen so they run on from
+    // panel to panel as across one sheet.
+    private static void glass(GuiGraphicsExtractor graphics, int x, int y, int width, int height) {
+        if (width <= 4 || height <= 4) return;
+        boolean light = mode() == ConfigTheme.Mode.LIGHT;
+        int white = 0xFFFFFFFF;
+        int sheen = Math.max(12, Math.min(height * 2 / 5, 40));
+        graphics.fillGradient(x + 1, y + 1, x + width - 1, y + 1 + sheen, withAlpha(white, light ? 0x30 : 0x16), withAlpha(white, 0));
+        graphics.fill(x + 2, y + 1, x + width - 2, y + 2, withAlpha(white, light ? 0x70 : 0x3A));
+        graphics.fill(x + 1, y + 2, x + 2, y + height - 2, withAlpha(white, light ? 0x40 : 0x1A));
+        graphics.fill(x + 2, y + height - 2, x + width - 2, y + height - 1, withAlpha(0xFF000000, light ? 0x18 : 0x48));
+        streaks(graphics, x, y, width, height, light);
+    }
+
+    private static void streaks(GuiGraphicsExtractor graphics, int x, int y, int width, int height, boolean light) {
+        var window = Minecraft.getInstance().getWindow();
+        int screen = window.getGuiScaledWidth() + window.getGuiScaledHeight();
+        float root2 = (float) Math.sqrt(2);
+        graphics.enableScissor(x + 1, y + 1, x + width - 1, y + height - 1);
+        var pose = graphics.pose();
+        pose.pushMatrix();
+        // Turned an eighth: the gradient runs across lines of x + y = constant, so the bands run diagonally.
+        pose.rotate((float) -Math.PI / 4);
+        int along = screen * 2;
+        band(graphics, Math.round(screen * 0.34F / root2), 14, along, light ? 0x22 : 0x12);
+        band(graphics, Math.round(screen * 0.34F / root2) + 26, 4, along, light ? 0x1A : 0x0E);
+        pose.popMatrix();
+        graphics.disableScissor();
+    }
+
+    // A soft band: clear at its edges, brightest at its middle.
+    private static void band(GuiGraphicsExtractor graphics, int start, int half, int along, int alpha) {
+        int white = withAlpha(0xFFFFFFFF, alpha);
+        int clear = withAlpha(0xFFFFFFFF, 0);
+        graphics.fillGradient(-along, start, along, start + half, clear, white);
+        graphics.fillGradient(-along, start + half, along, start + half * 2, white, clear);
     }
 
     /** A small label with a colored border, like a tag. */
