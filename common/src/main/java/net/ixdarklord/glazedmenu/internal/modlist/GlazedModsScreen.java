@@ -814,10 +814,11 @@ public final class GlazedModsScreen extends StyledScreen {
         pose.pushMatrix();
         pose.translate(x, y);
         pose.scale(GROUP_MARK_SCALE, GROUP_MARK_SCALE);
-        ConfigStyle.rect(graphics, 0, 0, width, 11, ConfigStyle.withAlpha(accent, 0x55));
-        ConfigStyle.outline(graphics, 0, 0, width, 11, ConfigStyle.withAlpha(bright, 0xE0));
-        (this.isExpanded(mod) ? ConfigIcons.DOWN : ConfigIcons.CHEVRON).draw(graphics, 2, 1, 9, bright);
-        graphics.text(this.font, text, 12, 2, ConfigStyle.colors().text(), false);
+        // An opaque capsule, a dark shade of the mod's color, so the count reads over any icon or tile; white text.
+        ConfigStyle.rect(graphics, 0, 0, width, 11, ConfigStyle.mix(0xFF000000, accent, 0.4F));
+        ConfigStyle.outline(graphics, 0, 0, width, 11, bright);
+        (this.isExpanded(mod) ? ConfigIcons.DOWN : ConfigIcons.CHEVRON).draw(graphics, 2, 1, 9, 0xFFFFFFFF);
+        graphics.text(this.font, text, 12, 2, 0xFFFFFFFF, true);
         pose.popMatrix();
     }
 
