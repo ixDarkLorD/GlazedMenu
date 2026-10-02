@@ -141,7 +141,7 @@ public final class ConfigStyle {
         boolean animate = GlazedSettings.transitions();
         double time = animate ? System.currentTimeMillis() : 0;
         float sway = animate ? (float) Math.sin(time / SWAY_MILLIS * Math.PI * 2) * 0.05F : 0;
-        int peak = light ? 0x24 : 0x16;
+        int peak = light ? 0x18 : 0x0E;
 
         graphics.enableScissor(x + 1, y + 1, x + width - 1, y + height - 1);
         var pose = graphics.pose();
