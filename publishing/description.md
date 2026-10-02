@@ -2,13 +2,17 @@
 
 **A glassy mod list and config screens for every mod.** Client side, for Fabric and NeoForge. It needs no other mod.
 
+Every screen is a pane of frosted glass: soft reflections, lit edges, a glaze of color running from top to bottom and
+slow sun rays drifting across it.
+
 Glazed Menu takes the place of Mod Menu's and NeoForge's mod lists, and gives the settings of almost any mod one
 clean, themed screen.
 
 ---
 
 ## 📋 The mod list
-- **Grid or list view**, with filters for **All**, **With Settings** and **Libraries**, search, and A–Z sorting
+- **Grid or list view**, with filters for **All**, **With Settings** and **Libraries**, smooth search, and A–Z sorting
+- **Remembers where you were**: the selected mod and scroll position stay when you open a mod's settings and come back
 - **Groups**: mods that bundle others, like Fabric API and its modules, open and close as one entry
 - **Every mod in its own colors**, taken from its logo
 - **A details pane** with the description, authors, license, links, what a mod needs and what it bundles
@@ -17,13 +21,16 @@ clean, themed screen.
 
 ## ⚙️ Config screens for every mod
 One look for every mod's settings: a sidebar of categories, search, undo and redo, reset, presets, validation,
-restart notices, list editing and a color picker. Find every mod's configs in one place through **Mod Configs**, with
-search across all of them.
+restart notices, list editing and a color picker, with **Save** to keep editing and **Done** to save and close.
+
+- **Mod Configs**: every mod's configs in one place, as cards in each mod's colors, with search across all of them
+- **Each mod's configs as cards** sized to fill the screen, tagged **CLIENT**, **SERVER**, **STARTUP** and so on
 
 ## 🎨 Make it yours
 - **Dark and light** modes
 - **Color schemes**: Glazed, Classic, Ocean, Forest, Ember, Rose and Slate
-- **Panel opacity**, background effects and fading page transitions
+- **Panel opacity**, the frosted glass and sun ray effects, and fading page transitions (all of it holds still on Fast
+  graphics or with transitions off)
 
 ## 🧩 Compatibility
 Glazed Menu needs no other mod. It works with:
