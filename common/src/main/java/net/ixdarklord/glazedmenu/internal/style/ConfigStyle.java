@@ -129,7 +129,7 @@ public final class ConfigStyle {
     // out on its own beat. Placed by the screen, so they run on from panel to panel as through one pane of glass.
     private static final int RAYS = 7;
     private static final int RAY_SEGMENTS = 14;
-    private static final float SWAY_MILLIS = 16000;
+    private static final float SWAY_MILLIS = 28000;
 
     private static void streaks(GuiGraphicsExtractor graphics, int x, int y, int width, int height, boolean light) {
         var window = Minecraft.getInstance().getWindow();
@@ -149,7 +149,10 @@ public final class ConfigStyle {
             // Spread between pointing down and pointing right, unevenly, like light through leaves.
             float spread = (i + 0.5F) / RAYS;
             float angle = -(0.22F + 1.05F * spread + 0.06F * (float) Math.sin(i * 2.7)) + sway * (1 + (i % 3) * 0.4F);
-            float breath = animate ? 0.35F + 0.65F * (0.5F + 0.5F * (float) Math.sin(time / (2600 + i * 530) + i * 1.9)) : 0.8F;
+            // Slow, eased breathing: a sine run through a smoothstep, so the light lingers at its brightest and faintest.
+            float wave = 0.5F + 0.5F * (float) Math.sin(time / (5200 + i * 900) + i * 1.9);
+            wave = wave * wave * (3 - 2 * wave);
+            float breath = animate ? 0.35F + 0.65F * wave : 0.8F;
             float rayWidth = 10 + (i * 37 % 5) * 7;
             int alpha = Math.round(peak * breath);
             if (alpha <= 0) continue;
