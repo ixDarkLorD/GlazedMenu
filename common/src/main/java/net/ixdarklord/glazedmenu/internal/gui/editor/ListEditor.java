@@ -24,7 +24,7 @@ public final class ListEditor<E> implements ValueEditor {
         this.slot = slot;
         this.button = new FlatButton(width, height, CommonComponents.EMPTY, pressed -> {
             Minecraft minecraft = Minecraft.getInstance();
-            minecraft.setScreen(new ListEditScreen<>(minecraft.screen, slot));
+            minecraft.gui.setScreen(new ListEditScreen<>(minecraft.gui.screen(), slot));
         });
         this.refresh();
     }

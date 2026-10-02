@@ -83,8 +83,8 @@ public final class ConfigScreens {
     /** Opens {@link #categoryPopup(Screen, String, String)} over the current screen, or over the game. */
     public static void openCategory(String modId, String path) {
         Minecraft minecraft = Minecraft.getInstance();
-        Screen screen = categoryPopup(minecraft.screen, modId, path);
-        if (screen != null) minecraft.setScreen(screen);
+        Screen screen = categoryPopup(minecraft.gui.screen(), modId, path);
+        if (screen != null) minecraft.gui.setScreen(screen);
     }
 
     /** A screen listing every mod's configs. */
@@ -95,8 +95,8 @@ public final class ConfigScreens {
     /** Opens a mod's config screen on top of the current screen. */
     public static void open(String modId) {
         Minecraft minecraft = Minecraft.getInstance();
-        Screen screen = create(minecraft.screen, modId);
-        if (screen != null) minecraft.setScreen(screen);
+        Screen screen = create(minecraft.gui.screen(), modId);
+        if (screen != null) minecraft.gui.setScreen(screen);
     }
 
     /**

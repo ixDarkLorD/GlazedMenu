@@ -119,7 +119,7 @@ public final class FtbSource extends ExternalSource {
         for (ExternalConfig config : INSTANCE.configs()) {
             if (!config.modId().equals(modId) || INSTANCE.serverConfigs.getOrDefault(config, false)) continue;
             ConfigManagerClient.editConfig(INSTANCE.ftbConfigs.get(config).getKey());
-            return Minecraft.getInstance().screen;
+            return Minecraft.getInstance().gui.screen();
         }
         return null;
     }

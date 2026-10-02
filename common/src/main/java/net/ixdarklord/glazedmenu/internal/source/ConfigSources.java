@@ -103,7 +103,7 @@ public final class ConfigSources {
 
     private static boolean opens(String modId, UnaryOperator<Screen> factory) {
         try {
-            return factory.apply(Minecraft.getInstance().screen) != null;
+            return factory.apply(Minecraft.getInstance().gui.screen()) != null;
         } catch (RuntimeException | LinkageError e) {
             GlazedMenu.LOGGER.debug("The config screen of {} doesn't open", modId, e);
             return false;

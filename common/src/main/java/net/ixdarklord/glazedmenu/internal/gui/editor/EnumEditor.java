@@ -48,7 +48,7 @@ public final class EnumEditor<E extends Enum<E>> implements ValueEditor {
     // Every constant in a dropdown under the box; picking one sets it.
     private void openDropdown() {
         Minecraft minecraft = Minecraft.getInstance();
-        minecraft.setScreen(new DropdownScreen<>(minecraft.screen, this.button.getX(), this.button.getY(), this.button.getWidth(), this.button.getHeight(),
+        minecraft.gui.setScreen(new DropdownScreen<>(minecraft.gui.screen(), this.button.getX(), this.button.getY(), this.button.getWidth(), this.button.getHeight(),
                 this.type.constants(), this.slot.get(), this.type::displayName, this.type::description, value -> {
                     this.slot.set(value);
                     this.refresh();

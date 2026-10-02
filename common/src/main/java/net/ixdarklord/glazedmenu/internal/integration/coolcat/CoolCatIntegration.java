@@ -43,8 +43,8 @@ public final class CoolCatIntegration {
             if (!(config instanceof ConfigImpl impl)) return;
             CoolCatConfig wrapped = CoolCatSource.INSTANCE.config(impl);
             Minecraft minecraft = Minecraft.getInstance();
-            if (minecraft.screen instanceof ConfigScreen screen) screen.onConfigSynced(wrapped);
-            if (minecraft.screen instanceof CategoryPopup popup) popup.onConfigSynced(wrapped);
+            if (minecraft.gui.screen() instanceof ConfigScreen screen) screen.onConfigSynced(wrapped);
+            if (minecraft.gui.screen() instanceof CategoryPopup popup) popup.onConfigSynced(wrapped);
         });
     }
 

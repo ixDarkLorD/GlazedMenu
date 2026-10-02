@@ -18,9 +18,9 @@ public abstract class FtbConfigManagerClientMixin {
     private static void glazedmenu$openGlazed(String configName, boolean readOnly, CallbackInfo info) {
         if (FtbSource.useOwnEditor(configName)) return;
         Minecraft minecraft = Minecraft.getInstance();
-        Screen screen = FtbSource.screenFor(configName, minecraft.screen);
+        Screen screen = FtbSource.screenFor(configName, minecraft.gui.screen());
         if (screen == null) return;
-        minecraft.setScreen(screen);
+        minecraft.gui.setScreen(screen);
         info.cancel();
     }
 }

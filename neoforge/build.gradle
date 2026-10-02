@@ -4,3 +4,24 @@ apply from: "https://raw.githubusercontent.com/ixDarkLorD/ModResources/main/grad
 publisher {
     setProjectVersion("${project.version}")
 }
+
+// The optional config libraries common code reads: compile-only here too, so the dev runs' Architectury transformer
+// can resolve their classes. Never bundled.
+repositories {
+    maven {
+        name = "FTB"
+        url = "https://maven.ftb.dev/releases"
+        content { includeGroup "dev.ftb.mods" }
+    }
+}
+
+dependencies {
+    compileOnly("maven.modrinth:cloth-config:${cloth_config_version}") { transitive = false }
+    compileOnly("maven.modrinth:yacl:${yacl_version}") { transitive = false }
+    compileOnly("maven.modrinth:midnightlib:${midnightlib_version}") { transitive = false }
+    compileOnly("net.mezzdev.config:mezz_config-${libs.versions.minecraft.get()}-config-api:${mezz_config_version}") { transitive = false }
+    compileOnly("dev.ftb.mods:ftb-library:${ftb_library_version}") { transitive = false }
+    compileOnly(libs.forgeconfigapiport.common) { transitive = false }
+    compileOnly "net.ixdarklord.coolcatlib:coolcatlib-core-common:${coolcatlib_version}"
+    compileOnly "net.ixdarklord.coolcatlib:coolcatlib-canvas-common:${coolcatlib_version}"
+}

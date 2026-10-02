@@ -245,7 +245,7 @@ public final class CategoryPopup extends StyledPopup {
 
     private void save() {
         if (this.session.hasErrors()) return;
-        this.minecraft.setScreen(this.parent);
+        this.minecraft.gui.setScreen(this.parent);
         if (this.session.modifiedCount() > 0) this.session.saveAndNotify();
     }
 
@@ -262,14 +262,14 @@ public final class CategoryPopup extends StyledPopup {
     @Override
     public void onClose() {
         if (this.session.modifiedCount() == 0 && !this.session.hasErrors()) {
-            this.minecraft.setScreen(this.parent);
+            this.minecraft.gui.setScreen(this.parent);
             return;
         }
-        this.minecraft.setScreen(new ConfirmPopup(this, this.theme,
+        this.minecraft.gui.setScreen(new ConfirmPopup(this, this.theme,
                 Component.translatableWithFallback("glazedmenu.discard.title", "Discard changes?"),
                 Component.translatableWithFallback("glazedmenu.discard.message", "%s unsaved changes will be lost.", this.session.modifiedCount()),
                 Component.translatableWithFallback("glazedmenu.discard.yes", "Discard"), true,
-                discard -> this.minecraft.setScreen(discard ? this.parent : this)));
+                discard -> this.minecraft.gui.setScreen(discard ? this.parent : this)));
     }
 
     /** The server's values changed while the popup was open. */

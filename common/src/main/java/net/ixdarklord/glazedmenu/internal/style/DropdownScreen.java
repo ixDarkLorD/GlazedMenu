@@ -166,7 +166,7 @@ public final class DropdownScreen<T> extends Screen implements Overlay {
     // widgets while the dropdown was open).
     private void pick(int index) {
         this.onPick.accept(this.values.get(index));
-        this.minecraft.setScreen(this.parent);
+        this.minecraft.gui.setScreen(this.parent);
     }
 
     @Override
@@ -213,7 +213,7 @@ public final class DropdownScreen<T> extends Screen implements Overlay {
 
     @Override
     public void onClose() {
-        this.minecraft.setScreen(this.parent);
+        this.minecraft.gui.setScreen(this.parent);
     }
 
     @Override

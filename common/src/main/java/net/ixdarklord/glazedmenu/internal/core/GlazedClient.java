@@ -12,7 +12,6 @@ import java.util.function.Supplier;
 // Small client helpers: opening a screen once the chat (after a command) has closed, and toasts.
 public final class GlazedClient {
     // The widest a toast's message line gets before it wraps.
-    private static final int TOAST_LINE_WIDTH = 170;
     private static @Nullable Supplier<Screen> pendingScreen;
 
     private GlazedClient() {}
@@ -27,7 +26,7 @@ public final class GlazedClient {
         if (pendingScreen != null) {
             Screen screen = pendingScreen.get();
             pendingScreen = null;
-            if (screen != null) minecraft.setScreen(screen);
+            if (screen != null) minecraft.gui.setScreen(screen);
         }
     }
 
@@ -37,10 +36,10 @@ public final class GlazedClient {
      */
     public static void toast(Component title, @Nullable Component message) {
         Minecraft minecraft = Minecraft.getInstance();
-        ToastManager toasts = minecraft.getToastManager();
+        ToastManager toasts = minecraft.gui.toastManager();
         SystemToast.SystemToastId id = SystemToast.SystemToastId.PERIODIC_NOTIFICATION;
         SystemToast.forceHide(toasts, id);
-        boolean fits = message == null || minecraft.font.width(message) <= TOAST_LINE_WIDTH;
-        toasts.addToast(fits ? new SystemToast(id, title, message) : SystemToast.multiline(minecraft, id, title, message));
+        // A long message wraps on its own in 26.2's toasts.
+        toasts.addToast(new SystemToast(id, title, message));
     }
 }

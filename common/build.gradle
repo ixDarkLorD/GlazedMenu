@@ -28,7 +28,7 @@ dependencies {
     compileOnly("maven.modrinth:yacl:${yacl_version}") { transitive = false }
     compileOnly("maven.modrinth:midnightlib:${midnightlib_version}") { transitive = false }
     // MezzConfig (JEI's config library): its API alone.
-    compileOnly("net.mezzdev.config:mezz_config-26.1.2-config-api:${mezz_config_version}") { transitive = false }
+    compileOnly("net.mezzdev.config:mezz_config-${libs.versions.minecraft.get()}-config-api:${mezz_config_version}") { transitive = false }
     // FTB Library: its common jar.
     compileOnly("dev.ftb.mods:ftb-library:${ftb_library_version}") { transitive = false }
 }

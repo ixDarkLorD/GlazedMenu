@@ -79,7 +79,7 @@ public abstract class StyledScreen extends Screen {
     /** Goes to another screen, fading this page out first; a popup or dropdown over it opens at once. */
     public void leave(@Nullable Screen next) {
         if (next instanceof Overlay || !GlazedSettings.transitions()) {
-            this.minecraft.setScreen(next);
+            this.minecraft.gui.setScreen(next);
             return;
         }
         if (this.leavingAt < 0) {
@@ -98,7 +98,7 @@ public abstract class StyledScreen extends Screen {
     public void tick() {
         if (this.leavingAt >= 0 && (System.nanoTime() - this.leavingAt) / 1_000_000F >= FADE_OUT_MILLIS) {
             this.leavingAt = -1;
-            this.minecraft.setScreen(this.leavingTo);
+            this.minecraft.gui.setScreen(this.leavingTo);
         }
     }
 

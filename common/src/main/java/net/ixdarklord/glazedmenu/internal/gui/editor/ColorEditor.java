@@ -24,7 +24,7 @@ public final class ColorEditor extends TextEditor<Integer> {
     private void openPicker() {
         Minecraft minecraft = Minecraft.getInstance();
         boolean alpha = this.slot.type() instanceof ColorType color && color.hasAlpha();
-        minecraft.setScreen(new ColorPickerScreen(minecraft.screen, this.slot.name(), this.slot.get(), alpha, color -> {
+        minecraft.gui.setScreen(new ColorPickerScreen(minecraft.gui.screen(), this.slot.name(), this.slot.get(), alpha, color -> {
             this.slot.set(color);
             this.refresh();
         }));

@@ -155,7 +155,7 @@ public final class ConfigScreen extends StyledScreen {
         x = place(this.resetButton, x, y);
         if (!this.session.config().presets().isEmpty()) {
             Component presetsName = Component.translatableWithFallback("glazedmenu.button.presets", "Presets");
-            Button.OnPress presets = button -> this.minecraft.setScreen(new PresetScreen(this, this.session));
+            Button.OnPress presets = button -> this.minecraft.gui.setScreen(new PresetScreen(this, this.session));
             x = place(this.addRenderableWidget(compact ? FlatButton.icon(ConfigIcons.LIST, presetsName, presets).style(FlatButton.Style.NORMAL)
                     : FlatButton.of(presetsName, 70, presets).withIcon(ConfigIcons.LIST)), x, y);
         }
@@ -475,11 +475,11 @@ public final class ConfigScreen extends StyledScreen {
             this.leave(this.parent);
             return;
         }
-        this.minecraft.setScreen(new ConfirmPopup(this, this.theme,
+        this.minecraft.gui.setScreen(new ConfirmPopup(this, this.theme,
                 Component.translatableWithFallback("glazedmenu.discard.title", "Discard changes?"),
                 Component.translatableWithFallback("glazedmenu.discard.message", "%s unsaved changes will be lost.", this.session.modifiedCount()),
                 Component.translatableWithFallback("glazedmenu.discard.yes", "Discard"), true,
-                discard -> this.minecraft.setScreen(discard ? this.parent : this)));
+                discard -> this.minecraft.gui.setScreen(discard ? this.parent : this)));
     }
 
     /** The server's values changed while this screen was open. */

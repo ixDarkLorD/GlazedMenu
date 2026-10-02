@@ -26,7 +26,7 @@ public final class ModListHooks {
     /** The screen to open instead: Glazed Menu's mod list for another mod list, over the screen that opened it. */
     public static @Nullable Screen replace(@Nullable Screen screen) {
         if (screen == null || !GlazedSettings.replaceModList() || !MOD_LISTS.contains(screen.getClass().getName())) return screen;
-        return new GlazedModsScreen(Minecraft.getInstance().screen);
+        return new GlazedModsScreen(Minecraft.getInstance().gui.screen());
     }
 
     /**
@@ -57,7 +57,7 @@ public final class ModListHooks {
     }
 
     private static void open(Screen parent) {
-        Minecraft.getInstance().setScreen(new GlazedModsScreen(parent));
+        Minecraft.getInstance().gui.setScreen(new GlazedModsScreen(parent));
     }
 
     private static @Nullable String key(AbstractWidget widget) {
