@@ -125,40 +125,67 @@ public final class ConfigStyle {
         streaks(graphics, x, y, width, height, light);
     }
 
-    private static final long STREAK_DRIFT_MILLIS = 14000;
-    private static final long STREAK_BREATH_MILLIS = 3600;
+    // Sun rays: soft beams fanning out from just above the screen's top left corner, swaying slowly, each fading in and
+    // out on its own beat. Placed by the screen, so they run on from panel to panel as through one pane of glass.
+    private static final int RAYS = 7;
+    private static final int RAY_SEGMENTS = 14;
+    private static final float SWAY_MILLIS = 16000;
 
     private static void streaks(GuiGraphicsExtractor graphics, int x, int y, int width, int height, boolean light) {
         var window = Minecraft.getInstance().getWindow();
-        int screen = window.getGuiScaledWidth() + window.getGuiScaledHeight();
-        float root2 = (float) Math.sqrt(2);
+        int screenWidth = window.getGuiScaledWidth();
+        int screenHeight = window.getGuiScaledHeight();
+        float originX = -screenWidth * 0.08F;
+        float originY = -screenHeight * 0.18F;
+        float reach = (float) Math.hypot(screenWidth - originX, screenHeight - originY);
+        boolean animate = GlazedSettings.transitions();
+        double time = animate ? System.currentTimeMillis() : 0;
+        float sway = animate ? (float) Math.sin(time / SWAY_MILLIS * Math.PI * 2) * 0.05F : 0;
+        int peak = light ? 0x24 : 0x16;
+
         graphics.enableScissor(x + 1, y + 1, x + width - 1, y + height - 1);
         var pose = graphics.pose();
-        pose.pushMatrix();
-        // Turned an eighth: the gradient runs across lines of x + y = constant, so the bands run diagonally.
-        pose.rotate((float) -Math.PI / 4);
-        int along = screen * 2;
-        // The streaks drift slowly across the screen and back to the start, and their light breathes in and out; both
-        // hold still when animations are off.
-        boolean animate = GlazedSettings.transitions();
-        long now = System.currentTimeMillis();
-        float drift = animate ? (now % STREAK_DRIFT_MILLIS) / (float) STREAK_DRIFT_MILLIS : 0.34F;
-        float breath = animate ? 0.55F + 0.45F * (0.5F + 0.5F * (float) Math.sin(now / (double) STREAK_BREATH_MILLIS * Math.PI * 2)) : 1;
-        // From just before the screen's top left to just past its bottom right.
-        int start = Math.round((drift * 1.3F - 0.15F) * screen / root2);
-        band(graphics, start, 14, along, Math.round((light ? 0x22 : 0x12) * breath));
-        band(graphics, start + 26, 4, along, Math.round((light ? 0x1A : 0x0E) * breath));
-        pose.popMatrix();
+        for (int i = 0; i < RAYS; i++) {
+            // Spread between pointing down and pointing right, unevenly, like light through leaves.
+            float spread = (i + 0.5F) / RAYS;
+            float angle = -(0.22F + 1.05F * spread + 0.06F * (float) Math.sin(i * 2.7)) + sway * (1 + (i % 3) * 0.4F);
+            float breath = animate ? 0.35F + 0.65F * (0.5F + 0.5F * (float) Math.sin(time / (2600 + i * 530) + i * 1.9)) : 0.8F;
+            float rayWidth = 10 + (i * 37 % 5) * 7;
+            int alpha = Math.round(peak * breath);
+            if (alpha <= 0) continue;
+            pose.pushMatrix();
+            pose.translate(originX, originY);
+            pose.rotate(angle);
+            // Down the beam (its +y), in segments: widening as it goes, brightest a little way out, fading to nothing.
+            float segment = reach / RAY_SEGMENTS;
+            for (int k = 0; k < RAY_SEGMENTS; k++) {
+                float t0 = k / (float) RAY_SEGMENTS;
+                float t1 = (k + 1) / (float) RAY_SEGMENTS;
+                int a0 = Math.round(alpha * rayFade(t0));
+                int a1 = Math.round(alpha * rayFade(t1));
+                if (a0 == 0 && a1 == 0) continue;
+                float half = rayWidth * (0.3F + 1.4F * t0) / 2;
+                int top = Math.round(segment * k);
+                int bottom = Math.round(segment * (k + 1));
+                // A soft core and fainter edges on each side.
+                graphics.fillGradient(Math.round(-half * 0.45F), top, Math.round(half * 0.45F), bottom,
+                        withAlpha(0xFFFFFFFF, a0), withAlpha(0xFFFFFFFF, a1));
+                graphics.fillGradient(Math.round(-half), top, Math.round(-half * 0.45F), bottom,
+                        withAlpha(0xFFFFFFFF, a0 / 2), withAlpha(0xFFFFFFFF, a1 / 2));
+                graphics.fillGradient(Math.round(half * 0.45F), top, Math.round(half), bottom,
+                        withAlpha(0xFFFFFFFF, a0 / 2), withAlpha(0xFFFFFFFF, a1 / 2));
+            }
+            pose.popMatrix();
+        }
         graphics.disableScissor();
     }
 
-    // A soft band: clear at its edges, brightest at its middle.
-    private static void band(GuiGraphicsExtractor graphics, int start, int half, int along, int alpha) {
-        int white = withAlpha(0xFFFFFFFF, alpha);
-        int clear = withAlpha(0xFFFFFFFF, 0);
-        graphics.fillGradient(-along, start, along, start + half, clear, white);
-        graphics.fillGradient(-along, start + half, along, start + half * 2, white, clear);
+    // A beam's brightness along it: rising from the sun, strongest near a fifth of the way, fading out by the far end.
+    private static float rayFade(float t) {
+        if (t < 0.2F) return t / 0.2F;
+        return (float) Math.pow(1 - (t - 0.2F) / 0.8F, 1.6);
     }
+
 
     /** A small label with a colored border, like a tag. */
     public static int badge(GuiGraphicsExtractor graphics, Font font, Component text, int x, int y, int color) {
