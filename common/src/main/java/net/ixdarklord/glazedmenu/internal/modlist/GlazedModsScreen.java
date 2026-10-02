@@ -277,7 +277,7 @@ public final class GlazedModsScreen extends StyledScreen {
         } catch (java.io.IOException e) {
             GlazedMenu.LOGGER.warn("Couldn't make the mods folder {}", mods, e);
         }
-        net.minecraft.util.Util.getPlatform().openPath(mods);
+        com.mojang.blaze3d.Blaze3D.openPath(mods);
     }
 
     // The icon shows the view a click switches to.
@@ -428,7 +428,7 @@ public final class GlazedModsScreen extends StyledScreen {
     }
 
     private void openLink(@Nullable String url) {
-        if (isLink(url)) ConfirmLinkScreen.confirmLinkNow(this, url);
+        if (isLink(url)) ConfirmLinkScreen.confirmLinkNow(this, java.net.URI.create(url));
     }
 
     // The mod's color: its theme's, its icon's, or the game's green (ModColors).

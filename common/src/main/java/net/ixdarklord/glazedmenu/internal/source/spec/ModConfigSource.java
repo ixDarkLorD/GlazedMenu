@@ -77,11 +77,12 @@ public final class ModConfigSource extends ExternalSource {
 
     private static ExternalConfig build(ModConfig modConfig, SpecView view) {
         String fileName = modConfig.getFileName();
-        ConfigScope scope = switch (modConfig.getType()) {
-            case CLIENT -> ConfigScope.CLIENT;
-            case COMMON -> ConfigScope.COMMON;
-            case SERVER -> ConfigScope.WORLD;
-            case STARTUP -> ConfigScope.STARTUP;
+        // By name: NeoForge 26.3 renamed COMMON to LOCAL and SERVER to SYNCED, while the API compiled against keeps the old.
+        ConfigScope scope = switch (modConfig.getType().name()) {
+            case "CLIENT" -> ConfigScope.CLIENT;
+            case "SERVER", "SYNCED" -> ConfigScope.WORLD;
+            case "STARTUP" -> ConfigScope.STARTUP;
+            default -> ConfigScope.COMMON;
         };
         ExternalConfigBuilder builder = new ExternalConfigBuilder(modConfig.getModId(), configName(modConfig), scope)
                 .file(fileName, fullPath(modConfig))
@@ -136,7 +137,7 @@ public final class ModConfigSource extends ExternalSource {
 
     // Edited here, except a server config: only in a world, and only the host's (players see a server's values).
     private static Access access(ModConfig modConfig, SpecView view) {
-        if (modConfig.getType() != ModConfig.Type.SERVER) return Access.LOCAL;
+        if (!isSynced(modConfig)) return Access.LOCAL;
         if (!view.isLoaded() || modConfig.getLoadedConfig() == null) return Access.UNAVAILABLE;
         return Minecraft.getInstance().isLocalServer() ? Access.LOCAL : Access.READ_ONLY;
     }
@@ -159,6 +160,12 @@ public final class ModConfigSource extends ExternalSource {
         } catch (RuntimeException e) {
             return null;
         }
+    }
+
+    // A server's config, sent to its players: SERVER, or SYNCED from NeoForge 26.3.
+    private static boolean isSynced(ModConfig modConfig) {
+        String type = modConfig.getType().name();
+        return type.equals("SERVER") || type.equals("SYNCED");
     }
 
     private static String typeName(ModConfig.Type type) {
