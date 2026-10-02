@@ -808,6 +808,15 @@ public final class ConfigSelectScreen extends StyledScreen {
             this.icon().draw(graphics, (width - iconSize) / 2 + 1, iconY + 1, iconSize, 0x90000000);
             this.icon().draw(graphics, (width - iconSize) / 2, iconY, iconSize, iconColor);
             if (unavailable) ConfigIcons.LOCK.draw(graphics, width - TILE_PADDING - ConfigIcons.SIZE - 4, TILE_PADDING + 5, 0xFFE0E0E0);
+            // The config's kind as a tag, as the mod list tags its mods: on a dark backing so it reads over the artwork.
+            if (this.config != null) {
+                Component tag = Component.translatableWithFallback("glazedmenu.tag.scope." + this.config.scope().name().toLowerCase(Locale.ROOT),
+                        this.config.scope().name());
+                int tagX = TILE_PADDING + 4;
+                int tagY = TILE_PADDING + 6;
+                ConfigStyle.rect(graphics, tagX, tagY, font.width(tag) + 8, 11, 0xC0000000);
+                ConfigStyle.badge(graphics, font, tag, tagX, tagY, unavailable ? 0xFFB0B0B0 : ConfigStyle.mix(accent, 0xFFFFFFFF, 0.35F));
+            }
             Component label = this.label.copy().withStyle(ChatFormatting.BOLD);
             int textWidth = Math.min(font.width(label), artWidth - 6);
             ConfigStyle.text(graphics, font, label, (width - textWidth) / 2 + 1, labelY + 1, textWidth, 0x90000000);
