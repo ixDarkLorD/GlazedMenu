@@ -1,1 +1,1 @@
-A glassy mod list and config screens for every mod: CoolCatLib, NeoForge, Cloth Config, YACL, MidnightLib and more.
+A glassy, themed mod list and config screens for every mod, with grid and list views, groups and update notices.

@@ -17,19 +17,24 @@ clean, themed screen.
 
 ## ⚙️ Config screens for every mod
 One look for every mod's settings: a sidebar of categories, search, undo and redo, reset, presets, validation,
-restart notices, list editing and a color picker. It reads the configs of:
-- **CoolCatLib: Core**, with its themes
-- **NeoForge** configs, and on Fabric through **Forge Config API Port** (Forge configs too)
-- **Cloth Config**, **YACL** and **MidnightLib**
-- **MezzConfig** (JEI) and **FTB Library** (FTB mods), each switchable in the settings
-- Any other mod with a screen of its own gets a link to it
-
-Find every mod's configs in one place through **Mod Configs**, with search across all of them.
+restart notices, list editing and a color picker. Find every mod's configs in one place through **Mod Configs**, with
+search across all of them.
 
 ## 🎨 Make it yours
 - **Dark and light** modes
 - **Color schemes**: Glazed, Classic, Ocean, Forest, Ember, Rose and Slate
 - **Panel opacity**, background effects and fading page transitions
+
+## 🧩 Compatibility
+Glazed Menu needs no other mod. It works with:
+- **Mod Menu** (Fabric) and **NeoForge's mod list**: Glazed Menu's list opens in their place (can be turned off)
+- **CoolCatLib** (Core and Canvas): their configs, themes and screen effects show in Glazed Menu's screens
+- **NeoForge** configs, and on Fabric **Forge Config API Port** (NeoForge and Forge configs)
+- **Cloth Config** (AutoConfig), **YACL** and **MidnightLib**
+- **JEI** (through **MezzConfig**) and **FTB mods** (through **FTB Library**, like FTB Ultimine): their configs show in
+  Glazed Menu's screens, and replacing their own screens is an option in its settings
+- **Configured**: steps aside for Glazed Menu's screens
+- Any other mod with a config screen of its own: its Settings button opens that screen
 
 ---
 
@@ -40,8 +45,5 @@ Find every mod's configs in one place through **Mod Configs**, with search acros
 - **Update notices on Fabric**: `"custom": { "glazedmenu": { "update_json": "<url>" } }`, a file in NeoForge's update
   JSON format. On NeoForge, the usual `updateJSONURL` is used.
 - **Themes**: CoolCatLib: Core's theme API, or a resource pack's `assets/<modid>/glazedmenu/config_theme.json`.
-
-**Optional:** with [CoolCatLib](https://www.curseforge.com/minecraft/mc-mods/coolcatlib) installed, its configs and
-screen effects show in Glazed Menu's screens.
 
 📦 Source and issues: [GitHub](https://github.com/ixDarkLorD/GlazedMenu)
