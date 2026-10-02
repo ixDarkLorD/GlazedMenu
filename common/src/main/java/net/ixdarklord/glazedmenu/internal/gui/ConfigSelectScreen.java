@@ -62,6 +62,8 @@ public final class ConfigSelectScreen extends StyledScreen {
     // Cards are portrait, 1:1.3, sized to fit: as wide as a row allows up to the maximum, and never taller than the list.
     private static final int TILE_MIN_WIDTH = 84;
     private static final int TILE_MAX_WIDTH = 116;
+    // The largest a card grows when a mod has only a few.
+    private static final int MAX_FIT_WIDTH = 220;
     private static final float TILE_ASPECT = 1.3F;
     private static final int TILE_MIN_FIT_WIDTH = 70;
     private static final int TILE_GAP = 12;
@@ -173,14 +175,15 @@ public final class ConfigSelectScreen extends StyledScreen {
                 this.rows.setRows(entries);
                 return;
             }
-            this.rows.wide = false;
-            byMod.forEach((mod, configs) -> {
-                if (this.modId == null) entries.add(new ModHeading(mod));
-                List<Tile> tiles = configs.stream().map(Tile::new).toList();
-                for (int i = 0; i < tiles.size(); i += columns) {
-                    entries.add(new TileRow(tiles.subList(i, Math.min(tiles.size(), i + columns)), width, height));
-                }
-            });
+            // One mod's configs: cards as large as the panel allows, in the arrangement (columns x rows) that fits them
+            // biggest, so a mod with one or two configs doesn't leave the panel mostly empty.
+            this.rows.wide = true;
+            List<Tile> tiles = byMod.values().stream().flatMap(List::stream).map(Tile::new).toList();
+            int[] size = this.fitCards(tiles.size());
+            int fitColumns = size[2];
+            for (int i = 0; i < tiles.size(); i += fitColumns) {
+                entries.add(new TileRow(tiles.subList(i, Math.min(tiles.size(), i + fitColumns)), size[0], size[1]));
+            }
             // Mods whose configs Glazed Menu can't read, but which have a screen of their own: a card opening it.
             if (this.modId == null) {
                 for (String mod : ConfigSources.nativeOnlyModIds()) {
@@ -212,6 +215,23 @@ public final class ConfigSelectScreen extends StyledScreen {
             if (entries.isEmpty()) entries.add(new NoResults());
         }
         this.rows.setRows(entries);
+    }
+
+    // The biggest card size (width, height, columns) for this many cards in the panel: every arrangement of columns is
+    // tried, each card portrait (1:1.3), the whole no taller than most of the panel and no wider than the row; never
+    // smaller than the usual cards, the list scrolling instead.
+    private int[] fitCards(int count) {
+        int rowWidth = this.rows.getRowWidth();
+        int room = Math.round((this.rows.getHeight() - 8) * 0.85F);
+        int[] best = {TILE_MIN_WIDTH, Math.round(TILE_MIN_WIDTH * TILE_ASPECT), Math.max(1, (rowWidth + TILE_GAP) / (TILE_MIN_WIDTH + TILE_GAP))};
+        for (int columns = 1; columns <= Math.max(1, count); columns++) {
+            int rowCount = (count + columns - 1) / columns;
+            int byWidth = (rowWidth - TILE_GAP * (columns - 1)) / columns;
+            int byHeight = Math.round((room / (float) rowCount - TILE_ROW_PADDING * 2) / TILE_ASPECT);
+            int width = Math.min(Math.min(byWidth, byHeight), MAX_FIT_WIDTH);
+            if (width > best[0]) best = new int[]{width, Math.round(width * TILE_ASPECT), columns};
+        }
+        return best;
     }
 
     // The list of every mod's: a card per mod (its icon, name and how many configs, then a line per config), in as many

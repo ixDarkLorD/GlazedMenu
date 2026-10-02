@@ -125,6 +125,9 @@ public final class ConfigStyle {
         streaks(graphics, x, y, width, height, light);
     }
 
+    private static final long STREAK_DRIFT_MILLIS = 14000;
+    private static final long STREAK_BREATH_MILLIS = 3600;
+
     private static void streaks(GuiGraphicsExtractor graphics, int x, int y, int width, int height, boolean light) {
         var window = Minecraft.getInstance().getWindow();
         int screen = window.getGuiScaledWidth() + window.getGuiScaledHeight();
@@ -135,8 +138,16 @@ public final class ConfigStyle {
         // Turned an eighth: the gradient runs across lines of x + y = constant, so the bands run diagonally.
         pose.rotate((float) -Math.PI / 4);
         int along = screen * 2;
-        band(graphics, Math.round(screen * 0.34F / root2), 14, along, light ? 0x22 : 0x12);
-        band(graphics, Math.round(screen * 0.34F / root2) + 26, 4, along, light ? 0x1A : 0x0E);
+        // The streaks drift slowly across the screen and back to the start, and their light breathes in and out; both
+        // hold still when animations are off.
+        boolean animate = GlazedSettings.transitions();
+        long now = System.currentTimeMillis();
+        float drift = animate ? (now % STREAK_DRIFT_MILLIS) / (float) STREAK_DRIFT_MILLIS : 0.34F;
+        float breath = animate ? 0.55F + 0.45F * (0.5F + 0.5F * (float) Math.sin(now / (double) STREAK_BREATH_MILLIS * Math.PI * 2)) : 1;
+        // From just before the screen's top left to just past its bottom right.
+        int start = Math.round((drift * 1.3F - 0.15F) * screen / root2);
+        band(graphics, start, 14, along, Math.round((light ? 0x22 : 0x12) * breath));
+        band(graphics, start + 26, 4, along, Math.round((light ? 0x1A : 0x0E) * breath));
         pose.popMatrix();
         graphics.disableScissor();
     }
