@@ -45,12 +45,77 @@ Glazed Menu needs no other mod. It works with:
 
 ---
 
-### For mod authors
-- **List your mod under Libraries**: `"custom": { "glazedmenu": { "library": true } }` in `fabric.mod.json`
-  (Mod Menu's `"badges": ["library"]` works too), or `library = true` under `[modproperties.<modid>]` in
-  `neoforge.mods.toml`.
-- **Update notices on Fabric**: `"custom": { "glazedmenu": { "update_json": "<url>" } }`, a file in NeoForge's update
-  JSON format. On NeoForge, the usual `updateJSONURL` is used.
-- **Themes**: CoolCatLib: Core's theme API, or a resource pack's `assets/<modid>/glazedmenu/config_theme.json`.
+### 🛠️ For mod authors
+Glazed Menu works with your mod as it is. These are optional extras, all read from files, with no code dependency on
+Glazed Menu.
+
+#### List your mod under Libraries
+**Fabric**, in `fabric.mod.json` (Mod Menu's own badge is read too):
+```json
+"custom": {
+  "glazedmenu": { "library": true },
+  "modmenu": { "badges": ["library"] }
+}
+```
+
+**NeoForge**, in `META-INF/neoforge.mods.toml`:
+```toml
+[modproperties.yourmodid]
+library = true
+```
+
+#### Update notices
+**NeoForge** uses your mod's usual `updateJSONURL`, so there is nothing to add.
+
+**Fabric**: point Glazed Menu at an update file in `fabric.mod.json`:
+```json
+"custom": {
+  "glazedmenu": { "update_json": "https://example.com/updates/yourmodid.json" }
+}
+```
+The file uses NeoForge's update JSON format. Glazed Menu takes the `<minecraft>-recommended` version for the running
+game (or `<minecraft>-latest`), and shows a notice when it's newer than the installed one:
+```json
+{
+  "homepage": "https://modrinth.com/mod/yourmod",
+  "promos": {
+    "26.1.2-recommended": "1.2.0",
+    "26.1.2-latest": "1.3.0-beta"
+  }
+}
+```
+
+#### Your mod's look in the config screens
+Ship `assets/<modid>/glazedmenu/config_theme.json` in your mod, or in a resource pack to theme any mod. Every field is
+optional; colors are `"#RRGGBB"` or `"#AARRGGBB"`:
+```json
+{
+  "base": "tinted",
+  "colors": { "accent": "#E86BA8" },
+  "light_base": "tinted",
+  "icon": "yourmodid:textures/gui/config_icon.png",
+  "background": "yourmodid:textures/gui/config_background.png",
+  "background_mode": "cover",
+  "background_opacity": 0.6
+}
+```
+- `base` / `light_base`: `tinted` (shaded with your accent), `dark` or `light`, for the dark and light modes.
+- `colors` / `light_colors`: any of `accent`, `backdrop`, `panel`, `panel_border`, `bar`, `popup`, `row_hover`, `field`,
+  `field_border`, `button`, `button_hover`, `button_disabled`, `toggle_off`, `knob`, `text`, `text_dim`, `text_muted`,
+  `modified`, `error`, `success`, `warning`.
+- `background_mode`: `stretch`, `cover` or `tile` (with `tile_size`). Also `texture_opacity`, `background_in_world`,
+  `popup_sprite` and `effects`.
+
+With CoolCatLib: Core, its theme API (`ConfigTheme.builder()`, `ConfigTheme.setForMod(...)`) themes your screens too.
+
+#### Config card artwork
+Each of your configs gets a card in Glazed Menu's config screens. To use your own artwork instead of the built-in one
+for its kind (client, server, ...), ship `assets/<modid>/textures/gui/config/cards/<config name>.png`. The image is
+portrait (about 1:1.3), for example 512×672.
+
+#### Your own config screen
+If your mod has its own config screen (Mod Menu's `ModMenuApi`, NeoForge's `IConfigScreenFactory`), its Settings
+button opens it. Generic screens made for any mod (NeoForge's, Configured's, Forge Config API Port's, MidnightLib's) are
+replaced by Glazed Menu's when Glazed Menu can read the configs behind them.
 
 📦 Source and issues: [GitHub](https://github.com/ixDarkLorD/GlazedMenu)
