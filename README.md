@@ -41,4 +41,4 @@ effects and fading page transitions, all in Glazed Menu's settings.
 Maven Local while developing.
 
 ## License
-[MPL-2.0](https://www.mozilla.org/MPL/2.0/)
+All Rights Reserved. The source is published to read; copying, modifying or redistributing it, in whole or in part, needs written permission from ixDarkLorD. See [LICENSE](LICENSE).

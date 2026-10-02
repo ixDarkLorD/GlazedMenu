@@ -197,7 +197,8 @@ public final class ConfigScreen extends StyledScreen {
         super.extractPanels(graphics, mouseX, mouseY, a);
         int bodyTop = this.bodyTop();
         int bodyHeight = this.bodyBottom() - bodyTop;
-        if (this.sidebar) ConfigStyle.panel(graphics, this.frameLeft(), bodyTop, this.sidebarWidth, bodyHeight);
+        // The category sidebar without sun rays, so its tabs read plainly.
+        if (this.sidebar) ConfigStyle.panel(graphics, this.frameLeft(), bodyTop, this.sidebarWidth, bodyHeight, false);
         ConfigStyle.panel(graphics, this.contentX(), bodyTop, this.frameLeft() + this.frameWidth() - this.contentX(), bodyHeight);
 
         // Title and badges, as far as the search box allows.

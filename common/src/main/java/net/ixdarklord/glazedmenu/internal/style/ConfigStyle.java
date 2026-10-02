@@ -94,9 +94,14 @@ public final class ConfigStyle {
 
     /** A translucent panel with a hairline border and a faint accent sheen along its top. */
     public static void panel(GuiGraphicsExtractor graphics, int x, int y, int width, int height) {
+        panel(graphics, x, y, width, height, true);
+    }
+
+    /** As {@link #panel(GuiGraphicsExtractor, int, int, int, int)}; {@code rays} false leaves out the sun rays. */
+    public static void panel(GuiGraphicsExtractor graphics, int x, int y, int width, int height, boolean rays) {
         rect(graphics, x, y, width, height, translucent(colors().panel()));
         glaze(graphics, x, y, width, height);
-        glass(graphics, x, y, width, height);
+        glass(graphics, x, y, width, height, rays);
         outline(graphics, x, y, width, height, colors().panelBorder());
         graphics.fillGradient(x + 1, y + 1, x + width - 1, y + Math.min(10, height - 1), withAlpha(accent(), 0x14), withAlpha(accent(), 0));
     }
@@ -104,7 +109,7 @@ public final class ConfigStyle {
     public static void bar(GuiGraphicsExtractor graphics, int x, int y, int width, int height) {
         rect(graphics, x, y, width, height, translucent(colors().bar()));
         glaze(graphics, x, y, width, height);
-        glass(graphics, x, y, width, height);
+        glass(graphics, x, y, width, height, true);
         outline(graphics, x, y, width, height, colors().panelBorder());
     }
 
@@ -113,7 +118,7 @@ public final class ConfigStyle {
     // A panel as a slab of frosted glass: a soft reflection down from its top, a bright edge along its top and left and a
     // darker one along its bottom, and two faint diagonal streaks of light, placed by the screen so they run on from
     // panel to panel as across one sheet.
-    private static void glass(GuiGraphicsExtractor graphics, int x, int y, int width, int height) {
+    private static void glass(GuiGraphicsExtractor graphics, int x, int y, int width, int height, boolean rays) {
         if (width <= 4 || height <= 4) return;
         boolean light = mode() == ConfigTheme.Mode.LIGHT;
         int white = 0xFFFFFFFF;
@@ -122,7 +127,7 @@ public final class ConfigStyle {
         graphics.fill(x + 2, y + 1, x + width - 2, y + 2, withAlpha(white, light ? 0x70 : 0x3A));
         graphics.fill(x + 1, y + 2, x + 2, y + height - 2, withAlpha(white, light ? 0x40 : 0x1A));
         graphics.fill(x + 2, y + height - 2, x + width - 2, y + height - 1, withAlpha(0xFF000000, light ? 0x18 : 0x48));
-        streaks(graphics, x, y, width, height, light);
+        if (rays) streaks(graphics, x, y, width, height, light);
     }
 
     // Sun rays: soft beams fanning out from just above the screen's top left corner, swaying slowly, each fading in and
