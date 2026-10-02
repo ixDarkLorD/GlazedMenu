@@ -1,7 +1,6 @@
 {
     "projects": {
         "fabric": 1,
-        "neoforge": 1,
         "forge": 1
     }
 }

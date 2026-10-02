@@ -22,13 +22,15 @@ public final class ConfigJson {
     private ConfigJson() {}
 
     public static <T> JsonElement encode(Codec<T> codec, T value) {
-        return codec.encodeStart(JsonOps.INSTANCE, value).getOrThrow(error -> new IllegalStateException("Couldn't encode " + value + ": " + error));
+        return codec.encodeStart(JsonOps.INSTANCE, value).getOrThrow(false, error -> {
+            throw new IllegalStateException("Couldn't encode " + value + ": " + error);
+        });
     }
 
     public static <T> ValidationResult<T> decode(Codec<T> codec, JsonElement json) {
         DataResult<T> result = codec.parse(JsonOps.INSTANCE, json);
         return result.result().map(ValidationResult::ok)
-                .orElseGet(() -> ValidationResult.error(Component.literal(result.error().map(DataResult.Error::message).orElse("?"))));
+                .orElseGet(() -> ValidationResult.error(Component.literal(result.error().map(DataResult.PartialResult::message).orElse("?"))));
     }
 
     /** Parses JSON leniently: comments, unquoted keys and single quotes are allowed. */

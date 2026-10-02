@@ -19,7 +19,7 @@ import org.joml.Vector3f;
 
 import java.util.List;
 
-// Minecraft 26.1's GUI drawing calls, on 1.21.1's GuiGraphics, so the screens read the same on every version. 1.21.1
+// Minecraft 26.1's GUI drawing calls, on 1.20.1's GuiGraphics, so the screens read the same on every version. 1.20.1
 // draws as it's called, so a "stratum" is just what's drawn after the last flush.
 public final class GuiGraphicsExtractor {
     private static @Nullable GuiGraphicsExtractor last;
@@ -70,7 +70,7 @@ public final class GuiGraphicsExtractor {
         this.raw.fill(RenderType.guiTextHighlight(), x0, y0, x1, y1, 0xFF0000FF);
     }
 
-    // --- Text: 1.21.1 draws a nearly transparent color opaque, so those are skipped ---
+    // --- Text: 1.20.1 draws a nearly transparent color opaque, so those are skipped ---
 
     public void text(Font font, @Nullable String text, int x, int y, int color, boolean shadow) {
         if (text != null && visible(color)) this.raw.drawString(font, text, x, y, color, shadow);
@@ -100,7 +100,7 @@ public final class GuiGraphicsExtractor {
         return (color & 0xFC000000) != 0;
     }
 
-    // --- Textures (the pipeline is 26.1's; 1.21.1 blends them all alike) ---
+    // --- Textures (the pipeline is 26.1's; 1.20.1 blends them all alike) ---
 
     public void blit(Object pipeline, ResourceLocation texture, int x, int y, float u, float v, int width, int height,
                      int regionWidth, int regionHeight, int textureWidth, int textureHeight, int color) {
@@ -127,7 +127,10 @@ public final class GuiGraphicsExtractor {
     public void blitSprite(Object pipeline, ResourceLocation sprite, int x, int y, int width, int height, int color) {
         if ((color >>> 24) == 0) return;
         this.tint(color);
-        this.raw.blitSprite(sprite, x, y, width, height);
+        // 1.20.1 has no GUI sprite atlas: a sprite is its own texture under textures/gui/sprites/, stretched.
+        ResourceLocation texture = new ResourceLocation(sprite.getNamespace(), "textures/gui/sprites/" + sprite.getPath() + ".png");
+        int[] size = net.ixdarklord.glazedmenu.internal.style.ConfigStyle.textureSize(texture);
+        this.raw.blit(texture, x, y, width, height, 0, 0, size[0], size[1], size[0], size[1]);
         this.untint();
     }
 
@@ -148,7 +151,7 @@ public final class GuiGraphicsExtractor {
 
     // --- Clipping and layers ---
 
-    /** Clips to a box given in the current transform (1.21.1's scissor ignores the transform, 26.1's doesn't). */
+    /** Clips to a box given in the current transform (1.20.1's scissor ignores the transform, 26.1's doesn't). */
     public void enableScissor(int x0, int y0, int x1, int y1) {
         Matrix4f matrix = this.raw.pose().last().pose();
         Vector3f a = matrix.transformPosition(new Vector3f(x0, y0, 0));
@@ -165,15 +168,10 @@ public final class GuiGraphicsExtractor {
         this.raw.flush();
     }
 
-    /** Blurs what's drawn so far (the panorama or the world), as vanilla's menu background does. */
-    public void blurBeforeThisStratum() {
-        this.raw.flush();
-        Minecraft minecraft = Minecraft.getInstance();
-        minecraft.gameRenderer.processBlurEffect(0);
-        minecraft.getMainRenderTarget().bindWrite(false);
-    }
+    /** 1.20.1 has no menu blur. */
+    public void blurBeforeThisStratum() {}
 
-    /** 1.21.1 has no mouse cursor shapes. */
+    /** 1.20.1 has no mouse cursor shapes. */
     public void requestCursor(CursorTypes cursor) {}
 
     // --- Tooltips, drawn by the screen after everything else ---
@@ -193,7 +191,7 @@ public final class GuiGraphicsExtractor {
                 positioner.positionTooltip(screenWidth, screenHeight, x, y, width, height), true);
     }
 
-    /** 26.1's 2D transform stack, on 1.21.1's PoseStack. */
+    /** 26.1's 2D transform stack, on 1.20.1's PoseStack. */
     public static final class Pose {
         private final PoseStack stack;
 

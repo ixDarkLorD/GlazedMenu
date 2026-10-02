@@ -156,8 +156,8 @@ public final class MezzSource extends ExternalSource {
     private static <T> @Nullable ConfigType<?> typeOf(T defaultValue, IConfigValueSerializer<T> serializer) {
         if (defaultValue instanceof List<?> list) {
             if (!(serializer instanceof IConfigListValueSerializer<?> listSerializer)) return null;
-            Object sample = !list.isEmpty() ? list.getFirst()
-                    : listSerializer.getElementSerializer().getAllValidValues().filter(values -> !values.isEmpty()).map(List::getFirst).orElse(null);
+            Object sample = !list.isEmpty() ? list.get(0)
+                    : listSerializer.getElementSerializer().getAllValidValues().filter(values -> !values.isEmpty()).map(validValues -> validValues.get(0)).orElse(null);
             if (sample == null) return null;
             ConfigType<?> element = ExternalTypes.of(sample.getClass(), null, null, null);
             return element != null && !(element instanceof net.ixdarklord.glazedmenu.api.config.type.ListType<?>) ? ConfigTypes.listOf(element) : null;

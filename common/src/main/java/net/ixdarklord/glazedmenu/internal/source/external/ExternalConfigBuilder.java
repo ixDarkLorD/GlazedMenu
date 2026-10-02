@@ -78,7 +78,7 @@ public final class ExternalConfigBuilder {
      */
     public ExternalConfig build(Supplier<Access> access, Runnable saver) {
         this.root.removeEmptyGroups();
-        return new ExternalConfig(ResourceLocation.fromNamespaceAndPath(cleanId(this.modId), cleanId(this.name)), this.scope, this.root,
+        return new ExternalConfig(new ResourceLocation(cleanId(this.modId), cleanId(this.name)), this.scope, this.root,
                 this.title, this.fileName, this.filePath, access, saver);
     }
 

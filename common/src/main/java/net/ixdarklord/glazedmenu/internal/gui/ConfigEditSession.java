@@ -168,9 +168,9 @@ public final class ConfigEditSession {
         this.redo.clear();
         Edit last = this.undo.peek();
         if (last != null && edit.time > 0 && last.time > 0 && edit.time - last.time < MERGE_WINDOW_MS
-                && last.changes.size() == 1 && edit.changes.size() == 1 && last.changes.getFirst().value == edit.changes.getFirst().value) {
+                && last.changes.size() == 1 && edit.changes.size() == 1 && last.changes.get(0).value == edit.changes.get(0).value) {
             this.undo.pop();
-            edit = new Edit(List.of(new Change(last.changes.getFirst().value, last.changes.getFirst().before, edit.changes.getFirst().after)), edit.time);
+            edit = new Edit(List.of(new Change(last.changes.get(0).value, last.changes.get(0).before, edit.changes.get(0).after)), edit.time);
         }
         this.undo.push(edit);
         while (this.undo.size() > MAX_HISTORY) this.undo.removeLast();

@@ -1,5 +1,6 @@
 package net.ixdarklord.glazedmenu.internal.core;
 
+import net.minecraft.util.Mth;
 import net.ixdarklord.glazedmenu.internal.style.GlazedBrand;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -57,7 +58,6 @@ public final class GlazedSettings {
         boolean themeEffects = true;
         boolean transitions = true;
         boolean replaceMezzConfigScreens = false;
-        boolean replaceFtbLibraryScreens = false;
     }
 
     private static Path file() {
@@ -138,17 +138,17 @@ public final class GlazedSettings {
 
     /** A theme's backdrop opacity, scaled by the player's choice. */
     public static float backgroundOpacity(float themeOpacity) {
-        return Math.clamp(themeOpacity * values.backgroundOpacity / 100.0F, 0, 1);
+        return Mth.clamp(themeOpacity * values.backgroundOpacity / 100.0F, 0, 1);
     }
 
     /** A theme's texture opacity, scaled by the player's choice. */
     public static float textureOpacity(float themeOpacity) {
-        return Math.clamp(themeOpacity * values.textureOpacity / 100.0F, 0, 1);
+        return Mth.clamp(themeOpacity * values.textureOpacity / 100.0F, 0, 1);
     }
 
     /** A panel's or bar's alpha, scaled by the player's panel opacity (100 keeps the theme's). */
     public static int panelAlpha(int themeAlpha) {
-        return Math.clamp(Math.round(themeAlpha * values.panelOpacity / 100.0F), 0, 255);
+        return Mth.clamp(Math.round(themeAlpha * values.panelOpacity / 100.0F), 0, 255);
     }
 
     /** Whether the screens draw their themes' effects: the player's choice, but never on Fast graphics. */
@@ -169,11 +169,6 @@ public final class GlazedSettings {
      */
     public static boolean replaceMezzConfigScreens() {
         return values.replaceMezzConfigScreens;
-    }
-
-    /** Whether Glazed Menu's screens replace FTB Library's config editor for FTB mods' configs. */
-    public static boolean replaceFtbLibraryScreens() {
-        return values.replaceFtbLibraryScreens;
     }
 
     // Fast graphics ask for the cheapest look, so it turns the screens' animations off.
@@ -240,9 +235,6 @@ public final class GlazedSettings {
             bool(builder, prefix + "otherScreens.", "replaceMezzConfigScreens", false,
                     "Turn on to replace MezzConfig GUI's config screens (like JEI's) with Glazed Menu's. Without MezzConfig GUI, Glazed Menu's open either way.",
                     () -> values.replaceMezzConfigScreens, value -> values.replaceMezzConfigScreens = value);
-            bool(builder, prefix + "otherScreens.", "replaceFtbLibraryScreens", false,
-                    "Turn on to replace FTB Library's config editor (FTB mods' settings, like FTB Ultimine's) with Glazed Menu's screens.",
-                    () -> values.replaceFtbLibraryScreens, value -> values.replaceFtbLibraryScreens = value);
             builder.pop();
             return List.of(builder.build(() -> Access.LOCAL, GlazedSettings::save));
         }

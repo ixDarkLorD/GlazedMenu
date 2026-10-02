@@ -80,7 +80,7 @@ public final class ModCatalog {
     public static @Nullable Screen settings(Screen parent, String modId) {
         if (modId.equals(GlazedMenu.MOD_ID)) return ConfigScreens.create(parent, modId);
         // The game's settings are its options.
-        if (modId.equals("minecraft")) return new net.minecraft.client.gui.screens.options.OptionsScreen(parent, net.minecraft.client.Minecraft.getInstance().options);
+        if (modId.equals("minecraft")) return new net.minecraft.client.gui.screens.OptionsScreen(parent, net.minecraft.client.Minecraft.getInstance().options);
         UnaryOperator<Screen> own = ConfigSources.nativeScreen(modId);
         if (GenericScreens.handles(modId)) return GenericScreens.choose(modId, parent, () -> own != null ? own.apply(parent) : null);
         return own != null ? own.apply(parent) : null;

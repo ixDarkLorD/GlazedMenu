@@ -1,5 +1,7 @@
 package net.ixdarklord.glazedmenu.api.config;
 
+import net.minecraft.util.Mth;
+
 /**
  * Every color of a mod's config screens (ARGB). Start from a preset and change what you like:
  * <pre>{@code
@@ -113,7 +115,7 @@ public final class ConfigColorScheme {
 
     // Mixes the RGB toward another color, keeping the alpha.
     private static int shade(int color, int toward, float amount) {
-        float t = Math.clamp(amount, 0, 1);
+        float t = Mth.clamp(amount, 0, 1);
         int r = Math.round((color >> 16 & 0xFF) + ((toward >> 16 & 0xFF) - (color >> 16 & 0xFF)) * t);
         int g = Math.round((color >> 8 & 0xFF) + ((toward >> 8 & 0xFF) - (color >> 8 & 0xFF)) * t);
         int b = Math.round((color & 0xFF) + ((toward & 0xFF) - (color & 0xFF)) * t);

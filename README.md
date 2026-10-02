@@ -1,10 +1,10 @@
 <p align="center"><img src="common/src/main/resources/mod_logo.png" width="160" alt="Glazed Menu"></p>
 <h1 align="center">Glazed Menu</h1>
 <p align="center"><b>A glassy mod list and config screens for every mod.</b><br>
-Client side · Fabric, NeoForge &amp; Forge · Minecraft 1.21 – 1.21.1</p>
+Client side · Fabric &amp; Forge · Minecraft 1.20 – 1.20.1</p>
 <hr>
 
-Glazed Menu replaces Mod Menu's, NeoForge's and Forge's mod lists with its own, and gives the configs of almost any mod a
+Glazed Menu replaces Mod Menu's and Forge's mod lists with its own, and gives the configs of almost any mod a
 clean, themed screen. It needs no other mod.
 
 ## The mod list

@@ -7,7 +7,6 @@ import net.ixdarklord.glazedmenu.internal.core.GlazedCommand;
 import net.ixdarklord.glazedmenu.internal.core.GlazedMenu;
 import net.ixdarklord.glazedmenu.internal.core.GlazedPlatform;
 import net.ixdarklord.glazedmenu.internal.source.ConfigSources;
-import net.ixdarklord.glazedmenu.internal.source.spec.forge.ForgeConfigSource;
 import net.minecraft.client.Minecraft;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraftforge.api.distmarker.Dist;
@@ -31,8 +30,9 @@ public final class GlazedForge {
         if (FMLEnvironment.dist != Dist.CLIENT) return;
         GlazedPlatform.set(new ForgeGlazedPlatform());
         GlazedClientConstructor.init();
-        ConfigSources.register(ForgeConfigSource.INSTANCE);
-        MinecraftForge.EVENT_BUS.addListener((TickEvent.ClientTickEvent.Pre event) -> GlazedClientConstructor.tick(Minecraft.getInstance()));
+        MinecraftForge.EVENT_BUS.addListener((TickEvent.ClientTickEvent event) -> {
+            if (event.phase == TickEvent.Phase.START) GlazedClientConstructor.tick(Minecraft.getInstance());
+        });
         MinecraftForge.EVENT_BUS.addListener((RegisterClientCommandsEvent event) ->
                 event.getDispatcher().register(GlazedCommand.<CommandSourceStack>build(CommandSourceStack::sendFailure)));
         // Glazed Menu's own button opens its settings.

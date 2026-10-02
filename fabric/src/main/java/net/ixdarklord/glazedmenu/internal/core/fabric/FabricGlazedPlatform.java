@@ -126,7 +126,7 @@ final class FabricGlazedPlatform implements GlazedPlatform {
     }
 
     @Override
-    public boolean hasNeoForgeConfigs() {
+    public boolean hasForgeConfigs() {
         return FabricLoader.getInstance().isModLoaded("forgeconfigapiport");
     }
 

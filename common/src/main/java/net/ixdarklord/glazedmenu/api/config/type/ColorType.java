@@ -24,7 +24,8 @@ public final class ColorType implements ConfigType<Integer> {
             ValidationResult<Integer> result = this.parse(text);
             return result.hasValue() ? DataResult.success(result.value()) : DataResult.error(result::messageString);
         }, this::format);
-        this.codec = Codec.withAlternative(hex, Codec.INT);
+        // A hex string, or a plain number as older files may hold.
+        this.codec = Codec.either(hex, Codec.INT).xmap(either -> either.map(value -> value, value -> value), com.mojang.datafixers.util.Either::left);
     }
 
     public boolean hasAlpha() {

@@ -2,7 +2,7 @@
 This file is for listing all the changes to this project
 
 ## v1.0 Release | Unreleased (Minecraft 26.1.2)
-- On Minecraft 1.21 – 1.21.1: also on Forge (its mod list, its `ForgeConfigSpec` configs and its Config buttons); no CoolCatLib integration on this version.
+- On Minecraft 1.20 – 1.20.1: on Fabric and Forge (Forge's mod list, its `ForgeConfigSpec` configs, on Fabric through Forge Config API Port, and its Config buttons); no NeoForge, CoolCatLib or FTB Library integration on this version (FTB Library 2001 has no shared config registry to read).
 ### ✨ New Features
 - First release: a mod list and CoolCatLib's config screens, moved out of CoolCatLib: Core, in their own client-only mod (package `net.ixdarklord.glazedmenu`). It needs no other mod: it has its own config model, styled widgets, effects and settings (`config/glazedmenu.json`, editable in its own screens).
 - With CoolCatLib: Core installed, Core's configs, the themes and enum names mods set with Core's API, the server's synced values and the startup mismatch screen work as before; with CoolCatLib: Canvas, the config screen effects registered with Canvas draw in Glazed Menu's screens too. Resource packs' `config_theme.json` is read from `assets/<modid>/glazedmenu/` (and the old `coolcatcore/`).

@@ -1,5 +1,6 @@
 package net.ixdarklord.glazedmenu.internal.style;
 
+import net.minecraft.util.Mth;
 import net.ixdarklord.glazedmenu.internal.compat.CompatEditBox;
 import net.ixdarklord.glazedmenu.internal.compat.CursorTypes;
 import net.ixdarklord.glazedmenu.internal.compat.GuiGraphicsExtractor;
@@ -106,7 +107,7 @@ public class StyledEditBox extends CompatEditBox {
         float target = this.scroll;
         if (cursorX - target > inner) target = cursorX - inner;
         if (cursorX < target) target = cursorX;
-        return Math.clamp(target, 0, Math.max(0, font.width(value) - inner));
+        return Mth.clamp(target, 0, Math.max(0, font.width(value) - inner));
     }
 
     private void extractText(GuiGraphicsExtractor graphics) {

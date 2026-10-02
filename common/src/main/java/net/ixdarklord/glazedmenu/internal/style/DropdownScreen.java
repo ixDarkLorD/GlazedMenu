@@ -1,5 +1,6 @@
 package net.ixdarklord.glazedmenu.internal.style;
 
+import net.minecraft.util.Mth;
 import net.ixdarklord.glazedmenu.internal.compat.Compat;
 import net.ixdarklord.glazedmenu.internal.compat.CompatScreen;
 import net.ixdarklord.glazedmenu.internal.compat.GuiGraphicsExtractor;
@@ -76,7 +77,7 @@ public final class DropdownScreen<T> extends CompatScreen implements Overlay {
         this.rows = Math.min(MAX_ROWS, this.values.size());
         int widest = this.values.stream().mapToInt(value -> this.font.width(this.name.apply(value))).max().orElse(0) + 28;
         this.panelWidth = Math.min(Math.max(this.anchorWidth, widest), this.width - 8);
-        this.panelX = Math.clamp(this.anchorX, 4, this.width - 4 - this.panelWidth);
+        this.panelX = Mth.clamp(this.anchorX, 4, this.width - 4 - this.panelWidth);
         int height = this.rows * ROW_HEIGHT + 4;
         // Below the box if it fits, else above it.
         this.panelY = this.anchorY + this.anchorHeight + height + 2 <= this.height - 4 ? this.anchorY + this.anchorHeight + 1 : Math.max(4, this.anchorY - height - 1);
@@ -145,7 +146,7 @@ public final class DropdownScreen<T> extends CompatScreen implements Overlay {
     private Vector2ic besideList(int screenWidth, int screenHeight, int x, int y, int width, int height) {
         int left = this.panelX + this.panelWidth + 6;
         if (left + width + 4 > screenWidth) left = Math.max(4, this.panelX - 6 - width);
-        int top = Math.clamp(y - 2, 4, Math.max(4, screenHeight - height - 4));
+        int top = Mth.clamp(y - 2, 4, Math.max(4, screenHeight - height - 4));
         return new Vector2i(left, top);
     }
 
@@ -161,7 +162,7 @@ public final class DropdownScreen<T> extends CompatScreen implements Overlay {
         int max = Math.max(0, this.values.size() - this.rows);
         if (index < this.scroll) this.scroll = index;
         else if (index >= this.scroll + this.rows) this.scroll = index - this.rows + 1;
-        this.scroll = Math.clamp(this.scroll, 0, max);
+        this.scroll = Mth.clamp(this.scroll, 0, max);
     }
 
     // The value is set before going back, so the screen underneath shows it as it returns (it may have rebuilt its
@@ -184,7 +185,7 @@ public final class DropdownScreen<T> extends CompatScreen implements Overlay {
 
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
-        this.scroll = Math.clamp(this.scroll - (int) Math.signum(scrollY), 0, Math.max(0, this.values.size() - this.rows));
+        this.scroll = Mth.clamp(this.scroll - (int) Math.signum(scrollY), 0, Math.max(0, this.values.size() - this.rows));
         return true;
     }
 

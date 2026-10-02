@@ -40,11 +40,6 @@ public final class GenericScreens {
     /** The screen a mod's button opens: the one the loader found, unless it's a generic one Glazed Menu can replace. */
     public static @Nullable Screen choose(String modId, @Nullable Screen parent, Supplier<@Nullable Screen> original) {
         if (!handles(modId)) return original.get();
-        // FTB Library's editor, unless the player chose to replace it.
-        if (GlazedPlatform.get().isModLoaded("ftblibrary")) {
-            Screen ftb = net.ixdarklord.glazedmenu.internal.source.ftb.FtbSource.ownScreen(modId);
-            if (ftb != null) return ftb;
-        }
         Screen screen;
         try {
             screen = original.get();

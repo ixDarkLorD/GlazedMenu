@@ -32,8 +32,8 @@ public interface GlazedPlatform {
     /** The game's config folder. */
     Path configDir();
 
-    /** Whether NeoForge's config system is here: on NeoForge always, on Fabric with Forge Config API Port. */
-    boolean hasNeoForgeConfigs();
+    /** Whether Forge's config system is here: on Forge always, on Fabric with Forge Config API Port. */
+    boolean hasForgeConfigs();
 
     /**
      * The address of the mod's update file (the update JSON format NeoForge uses: a homepage and "promos" of the newest

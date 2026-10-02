@@ -115,7 +115,7 @@ public final class ConfigEntryList extends CompatList<ConfigEntryList.Entry> {
             if (Language.getInstance().has(tooltipKey)) {
                 return Component.literal(Component.translatable(tooltipKey).getString().lines().findFirst().orElse(""));
             }
-            return value.comment().isEmpty() ? null : Component.literal(value.comment().getFirst());
+            return value.comment().isEmpty() ? null : Component.literal(value.comment().get(0));
         }
 
         @Override
@@ -330,7 +330,7 @@ public final class ConfigEntryList extends CompatList<ConfigEntryList.Entry> {
     static Component breadcrumb(ConfigGroup from, ConfigNode node) {
         List<Component> names = new ArrayList<>();
         for (ConfigNode parent = node.parent(); parent != null && parent != from; parent = parent.parent()) {
-            names.addFirst(parent.displayName());
+            names.add(0, parent.displayName());
         }
         MutableComponent text = Component.empty();
         for (Component name : names) text.append(name.copy().withStyle(ChatFormatting.GRAY)).append(Component.literal(" › ").withStyle(ChatFormatting.DARK_GRAY));

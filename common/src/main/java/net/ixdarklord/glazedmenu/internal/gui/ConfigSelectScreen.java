@@ -1,5 +1,6 @@
 package net.ixdarklord.glazedmenu.internal.gui;
 
+import net.minecraft.util.Mth;
 import net.ixdarklord.glazedmenu.internal.compat.CompatList;
 import net.ixdarklord.glazedmenu.internal.compat.GuiGraphicsExtractor;
 import net.ixdarklord.glazedmenu.internal.compat.KeyEvent;
@@ -104,7 +105,7 @@ public final class ConfigSelectScreen extends StyledScreen {
 
     @Override
     protected void init() {
-        int searchWidth = Math.clamp(this.width / 3, 100, 200);
+        int searchWidth = Mth.clamp(this.width / 3, 100, 200);
         this.search = this.addRenderableWidget(new StyledEditBox(this.font, searchWidth, 18,
                 Component.translatableWithFallback("glazedmenu.search.all", "Search all configs")));
         // The search bar at the right, and the light/dark switch after it.
@@ -195,7 +196,7 @@ public final class ConfigSelectScreen extends StyledScreen {
             }
             int used = entries.stream().mapToInt(Row::height).sum();
             int free = this.rows.getHeight() - used - 8;
-            if (free > 1) entries.addFirst(new Spacer(free / 2));
+            if (free > 1) entries.add(0, new Spacer(free / 2));
         } else {
             this.rows.wide = false;
             // Each config with matches is a category: its header, then its matching settings.
@@ -245,7 +246,7 @@ public final class ConfigSelectScreen extends StyledScreen {
             if (screen != null) cards.add(new ModCard(mod, List.of(new Tile(mod, screen))));
         }
         int rowWidth = this.rows.getRowWidth();
-        int columns = Math.clamp((rowWidth + CARD_GAP) / (CARD_MIN_WIDTH + CARD_GAP), 1, 4);
+        int columns = Mth.clamp((rowWidth + CARD_GAP) / (CARD_MIN_WIDTH + CARD_GAP), 1, 4);
         entries.add(new CardRow(cards, columns));
     }
 
@@ -721,12 +722,12 @@ public final class ConfigSelectScreen extends StyledScreen {
             Font font = ConfigSelectScreen.this.font;
             List<FormattedCharSequence> lines = new ArrayList<>();
             if (this.config == null) {
-                lines.add(this.label.copy().withStyle(ChatFormatting.BOLD).withColor(ConfigStyle.accentOf(this.theme) & 0xFFFFFF).getVisualOrderText());
+                lines.add(this.label.copy().withStyle(ChatFormatting.BOLD).withStyle(style -> style.withColor(ConfigStyle.accentOf(this.theme) & 0xFFFFFF)).getVisualOrderText());
                 lines.addAll(font.split(Component.translatableWithFallback("glazedmenu.tile.native.tooltip",
                         "Opens the mod's own config screen").withStyle(ChatFormatting.GRAY), TOOLTIP_WIDTH));
                 return lines;
             }
-            lines.add(this.config.title().copy().withStyle(ChatFormatting.BOLD).withColor(ConfigStyle.accentOf(this.theme) & 0xFFFFFF).getVisualOrderText());
+            lines.add(this.config.title().copy().withStyle(ChatFormatting.BOLD).withStyle(style -> style.withColor(ConfigStyle.accentOf(this.theme) & 0xFFFFFF)).getVisualOrderText());
             lines.addAll(font.split(scopeDescription(this.config).copy().withStyle(ChatFormatting.GRAY), TOOLTIP_WIDTH));
             long settings = this.config.values().count();
             // The screen's tabs: each group, and "General" for settings outside any group.
@@ -832,7 +833,7 @@ public final class ConfigSelectScreen extends StyledScreen {
     // A config's card artwork: the mod's own for that config if it ships one
     // (assets/<modid>/textures/gui/config/cards/<config name>.png), otherwise Glazed Menu's for its scope.
     private static ResourceLocation artworkOf(Config config) {
-        ResourceLocation own = ResourceLocation.fromNamespaceAndPath(config.modId(), "textures/gui/config/cards/" + config.name() + ".png");
+        ResourceLocation own = new ResourceLocation(config.modId(), "textures/gui/config/cards/" + config.name() + ".png");
         if (Minecraft.getInstance().getResourceManager().getResource(own).isPresent()) return own;
         return GlazedMenu.rl("textures/gui/cards/" + config.scope().name().toLowerCase(Locale.ROOT) + ".png");
     }
@@ -906,7 +907,7 @@ public final class ConfigSelectScreen extends StyledScreen {
             this.theme = themeOf(config);
             MutableComponent location = Component.empty();
             List<Component> groups = new ArrayList<>();
-            for (ConfigNode group = value.parent(); group != null && group.parent() != null; group = group.parent()) groups.addFirst(group.displayName());
+            for (ConfigNode group = value.parent(); group != null && group.parent() != null; group = group.parent()) groups.add(0, group.displayName());
             for (int i = 0; i < groups.size(); i++) {
                 if (i > 0) location.append(" › ");
                 location.append(groups.get(i));
@@ -914,7 +915,7 @@ public final class ConfigSelectScreen extends StyledScreen {
             if (groups.isEmpty()) {
                 location.append(value.comment().isEmpty()
                         ? Component.translatableWithFallback("glazedmenu.tab.general", "General")
-                        : Component.literal(value.comment().getFirst()));
+                        : Component.literal(value.comment().get(0)));
             }
             this.location = location;
         }

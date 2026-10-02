@@ -1,29 +1,70 @@
 package net.ixdarklord.glazedmenu.internal.compat;
 
-import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.ContainerObjectSelectionList;
-import net.minecraft.client.gui.components.events.ContainerEventHandler;
 import net.minecraft.client.gui.narration.NarratableEntry;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
-// A scrolling list written against Minecraft 26.1's list calls. 1.21.1's lists give every row the same height; this one
+// A scrolling list written against Minecraft 26.1's list calls. 1.20.1's lists give every row the same height; this one
 // gives each row its own (26.1's addEntry(entry, height)), laying the rows out top to bottom, and each row knows its
-// own bounds.
+// own bounds. 1.20.1's lists aren't widgets: their bounds are x0..x1 and y0..y1, read here as 26.1's position and size.
 public abstract class CompatList<E extends CompatList.Entry<E>> extends ContainerObjectSelectionList<E> {
-    private static final ResourceLocation SCROLLER_SPRITE = ResourceLocation.withDefaultNamespace("widget/scroller");
-    private static final ResourceLocation SCROLLER_BACKGROUND_SPRITE = ResourceLocation.withDefaultNamespace("widget/scroller_background");
     private static final int SCROLLBAR_WIDTH = 6;
 
     private @Nullable E hoveredEntry;
 
     protected CompatList(Minecraft minecraft, int width, int height, int y, int defaultEntryHeight) {
-        super(minecraft, width, height, y, defaultEntryHeight);
+        super(minecraft, width, height, y, y + height, defaultEntryHeight);
+        this.setRenderBackground(false);
+        this.setRenderTopAndBottom(false);
+    }
+
+    // --- 26.1's bounds ---
+
+    public int getX() {
+        return this.x0;
+    }
+
+    public int getY() {
+        return this.y0;
+    }
+
+    public int getWidth() {
+        return this.width;
+    }
+
+    public int getHeight() {
+        return this.height;
+    }
+
+    public int getRight() {
+        return this.x1;
+    }
+
+    public int getBottom() {
+        return this.y1;
+    }
+
+    public void setSize(int width, int height) {
+        this.width = width;
+        this.height = height;
+        this.x1 = this.x0 + width;
+        this.y1 = this.y0 + height;
+    }
+
+    public void setPosition(int x, int y) {
+        this.x0 = x;
+        this.x1 = x + this.width;
+        this.y0 = y;
+        this.y1 = y + this.height;
+    }
+
+    public void clampScrollAmount() {
+        this.setScrollAmount(this.getScrollAmount());
     }
 
     // --- Entries and layout ---
@@ -78,7 +119,6 @@ public abstract class CompatList<E extends CompatList.Entry<E>> extends Containe
         this.clampScrollAmount();
     }
 
-    @Override
     public void updateSizeAndPosition(int width, int height, int y) {
         this.updateSizeAndPosition(width, height, this.getX(), y);
     }
@@ -132,8 +172,8 @@ public abstract class CompatList<E extends CompatList.Entry<E>> extends Containe
     }
 
     @Override
-    public void setClampedScrollAmount(double scroll) {
-        super.setClampedScrollAmount(scroll);
+    public void setScrollAmount(double scroll) {
+        super.setScrollAmount(scroll);
         this.repositionEntries();
     }
 
@@ -209,7 +249,7 @@ public abstract class CompatList<E extends CompatList.Entry<E>> extends Containe
         E entry = this.entryAt(mouseX, mouseY);
         if (entry != null && entry.mouseClicked(event, doubleClick)) {
             E focused = this.getFocused();
-            if (focused != entry && focused instanceof ContainerEventHandler container) container.setFocused(null);
+            if (focused != null && focused != entry) focused.setFocused((net.minecraft.client.gui.components.events.GuiEventListener) null);
             this.setFocused(entry);
             this.setDragging(true);
             return true;
@@ -229,7 +269,7 @@ public abstract class CompatList<E extends CompatList.Entry<E>> extends Containe
     // --- Drawing ---
 
     @Override
-    public final void renderWidget(GuiGraphics raw, int mouseX, int mouseY, float a) {
+    public final void render(GuiGraphics raw, int mouseX, int mouseY, float a) {
         GuiGraphicsExtractor graphics = GuiGraphicsExtractor.of(raw);
         this.repositionEntries();
         this.hoveredEntry = this.isMouseOver(mouseX, mouseY) ? this.entryAt(mouseX, mouseY) : null;
@@ -245,31 +285,29 @@ public abstract class CompatList<E extends CompatList.Entry<E>> extends Containe
         this.extractScrollbar(graphics, mouseX, mouseY);
     }
 
-    @Override
-    protected final void renderListBackground(GuiGraphics graphics) {
-        this.extractListBackground(GuiGraphicsExtractor.of(graphics));
-    }
+    /** Nothing by default (1.20.1's list background is the dirt texture). */
+    protected void extractListBackground(GuiGraphicsExtractor graphics) {}
 
-    @Override
-    protected final void renderListSeparators(GuiGraphics graphics) {
-        this.extractListSeparators(GuiGraphicsExtractor.of(graphics));
-    }
+    protected void extractListSeparators(GuiGraphicsExtractor graphics) {}
 
-    protected void extractListBackground(GuiGraphicsExtractor graphics) {
-        super.renderListBackground(graphics.raw());
-    }
-
-    protected void extractListSeparators(GuiGraphicsExtractor graphics) {
-        super.renderListSeparators(graphics.raw());
-    }
-
-    /** Vanilla's scrollbar, while the rows don't fit. */
+    /** A plain scrollbar like 1.20.1's, while the rows don't fit. */
     protected void extractScrollbar(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
         if (!this.scrollable()) return;
-        RenderSystem.enableBlend();
-        graphics.raw().blitSprite(SCROLLER_BACKGROUND_SPRITE, this.scrollBarX(), this.getY(), SCROLLBAR_WIDTH, this.getHeight());
-        graphics.raw().blitSprite(SCROLLER_SPRITE, this.scrollBarX(), this.scrollBarY(), SCROLLBAR_WIDTH, this.scrollerHeight());
-        RenderSystem.disableBlend();
+        int x = this.scrollBarX();
+        int top = this.scrollBarY();
+        graphics.fill(x, this.getY(), x + SCROLLBAR_WIDTH, this.getBottom(), 0xFF000000);
+        graphics.fill(x, top, x + SCROLLBAR_WIDTH, top + this.scrollerHeight(), 0xFF808080);
+        graphics.fill(x, top, x + SCROLLBAR_WIDTH - 1, top + this.scrollerHeight() - 1, 0xFFC0C0C0);
+    }
+
+    @Override
+    public final boolean mouseScrolled(double mouseX, double mouseY, double delta) {
+        return this.mouseScrolled(mouseX, mouseY, 0, delta);
+    }
+
+    /** Minecraft 26.1's scroll, with a horizontal amount (1.20.1 has none). */
+    public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
+        return super.mouseScrolled(mouseX, mouseY, scrollY);
     }
 
     @Override

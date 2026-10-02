@@ -1,5 +1,6 @@
 package net.ixdarklord.glazedmenu.internal.style;
 
+import net.minecraft.util.Mth;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.Minecraft;
 
@@ -12,7 +13,7 @@ public final class GuiFade {
     private GuiFade() {}
 
     public static void set(float value) {
-        float clamped = Math.clamp(value, 0, 1);
+        float clamped = Mth.clamp(value, 0, 1);
         if (clamped == alpha) return;
         flush();
         alpha = clamped;

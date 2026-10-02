@@ -1,5 +1,6 @@
 package net.ixdarklord.glazedmenu.internal.modlist;
 
+import net.minecraft.util.Mth;
 import net.ixdarklord.glazedmenu.internal.compat.CompatList;
 import net.ixdarklord.glazedmenu.internal.compat.CompatWidget;
 import net.ixdarklord.glazedmenu.internal.compat.GuiGraphicsExtractor;
@@ -71,7 +72,7 @@ public final class GlazedModsScreen extends StyledScreen {
     private static final int HERO_HEIGHT = 70;
     private static final int HERO_ICON = 40;
     private static final float SELECT_MILLIS = 180;
-    private static final ResourceLocation GRASS = ResourceLocation.withDefaultNamespace("textures/block/grass_block_side.png");
+    private static final ResourceLocation GRASS = new ResourceLocation("textures/block/grass_block_side.png");
     // Where the screen left off, for the next time it opens.
     private static Filter lastFilter = Filter.ALL;
     private static boolean lastDescending;
@@ -152,8 +153,8 @@ public final class GlazedModsScreen extends StyledScreen {
     // Tiles fit a few to a row; list rows need room for a name and a line of description.
     private int drawerWidth() {
         int available = this.frameWidth() - GAP;
-        if (GlazedSettings.view() == GlazedSettings.View.LIST) return Math.clamp(available * 45 / 100, 150, 280);
-        int columns = Math.clamp((available * 2 / 5 - 12) / (TILE_WIDTH + TILE_GAP), 2, 6);
+        if (GlazedSettings.view() == GlazedSettings.View.LIST) return Mth.clamp(available * 45 / 100, 150, 280);
+        int columns = Mth.clamp((available * 2 / 5 - 12) / (TILE_WIDTH + TILE_GAP), 2, 6);
         return columns * (TILE_WIDTH + TILE_GAP) - TILE_GAP + 16;
     }
 
@@ -178,7 +179,7 @@ public final class GlazedModsScreen extends StyledScreen {
                 button -> this.leave(ConfigScreens.createModList(this))));
         configs.setPosition(right - 66, this.headerY() + 2);
 
-        int searchWidth = Math.clamp(this.width / 3, 110, 220);
+        int searchWidth = Mth.clamp(this.width / 3, 110, 220);
         this.search = this.addRenderableWidget(new StyledEditBox(this.font, searchWidth, 18,
                 Component.translatableWithFallback("glazedmenu.mods.search", "Search mods")));
         this.search.setPosition(right - DOCK_BUTTONS - 6 - searchWidth, this.headerY() + 3);
@@ -278,7 +279,7 @@ public final class GlazedModsScreen extends StyledScreen {
         } catch (java.io.IOException e) {
             GlazedMenu.LOGGER.warn("Couldn't make the mods folder {}", mods, e);
         }
-        net.minecraft.Util.getPlatform().openPath(mods);
+        net.minecraft.Util.getPlatform().openFile(mods.toFile());
     }
 
     // The icon shows the view a click switches to.
@@ -343,7 +344,7 @@ public final class GlazedModsScreen extends StyledScreen {
             if (!found.isEmpty() && (this.isExpanded(mod) || !this.query.isBlank())) shown.addAll(found.stream().sorted(order).toList());
         }
         this.shown = shown;
-        if (this.selected == null || !this.shown.contains(this.selected)) this.select(this.shown.isEmpty() ? null : this.shown.getFirst(), false);
+        if (this.selected == null || !this.shown.contains(this.selected)) this.select(this.shown.isEmpty() ? null : this.shown.get(0), false);
         if (this.drawer != null) this.drawer.setMods(this.shown, keepScroll);
         this.layoutActions();
     }
@@ -429,7 +430,7 @@ public final class GlazedModsScreen extends StyledScreen {
     }
 
     private void openLink(@Nullable String url) {
-        if (isLink(url)) ConfirmLinkScreen.confirmLinkNow(this, url);
+        if (isLink(url)) ConfirmLinkScreen.confirmLinkNow(url, this, true);
     }
 
     // The mod's color: its theme's, its icon's, or the game's green (ModColors).
@@ -490,7 +491,7 @@ public final class GlazedModsScreen extends StyledScreen {
                 default -> Integer.MIN_VALUE;
             };
             if (next != Integer.MIN_VALUE) {
-                this.select(this.shown.get(Math.clamp(next, 0, this.shown.size() - 1)), false);
+                this.select(this.shown.get(Mth.clamp(next, 0, this.shown.size() - 1)), false);
                 return true;
             }
             if (event.key() == KEY_ENTER && this.selected != null && ModCatalog.hasSettings(this.selected.id())) {
@@ -1202,7 +1203,7 @@ public final class GlazedModsScreen extends StyledScreen {
             this.lastFrame = now;
             int max = this.maxScroll();
             if (this.manual) {
-                this.target = Math.clamp(this.target, 0, max);
+                this.target = Mth.clamp(this.target, 0, max);
                 if (!GlazedSettings.transitions()) {
                     this.scroll = this.target;
                 } else {
@@ -1367,7 +1368,7 @@ public final class GlazedModsScreen extends StyledScreen {
             this.contentHeight = cursor + (int) this.scroll - top;
             int visible = bottom - top;
             this.visibleHeight = visible;
-            this.scroll = Math.clamp(this.scroll, 0, Math.max(0, this.contentHeight - visible));
+            this.scroll = Mth.clamp(this.scroll, 0, Math.max(0, this.contentHeight - visible));
             if (this.contentHeight > visible) {
                 int barHeight = Math.max(12, visible * visible / this.contentHeight);
                 int barY = top + (int) ((visible - barHeight) * (this.scroll / (this.contentHeight - visible)));
@@ -1456,7 +1457,7 @@ public final class GlazedModsScreen extends StyledScreen {
             if (!updateOpen) return;
             Component versions = Component.literal(mod.version()).withStyle(ChatFormatting.GRAY)
                     .append(Component.literal("  →  ").withStyle(ChatFormatting.DARK_GRAY))
-                    .append(Component.literal(update.version()).withColor(UPDATE_COLOR & 0xFFFFFF));
+                    .append(Component.literal(update.version()).withStyle(style -> style.withColor(UPDATE_COLOR & 0xFFFFFF)));
             ConfigStyle.text(graphics, font, versions, x + 20, y + UPDATE_LINE, width - 26, ConfigStyle.colors().text());
             if (link) {
                 Component open = Component.translatableWithFallback("glazedmenu.mods.update.open", "Open its page");
@@ -1505,7 +1506,7 @@ public final class GlazedModsScreen extends StyledScreen {
             // The wheel takes over from the drift; its target stays within the content, so it never overshoots the end.
             if (!this.manual) this.target = this.scroll;
             this.manual = true;
-            this.target = Math.clamp(this.target - scrollY * WHEEL_STEP, 0, this.maxScroll());
+            this.target = Mth.clamp(this.target - scrollY * WHEEL_STEP, 0, this.maxScroll());
             return true;
         }
 

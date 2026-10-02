@@ -1,5 +1,6 @@
 package net.ixdarklord.glazedmenu.api.config;
 
+import net.minecraft.util.Mth;
 import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
@@ -18,11 +19,11 @@ import java.util.function.Function;
  * <pre>{@code
  * ConfigTheme.setForMod("mymod", ConfigTheme.builder()
  *         .colors(ConfigColorScheme.tinted(0xFFFF8A3D))
- *         .background(ResourceLocation.fromNamespaceAndPath("mymod", "textures/gui/config_background.png"))
+ *         .background(new ResourceLocation("mymod", "textures/gui/config_background.png"))
  *         .mode(ConfigTheme.BackgroundMode.COVER)
  *         .textureOpacity(0.8F)       // lets the panorama or world show through the texture a little
  *         .backgroundOpacity(0.3F)    // how strongly the backdrop color covers it
- *         .effects(ResourceLocation.fromNamespaceAndPath("mymod", "snow"))   // animated effects, instead of the starfall
+ *         .effects(new ResourceLocation("mymod", "snow"))   // animated effects, instead of the starfall
  *         .build());
  * }</pre>
  * The texture is a full path in a resource pack ({@code assets/mymod/textures/gui/config_background.png}). Without one,
@@ -57,7 +58,7 @@ import java.util.function.Function;
 public final class ConfigTheme {
     // Declared before DEFAULT, which uses it.
     /** The built-in effect: soft glows in the accent and small faint stars falling, shifting with the mouse. */
-    public static final ResourceLocation STARFALL = ResourceLocation.fromNamespaceAndPath("glazedmenu", "starfall");
+    public static final ResourceLocation STARFALL = new ResourceLocation("glazedmenu", "starfall");
     /**
      * Glazed Menu's own look, for every mod that sets no theme: see-through to the title panorama or the world, with the dark
      * scheme tinted in the violet of Glazed Menu's logo (as its mod list).
@@ -311,13 +312,13 @@ public final class ConfigTheme {
          * The opacity of the backdrop color over the background, from 0 (not drawn) to 1 (hides it); 0.35 by default.
          */
         public Builder backgroundOpacity(float opacity) {
-            this.backgroundOpacity = Math.clamp(opacity, 0, 1);
+            this.backgroundOpacity = Mth.clamp(opacity, 0, 1);
             return this;
         }
 
         /** The background texture's opacity, from 0 (invisible) to 1 (opaque, the default). */
         public Builder textureOpacity(float opacity) {
-            this.textureOpacity = Math.clamp(opacity, 0, 1);
+            this.textureOpacity = Mth.clamp(opacity, 0, 1);
             return this;
         }
 

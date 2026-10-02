@@ -11,9 +11,9 @@ import net.ixdarklord.glazedmenu.api.config.ConfigTheme;
  * {@code ConfigBuilder.effects} for one config):
  * <pre>{@code
  * // Client setup:
- * ConfigEffects.register(ResourceLocation.fromNamespaceAndPath("mymod", "snow"), new SnowEffect());
+ * ConfigEffects.register(new ResourceLocation("mymod", "snow"), new SnowEffect());
  * // Anywhere, even common code:
- * Config.builder("mymod", ConfigScope.CLIENT).effects(ResourceLocation.fromNamespaceAndPath("mymod", "snow"));
+ * Config.builder("mymod", ConfigScope.CLIENT).effects(new ResourceLocation("mymod", "snow"));
  * }</pre>
  * Every method is optional. They run every frame on the render thread, so they should be cheap; an effect that throws is
  * logged once and switched off. Players can turn every effect off, and the Fast graphics preset always does.

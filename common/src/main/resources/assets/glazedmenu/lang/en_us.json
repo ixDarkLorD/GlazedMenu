@@ -14,7 +14,6 @@
   "config.glazedmenu.client.modList.showLibraries": "Show Loader Parts",
   "config.glazedmenu.client.modList.view": "Mod List View",
   "config.glazedmenu.client.otherScreens": "Other Config Screens",
-  "config.glazedmenu.client.otherScreens.replaceFtbLibraryScreens": "Replace FTB Library Screens",
   "config.glazedmenu.client.otherScreens.replaceMezzConfigScreens": "Replace MezzConfig GUI Screens",
   "config.glazedmenu.client.title": "Glazed Menu",
   "glazedmenu.access.read_only": "The server's values; you can't change them",

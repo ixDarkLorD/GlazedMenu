@@ -68,7 +68,8 @@ public final class ModUpdates {
         ModEntry game = ModCatalog.get("minecraft");
         if (game == null) return;
         int found = 0;
-        try (HttpClient client = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(10)).followRedirects(HttpClient.Redirect.NORMAL).build()) {
+        {
+            HttpClient client = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(10)).followRedirects(HttpClient.Redirect.NORMAL).build();
             for (ModEntry mod : ModCatalog.all()) {
                 if (FOUND.containsKey(mod.id())) continue;
                 String url = platform.updateJson(mod.id()).orElse(null);

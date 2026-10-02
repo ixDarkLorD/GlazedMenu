@@ -1,11 +1,11 @@
 package net.ixdarklord.glazedmenu.internal.source.spec;
 
-import net.ixdarklord.glazedmenu.internal.core.Names;
-import net.ixdarklord.glazedmenu.internal.source.Access;
 import com.electronwill.nightconfig.core.UnmodifiableConfig;
 import net.ixdarklord.glazedmenu.api.config.ConfigScope;
 import net.ixdarklord.glazedmenu.api.config.type.ConfigType;
 import net.ixdarklord.glazedmenu.internal.core.GlazedMenu;
+import net.ixdarklord.glazedmenu.internal.core.Names;
+import net.ixdarklord.glazedmenu.internal.source.Access;
 import net.ixdarklord.glazedmenu.internal.source.external.ExternalConfig;
 import net.ixdarklord.glazedmenu.internal.source.external.ExternalConfigBuilder;
 import net.ixdarklord.glazedmenu.internal.source.external.ExternalSource;
@@ -13,9 +13,8 @@ import net.ixdarklord.glazedmenu.internal.source.external.ExternalTypes;
 import net.ixdarklord.glazedmenu.internal.source.external.ExternalValue;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
-import net.neoforged.fml.config.IConfigSpec;
-import net.neoforged.fml.config.ModConfig;
-import net.neoforged.fml.config.ModConfigs;
+import net.minecraftforge.fml.config.ConfigTracker;
+import net.minecraftforge.fml.config.ModConfig;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
@@ -25,37 +24,28 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.function.Function;
 
 /**
- * NeoForge's config system: every {@link ModConfig} NeoForge (or, on Fabric, Forge Config API Port) tracks, with a
- * {@code ModConfigSpec}, or on Fabric a Forge {@code ForgeConfigSpec} (through a reader the Fabric module adds).
+ * Forge's config system: every {@link ModConfig} with a {@code ForgeConfigSpec}, tracked by Forge, or on Fabric by Forge
+ * Config API Port (the same classes). Minecraft 1.20 has no NeoForge configs.
  */
 public final class ModConfigSource extends ExternalSource {
     public static final ModConfigSource INSTANCE = new ModConfigSource();
-    // Turns a ModConfig's spec into a view, or null for specs of another kind.
-    private final List<Function<IConfigSpec, @Nullable SpecView>> readers = new CopyOnWriteArrayList<>(List.of(NeoForgeSpecView::of));
 
     private ModConfigSource() {}
 
-    /** Reads another kind of spec, as Forge Config API Port wraps Forge's. */
-    public void addReader(Function<IConfigSpec, @Nullable SpecView> reader) {
-        this.readers.add(reader);
-    }
-
     @Override
     public String name() {
-        return "NeoForge configs";
+        return "Forge configs";
     }
 
     @Override
     protected List<ExternalConfig> discover() {
-        List<ModConfig> modConfigs = new ArrayList<>(ModConfigs.getFileMap().values());
+        List<ModConfig> modConfigs = new ArrayList<>(ConfigTracker.INSTANCE.fileMap().values());
         modConfigs.sort(Comparator.comparing(ModConfig::getModId).thenComparing(config -> config.getType().ordinal()));
         List<ExternalConfig> configs = new ArrayList<>();
         for (ModConfig modConfig : modConfigs) {
-            SpecView view = this.view(modConfig.getSpec());
+            SpecView view = ForgeSpecView.of(modConfig.getSpec());
             if (view == null) continue;
             try {
                 ExternalConfig config = build(modConfig, view);
@@ -67,26 +57,17 @@ public final class ModConfigSource extends ExternalSource {
         return configs;
     }
 
-    private @Nullable SpecView view(IConfigSpec spec) {
-        for (Function<IConfigSpec, @Nullable SpecView> reader : this.readers) {
-            SpecView view = reader.apply(spec);
-            if (view != null) return view;
-        }
-        return null;
-    }
-
     private static ExternalConfig build(ModConfig modConfig, SpecView view) {
         String fileName = modConfig.getFileName();
         ConfigScope scope = switch (modConfig.getType()) {
             case CLIENT -> ConfigScope.CLIENT;
             case COMMON -> ConfigScope.COMMON;
             case SERVER -> ConfigScope.WORLD;
-            case STARTUP -> ConfigScope.STARTUP;
         };
         ExternalConfigBuilder builder = new ExternalConfigBuilder(modConfig.getModId(), configName(modConfig), scope)
                 .file(fileName, fullPath(modConfig))
                 .title(Component.translatableWithFallback(modConfig.getModId() + ".configuration.title",
-                        modName(modConfig.getModId()) + " " + typeName(modConfig.getType())));
+                        Names.modName(modConfig.getModId()) + " " + typeName(modConfig.getType())));
         addGroup(builder, view, view.values(), new ArrayList<>());
         return builder.build(() -> access(modConfig, view), view::save);
     }
@@ -137,7 +118,7 @@ public final class ModConfigSource extends ExternalSource {
     // Edited here, except a server config: only in a world, and only the host's (players see a server's values).
     private static Access access(ModConfig modConfig, SpecView view) {
         if (modConfig.getType() != ModConfig.Type.SERVER) return Access.LOCAL;
-        if (!view.isLoaded() || modConfig.getLoadedConfig() == null) return Access.UNAVAILABLE;
+        if (!view.isLoaded() || modConfig.getConfigData() == null) return Access.UNAVAILABLE;
         return Minecraft.getInstance().isLocalServer() ? Access.LOCAL : Access.READ_ONLY;
     }
 
@@ -166,11 +147,7 @@ public final class ModConfigSource extends ExternalSource {
         return name.charAt(0) + name.substring(1).toLowerCase(Locale.ROOT);
     }
 
-    private static String modName(String modId) {
-        return Names.modName(modId);
-    }
-
-    static List<String> lines(@Nullable String comment) {
+    private static List<String> lines(@Nullable String comment) {
         if (comment == null || comment.isBlank()) return List.of();
         return Arrays.stream(comment.split("\\R")).map(String::strip).filter(line -> !line.isEmpty()).toList();
     }

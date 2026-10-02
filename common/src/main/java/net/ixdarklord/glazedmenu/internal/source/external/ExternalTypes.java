@@ -62,7 +62,7 @@ public final class ExternalTypes {
         if (boxed.getSuperclass() != null && boxed.getSuperclass().isEnum()) return ConfigTypes.enumOf((Class) boxed.getSuperclass());
         if (List.class.isAssignableFrom(boxed)) {
             Class<?> element = String.class;
-            if (defaultValue instanceof List<?> list && !list.isEmpty() && list.getFirst() != null) element = list.getFirst().getClass();
+            if (defaultValue instanceof List<?> list && !list.isEmpty() && list.get(0) != null) element = list.get(0).getClass();
             ConfigType<?> elementType = of(element, null, null, null);
             return elementType != null && !(elementType instanceof net.ixdarklord.glazedmenu.api.config.type.ListType<?>)
                     ? ConfigTypes.listOf(elementType) : null;

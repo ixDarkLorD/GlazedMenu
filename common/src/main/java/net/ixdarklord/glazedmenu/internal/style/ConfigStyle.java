@@ -1,5 +1,6 @@
 package net.ixdarklord.glazedmenu.internal.style;
 
+import net.minecraft.util.Mth;
 import net.ixdarklord.glazedmenu.internal.compat.GuiGraphicsExtractor;
 import net.ixdarklord.glazedmenu.internal.compat.RenderPipelines;
 import net.ixdarklord.glazedmenu.internal.core.GlazedSettings;
@@ -238,11 +239,8 @@ public final class ConfigStyle {
         ResourceLocation texture = current.background();
         boolean textured = texture != null && (minecraft.level == null || current.backgroundInWorld());
         float textureOpacity = textured ? GlazedSettings.textureOpacity(current.textureOpacity()) : 0;
-        // What shows through: the panorama or the world, blurred.
-        if (textureOpacity < 1) {
-            if (minecraft.level == null) panorama.run();
-            if (minecraft.options.getMenuBackgroundBlurriness() >= 1) graphics.blurBeforeThisStratum();
-        }
+        // What shows through: the panorama or the world (1.20.1 has no menu blur).
+        if (textureOpacity < 1 && minecraft.level == null) panorama.run();
         if (textured && textureOpacity > 0) {
             texture(graphics, texture, current, width, height, withAlpha(0xFFFFFFFF, Math.round(255 * textureOpacity)));
         }
@@ -284,7 +282,7 @@ public final class ConfigStyle {
     // The glaze at a height: one color strong at the top of the screen, the other strong at the bottom, and between
     // them a soft blend of the two, faint through the middle.
     private static int glazeAt(int y, int screenHeight, int upper, int lower, boolean light) {
-        float t = Math.clamp(y / (float) screenHeight, 0, 1);
+        float t = Mth.clamp(y / (float) screenHeight, 0, 1);
         float blend = t * t * (3 - 2 * t);
         float edge = (float) Math.pow(Math.abs(2 * t - 1), 1.6);
         int faint = light ? 0x0C : 0x10;

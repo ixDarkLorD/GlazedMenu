@@ -128,7 +128,7 @@ public final class ListEditScreen<E> extends StyledScreen {
     }
 
     private void add() {
-        E value = this.elements.isEmpty() ? this.defaultElement() : this.elements.getLast().value;
+        E value = this.elements.isEmpty() ? this.defaultElement() : this.elements.get(this.elements.size() - 1).value;
         if (value == null) return;
         Element element = new Element(value);
         ValidationResult<E> result = this.type.elementType().validate(value);
@@ -191,16 +191,15 @@ public final class ListEditScreen<E> extends StyledScreen {
     @SuppressWarnings("unchecked")
     private @Nullable E defaultElement() {
         ConfigType<E> elementType = this.type.elementType();
-        Object value = switch (elementType) {
-            case BooleanType ignored -> false;
-            case NumberType<?> number -> number.fromDouble(0);
-            case StringType ignored -> "";
-            case EnumType<?> enumType -> enumType.constants().getFirst();
-            case ColorType ignored -> 0xFFFFFFFF;
-            case IdentifierType ignored -> ResourceLocation.withDefaultNamespace("stone");
-            case ListType<?> ignored -> List.of();
-            default -> null;
-        };
+        Object value;
+        if (elementType instanceof BooleanType) value = false;
+        else if (elementType instanceof NumberType<?> number) value = number.fromDouble(0);
+        else if (elementType instanceof StringType) value = "";
+        else if (elementType instanceof EnumType<?> enumType) value = enumType.constants().get(0);
+        else if (elementType instanceof ColorType) value = 0xFFFFFFFF;
+        else if (elementType instanceof IdentifierType) value = new ResourceLocation("stone");
+        else if (elementType instanceof ListType<?>) value = List.of();
+        else value = null;
         if (value != null) return (E) value;
         for (String input : FALLBACK_INPUTS) {
             ValidationResult<E> result = elementType.parse(input);

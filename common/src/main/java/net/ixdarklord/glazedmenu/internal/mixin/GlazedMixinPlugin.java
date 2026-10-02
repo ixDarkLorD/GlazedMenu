@@ -15,8 +15,7 @@ public final class GlazedMixinPlugin implements IMixinConfigPlugin {
     // Mixin -> the class file of its target.
     private static final Map<String, String> OPTIONAL = Map.of(
             "YaclConfigClassHandlerMixin", "dev/isxander/yacl3/config/v2/impl/ConfigClassHandlerImpl.class",
-            "ModMenuMixin", "com/terraformersmc/modmenu/ModMenu.class",
-            "FtbConfigManagerClientMixin", "dev/ftb/mods/ftblibrary/config/manager/ConfigManagerClient.class");
+            "ModMenuMixin", "com/terraformersmc/modmenu/ModMenu.class");
     private String mixinPackage = "";
 
     @Override

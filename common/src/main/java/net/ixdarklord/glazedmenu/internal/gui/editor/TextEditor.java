@@ -50,7 +50,7 @@ public class TextEditor<T> implements ValueEditor {
         String text = this.slot.type().format(this.slot.get());
         if (!text.equals(this.box.getValue())) {
             this.box.setValue(text);
-            this.box.moveCursorToStart(false);
+            this.box.moveCursorTo(0, false);
         }
         this.updating = false;
         this.updateColor();

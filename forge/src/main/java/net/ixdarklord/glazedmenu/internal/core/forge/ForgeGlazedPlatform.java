@@ -38,7 +38,7 @@ final class ForgeGlazedPlatform implements GlazedPlatform {
         for (IModFileInfo file : ModList.get().getModFiles()) {
             try {
                 if (!location.equals(file.getFile().getFilePath().toAbsolutePath().normalize()) || file.getMods().isEmpty()) continue;
-                return file.getMods().getFirst().getModId();
+                return file.getMods().get(0).getModId();
             } catch (RuntimeException e) {
                 GlazedMenu.LOGGER.debug("Couldn't read mod file {}", file, e);
             }
@@ -68,7 +68,7 @@ final class ForgeGlazedPlatform implements GlazedPlatform {
             }
             // Further mods in a file with several are listed under its first.
             List<IModInfo> fileMods = mod.getOwningFile().getMods();
-            String parent = fileMods.size() > 1 && fileMods.getFirst() != mod ? fileMods.getFirst().getModId() : null;
+            String parent = fileMods.size() > 1 && fileMods.get(0) != mod ? fileMods.get(0).getModId() : null;
             mods.add(new ModEntry(mod.getModId(), mod.getDisplayName(), mod.getVersion().toString(), mod.getDescription().strip(),
                     names(mod.getConfig().getConfigElement("authors").orElse(null)), names(mod.getConfig().getConfigElement("credits").orElse(null)),
                     blankToNull(mod.getOwningFile().getLicense()),
@@ -114,10 +114,9 @@ final class ForgeGlazedPlatform implements GlazedPlatform {
         return FMLPaths.CONFIGDIR.get();
     }
 
-    // Forge's own configs (ForgeConfigSpec) are read by ForgeConfigSource; NeoForge's classes aren't here.
     @Override
-    public boolean hasNeoForgeConfigs() {
-        return false;
+    public boolean hasForgeConfigs() {
+        return true;
     }
 
     // Forge's own check of mods' update JSONs (when its version check is on).

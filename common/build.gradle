@@ -7,16 +7,8 @@ shadowJar {
 }
 
 // The config systems Glazed Menu reads, compiled against but never bundled: each is only touched once its mod is loaded.
-// NeoForge's config API (Forge Config API Port's copies, for common code; the classes Glazed Menu uses are the same as
-// NeoForge's), Cloth Config, YACL, MidnightLib, MezzConfig (their Fabric jars; the classes Glazed Menu uses are the same on NeoForge).
-repositories {
-    maven {
-        name = "FTB"
-        url = "https://maven.ftb.dev/releases"
-        content { includeGroup "dev.ftb.mods" }
-    }
-}
-
+// Forge's config API (Forge Config API Port's copies, for common code; the classes Glazed Menu uses are the same as
+// Forge's), Cloth Config, YACL, MidnightLib, MezzConfig (their Fabric jars; the classes Glazed Menu uses are the same on Forge).
 dependencies {
     modCompileOnly(libs.forgeconfigapiport.common) { transitive = false }
     modCompileOnly(libs.forgeconfigapiport.fabric) { transitive = false }
@@ -26,6 +18,4 @@ dependencies {
     modCompileOnly("maven.modrinth:midnightlib:${midnightlib_version}") { transitive = false }
     // MezzConfig (JEI's config library): its API alone.
     modCompileOnly("net.mezzdev.config:mezz_config-${libs.versions.minecraft.get()}-config-api:${mezz_config_version}") { transitive = false }
-    // FTB Library: its common jar.
-    modCompileOnly("dev.ftb.mods:ftb-library:${ftb_library_version}") { transitive = false }
 }

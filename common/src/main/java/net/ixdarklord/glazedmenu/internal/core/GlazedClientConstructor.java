@@ -3,7 +3,6 @@ package net.ixdarklord.glazedmenu.internal.core;
 import net.ixdarklord.glazedmenu.internal.source.ConfigSources;
 import net.ixdarklord.glazedmenu.internal.source.cloth.ClothSource;
 import net.ixdarklord.glazedmenu.internal.source.external.ExternalSource;
-import net.ixdarklord.glazedmenu.internal.source.ftb.FtbSource;
 import net.ixdarklord.glazedmenu.internal.source.mezz.MezzSource;
 import net.ixdarklord.glazedmenu.internal.source.midnight.MidnightSource;
 import net.ixdarklord.glazedmenu.internal.source.spec.ModConfigSource;
@@ -32,12 +31,11 @@ public final class GlazedClientConstructor {
         ThemeEffects.init();
         ConfigSources.register(GlazedSettings.SOURCE);
         // (No CoolCatLib integration on 1.21: its own config screens are there.)
-        if (platform.hasNeoForgeConfigs()) ConfigSources.register(ModConfigSource.INSTANCE);
+        if (platform.hasForgeConfigs()) ConfigSources.register(ModConfigSource.INSTANCE);
         if (platform.isModLoaded("cloth-config") || platform.isModLoaded("cloth_config")) ConfigSources.register(ClothSource.INSTANCE);
         if (platform.isModLoaded("yet_another_config_lib_v3")) ConfigSources.register(YaclSource.INSTANCE);
         if (platform.isModLoaded("midnightlib")) ConfigSources.register(MidnightSource.INSTANCE);
         if (platform.isModLoaded("mezz_config")) ConfigSources.register(MezzSource.INSTANCE);
-        if (platform.isModLoaded("ftblibrary")) ConfigSources.register(FtbSource.INSTANCE);
     }
 
     /** Every client tick, from the loader module. Every mod has loaded by the first. */

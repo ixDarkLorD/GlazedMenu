@@ -1,5 +1,6 @@
 package net.ixdarklord.glazedmenu.internal.gui;
 
+import net.minecraft.util.Mth;
 import net.ixdarklord.glazedmenu.internal.compat.CompatList;
 import net.ixdarklord.glazedmenu.internal.compat.GuiGraphicsExtractor;
 import net.ixdarklord.glazedmenu.internal.compat.KeyEvent;
@@ -98,11 +99,11 @@ public final class ConfigScreen extends StyledScreen {
     @Override
     protected void init() {
         this.sidebar = this.tabs.size() > 1 && this.width >= SIDEBAR_MIN_SCREEN_WIDTH;
-        this.sidebarWidth = this.sidebar ? Math.clamp(this.width / 5, 100, 150) : 0;
+        this.sidebarWidth = this.sidebar ? Mth.clamp(this.width / 5, 100, 150) : 0;
         int bodyTop = this.bodyTop();
         int bodyHeight = this.bodyBottom() - bodyTop;
 
-        int searchWidth = Math.clamp(this.width / 4, 90, 180);
+        int searchWidth = Mth.clamp(this.width / 4, 90, 180);
         this.search = this.addRenderableWidget(new StyledEditBox(this.font, searchWidth, 18, Component.translatableWithFallback("glazedmenu.search", "Search")));
         // The search bar, then the light/dark switch at the right end, a hairline between them.
         this.search.setPosition(this.frameLeft() + this.frameWidth() - 6 - 20 - TOGGLE_ROOM - searchWidth, this.topBarY() + 5);
@@ -307,7 +308,7 @@ public final class ConfigScreen extends StyledScreen {
         }
         int notices = entries.size();
 
-        int editorWidth = Math.clamp(this.list.getRowWidth() * 2 / 5, 90, 170);
+        int editorWidth = Mth.clamp(this.list.getRowWidth() * 2 / 5, 90, 170);
         String query = this.query.trim().toLowerCase(Locale.ROOT);
         if (!query.isEmpty()) {
             config.root().values().map(value -> (ConfigValue<?>) value)

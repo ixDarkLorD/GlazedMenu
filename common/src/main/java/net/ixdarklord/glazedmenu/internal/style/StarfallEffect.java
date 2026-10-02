@@ -1,5 +1,6 @@
 package net.ixdarklord.glazedmenu.internal.style;
 
+import net.minecraft.util.Mth;
 import net.ixdarklord.glazedmenu.internal.compat.GuiGraphicsExtractor;
 import net.ixdarklord.glazedmenu.internal.compat.RenderPipelines;
 import net.ixdarklord.glazedmenu.api.config.ConfigTheme;
@@ -108,8 +109,8 @@ final class StarfallEffect implements ConfigEffect {
     // A popup redrawing the page under it passes no mouse; the parallax then stays where it was.
     private void updateParallax(Context context) {
         if (context.hasMouse() && context.width() > 0 && context.height() > 0) {
-            this.targetX = Math.clamp(context.mouseX() / (float) context.width() * 2 - 1, -1, 1);
-            this.targetY = Math.clamp(context.mouseY() / (float) context.height() * 2 - 1, -1, 1);
+            this.targetX = Mth.clamp(context.mouseX() / (float) context.width() * 2 - 1, -1, 1);
+            this.targetY = Mth.clamp(context.mouseY() / (float) context.height() * 2 - 1, -1, 1);
         }
         long now = System.nanoTime();
         float elapsed = this.lastFrame == 0 ? 1000 : Math.min(200, (now - this.lastFrame) / 1_000_000F);

@@ -1,5 +1,6 @@
 package net.ixdarklord.glazedmenu.internal.gui.style;
 
+import net.minecraft.util.Mth;
 import net.ixdarklord.glazedmenu.internal.compat.GuiGraphicsExtractor;
 import net.ixdarklord.glazedmenu.internal.compat.RenderPipelines;
 import net.ixdarklord.glazedmenu.internal.style.ConfigStyle;
@@ -34,7 +35,7 @@ public final class ModIcons {
     // Largest first; the accent is the icon's most vivid color (0 when unknown).
     private record Icon(List<Level> levels, int accent) {
         Level forSize(int pixels) {
-            Level chosen = this.levels.getFirst();
+            Level chosen = this.levels.get(0);
             for (Level level : this.levels) {
                 if (Math.max(level.width, level.height) < pixels) break;
                 chosen = level;
@@ -89,7 +90,7 @@ public final class ModIcons {
         if (total < 1e-3) return 0;
         float[] hsb = java.awt.Color.RGBtoHSB((int) (red / total), (int) (green / total), (int) (blue / total), null);
         if (hsb[1] < 0.12F) return 0;
-        return 0xFF000000 | java.awt.Color.HSBtoRGB(hsb[0], Math.clamp(hsb[1] * 1.25F, 0.45F, 0.85F), Math.clamp(hsb[2] * 1.2F, 0.75F, 0.95F)) & 0xFFFFFF;
+        return 0xFF000000 | java.awt.Color.HSBtoRGB(hsb[0], Mth.clamp(hsb[1] * 1.25F, 0.45F, 0.85F), Mth.clamp(hsb[2] * 1.2F, 0.75F, 0.95F)) & 0xFFFFFF;
     }
 
     /** Whether the mod has an icon to draw. */

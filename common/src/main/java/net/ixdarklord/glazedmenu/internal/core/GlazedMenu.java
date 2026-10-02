@@ -14,6 +14,6 @@ public final class GlazedMenu {
     private GlazedMenu() {}
 
     public static ResourceLocation rl(String name) {
-        return ResourceLocation.fromNamespaceAndPath(MOD_ID, name.toLowerCase(Locale.ROOT));
+        return new ResourceLocation(MOD_ID, name.toLowerCase(Locale.ROOT));
     }
 }

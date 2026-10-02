@@ -1,5 +1,6 @@
 package net.ixdarklord.glazedmenu.internal.gui;
 
+import net.minecraft.util.Mth;
 import net.ixdarklord.glazedmenu.internal.compat.GuiGraphicsExtractor;
 import net.ixdarklord.glazedmenu.internal.compat.KeyEvent;
 import net.ixdarklord.glazedmenu.internal.source.Access;
@@ -171,7 +172,7 @@ public final class CategoryPopup extends StyledPopup {
                     "Changes apply after restarting the game"), ConfigStyle.colors().warning(), ConfigIcons.RESTART));
         }
         int notices = entries.size();
-        int editorWidth = Math.clamp((this.contentWidth() - 14) * 2 / 5, 90, 150);
+        int editorWidth = Mth.clamp((this.contentWidth() - 14) * 2 / 5, 90, 150);
         if (this.node instanceof ConfigValue<?> value) {
             entries.add(new ConfigEntryList.ValueEntry<>(this.session, value, value.displayName(), editorWidth));
         } else if (this.node instanceof ConfigGroup group) {

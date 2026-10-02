@@ -1,18 +1,17 @@
 package net.ixdarklord.glazedmenu.internal.source.spec;
 
 import com.electronwill.nightconfig.core.UnmodifiableConfig;
-import fuzs.forgeconfigapiport.fabric.impl.core.ForgeConfigSpecAdapter;
 import net.ixdarklord.glazedmenu.api.config.RestartRequirement;
 import net.minecraftforge.common.ForgeConfigSpec;
-import net.neoforged.fml.config.IConfigSpec;
+import net.minecraftforge.fml.config.IConfigSpec;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-// A Forge ForgeConfigSpec, as Forge Config API Port registers it on Fabric: wrapped in its copy of NeoForge's configs.
+// A Forge ForgeConfigSpec (Forge's own, or Forge Config API Port's copy on Fabric: the same classes).
 public record ForgeSpecView(ForgeConfigSpec spec) implements SpecView {
-    public static @Nullable SpecView of(IConfigSpec spec) {
-        return spec instanceof ForgeConfigSpecAdapter adapter && adapter.spec() instanceof ForgeConfigSpec forgeSpec ? new ForgeSpecView(forgeSpec) : null;
+    public static @Nullable SpecView of(IConfigSpec<?> spec) {
+        return spec instanceof ForgeConfigSpec forgeSpec ? new ForgeSpecView(forgeSpec) : null;
     }
 
     @Override
@@ -87,17 +86,25 @@ public record ForgeSpecView(ForgeConfigSpec spec) implements SpecView {
         }
 
         @Override
-        @SuppressWarnings("rawtypes")
         public @Nullable Number min() {
-            ForgeConfigSpec.Range range = this.valueSpec().getRange();
-            return range != null && range.getMin() instanceof Number min ? min : null;
+            return bound(this.valueSpec().getRange(), "getMin");
         }
 
         @Override
-        @SuppressWarnings("rawtypes")
         public @Nullable Number max() {
-            ForgeConfigSpec.Range range = this.valueSpec().getRange();
-            return range != null && range.getMax() instanceof Number max ? max : null;
+            return bound(this.valueSpec().getRange(), "getMax");
+        }
+
+        // Forge 47 keeps its Range class private; its public getters are called through reflection.
+        private static @Nullable Number bound(@Nullable Object range, String getter) {
+            if (range == null) return null;
+            try {
+                java.lang.reflect.Method method = range.getClass().getMethod(getter);
+                method.setAccessible(true);
+                return method.invoke(range) instanceof Number number ? number : null;
+            } catch (ReflectiveOperationException | RuntimeException e) {
+                return null;
+            }
         }
 
         @Override

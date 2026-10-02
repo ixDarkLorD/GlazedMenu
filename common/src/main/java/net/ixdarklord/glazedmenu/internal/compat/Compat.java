@@ -4,7 +4,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.Renderable;
 import net.minecraft.client.gui.screens.Screen;
 
-// Minecraft 26.1's calls on vanilla screens and widgets, made the 1.21.1 way.
+// Minecraft 26.1's calls on vanilla screens and widgets, made the 1.20.1 way.
 public final class Compat {
     private Compat() {}
 
@@ -15,7 +15,7 @@ public final class Compat {
 
     /** Draws a screen's background. */
     public static void extractBackground(Screen screen, GuiGraphicsExtractor graphics, int mouseX, int mouseY, float a) {
-        screen.renderBackground(graphics.raw(), mouseX, mouseY, a);
+        screen.renderBackground(graphics.raw());
     }
 
     /** Lays a screen out for a size. */

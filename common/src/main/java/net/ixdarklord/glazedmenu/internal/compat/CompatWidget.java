@@ -12,7 +12,7 @@ public abstract class CompatWidget extends AbstractWidget {
 
     protected abstract void extractWidgetRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float a);
 
-    // --- 1.21.1's calls, passed on as Minecraft 26.1's ---
+    // --- 1.20.1's calls, passed on as Minecraft 26.1's ---
 
     @Override
     protected final void renderWidget(GuiGraphics graphics, int mouseX, int mouseY, float a) {
@@ -73,6 +73,28 @@ public abstract class CompatWidget extends AbstractWidget {
         return super.keyPressed(event.key(), event.scancode(), event.modifiers());
     }
 
-    /** 1.21.1 has no mouse cursor shapes. */
+    @Override
+    public final boolean mouseScrolled(double mouseX, double mouseY, double delta) {
+        return this.mouseScrolled(mouseX, mouseY, 0, delta);
+    }
+
+    /** Minecraft 26.1's scroll, with a horizontal amount (1.20.1 has none). */
+    public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
+        return super.mouseScrolled(mouseX, mouseY, scrollY);
+    }
+
+    public int getRight() {
+        return this.getX() + this.getWidth();
+    }
+
+    public int getBottom() {
+        return this.getY() + this.getHeight();
+    }
+
+    public void setHeight(int height) {
+        this.height = height;
+    }
+
+    /** 1.20.1 has no mouse cursor shapes. */
     protected void handleCursor(GuiGraphicsExtractor graphics) {}
 }

@@ -38,9 +38,10 @@ public final class GlazedClient {
     public static void toast(Component title, @Nullable Component message) {
         Minecraft minecraft = Minecraft.getInstance();
         ToastComponent toasts = minecraft.getToasts();
-        SystemToast.SystemToastId id = SystemToast.SystemToastId.PERIODIC_NOTIFICATION;
-        SystemToast.forceHide(toasts, id);
+        SystemToast.SystemToastIds id = SystemToast.SystemToastIds.PERIODIC_NOTIFICATION;
         boolean fits = message == null || minecraft.font.width(message) <= TOAST_LINE_WIDTH;
-        toasts.addToast(fits ? new SystemToast(id, title, message) : SystemToast.multiline(minecraft, id, title, message));
+        // 1.20.1 can only replace a one-line toast in place.
+        if (fits) SystemToast.addOrUpdate(toasts, id, title, message);
+        else toasts.addToast(SystemToast.multiline(minecraft, id, title, message));
     }
 }

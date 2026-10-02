@@ -1,5 +1,6 @@
 package net.ixdarklord.glazedmenu.internal.gui;
 
+import net.minecraft.util.Mth;
 import net.ixdarklord.glazedmenu.internal.compat.CompatWidget;
 import net.ixdarklord.glazedmenu.internal.compat.GuiGraphicsExtractor;
 import net.ixdarklord.glazedmenu.internal.compat.MouseButtonEvent;
@@ -250,8 +251,8 @@ public final class ColorPickerScreen extends StyledPopup {
 
         private void pick(double mouseX, double mouseY) {
             ColorPickerScreen screen = ColorPickerScreen.this;
-            float fx = (float) Math.clamp((mouseX - this.getX()) / (SQUARE - 1), 0, 1);
-            float fy = (float) Math.clamp((mouseY - this.getY()) / (SQUARE - 1), 0, 1);
+            float fx = (float) Mth.clamp((mouseX - this.getX()) / (SQUARE - 1), 0, 1);
+            float fy = (float) Mth.clamp((mouseY - this.getY()) / (SQUARE - 1), 0, 1);
             switch (this.dragging) {
                 case SQUARE_PART -> {
                     screen.saturation = fx;
