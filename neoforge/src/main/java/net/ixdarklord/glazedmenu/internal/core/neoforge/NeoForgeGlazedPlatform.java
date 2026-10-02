@@ -97,8 +97,10 @@ final class NeoForgeGlazedPlatform implements GlazedPlatform {
     @Override
     public Optional<byte[]> readModIcon(String modId) {
         return ModList.get().getModContainerById(modId).flatMap(container -> container.getModInfo().getLogoFile().flatMap(logo -> {
-            try (InputStream stream = container.getModInfo().getOwningFile().getFile().getContents().openFile(logo)) {
-                return stream == null ? Optional.empty() : Optional.of(stream.readAllBytes());
+            Path path = container.getModInfo().getOwningFile().getFile().findResource(logo);
+            if (!java.nio.file.Files.isRegularFile(path)) return Optional.empty();
+            try (InputStream stream = java.nio.file.Files.newInputStream(path)) {
+                return Optional.of(stream.readAllBytes());
             } catch (IOException e) {
                 return Optional.empty();
             }

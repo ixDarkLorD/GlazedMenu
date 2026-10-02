@@ -1,8 +1,8 @@
 package net.ixdarklord.glazedmenu.internal.style;
 
+import net.ixdarklord.glazedmenu.internal.compat.GuiGraphicsExtractor;
 import net.ixdarklord.glazedmenu.api.theme.ConfigEffect;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 

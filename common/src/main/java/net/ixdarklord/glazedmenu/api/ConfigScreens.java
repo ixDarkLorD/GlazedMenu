@@ -10,7 +10,7 @@ import net.ixdarklord.glazedmenu.internal.gui.ConfigSelectScreen;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.function.IntConsumer;
@@ -34,7 +34,7 @@ public final class ConfigScreens {
     }
 
     /** The screen editing one config, by its id ({@code mymod:client}), from any config system Glazed Menu reads. */
-    public static @Nullable Screen create(@Nullable Screen parent, Identifier configId) {
+    public static @Nullable Screen create(@Nullable Screen parent, ResourceLocation configId) {
         return ConfigSources.all().stream().filter(config -> config.id().equals(configId)).findFirst()
                 .map(config -> create(parent, config)).orElse(null);
     }
@@ -65,7 +65,7 @@ public final class ConfigScreens {
     }
 
     /** {@link #categoryPopup(Screen, Config, String)} for a config by its id, from any config system Glazed Menu reads. */
-    public static @Nullable Screen categoryPopup(@Nullable Screen parent, Identifier configId, String path) {
+    public static @Nullable Screen categoryPopup(@Nullable Screen parent, ResourceLocation configId, String path) {
         return ConfigSources.all().stream().filter(config -> config.id().equals(configId)).findFirst()
                 .map(config -> categoryPopup(parent, config, path)).orElse(null);
     }

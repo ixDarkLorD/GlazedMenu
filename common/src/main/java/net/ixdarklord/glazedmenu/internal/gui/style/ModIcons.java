@@ -1,15 +1,15 @@
 package net.ixdarklord.glazedmenu.internal.gui.style;
 
+import net.ixdarklord.glazedmenu.internal.compat.GuiGraphicsExtractor;
+import net.ixdarklord.glazedmenu.internal.compat.RenderPipelines;
 import net.ixdarklord.glazedmenu.internal.style.ConfigStyle;
 import com.mojang.blaze3d.platform.NativeImage;
 import net.ixdarklord.glazedmenu.api.config.ConfigTheme;
 import net.ixdarklord.glazedmenu.internal.core.GlazedMenu;
 import net.ixdarklord.glazedmenu.internal.core.GlazedPlatform;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.renderer.texture.DynamicTexture;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -29,7 +29,7 @@ public final class ModIcons {
 
     private ModIcons() {}
 
-    private record Level(Identifier id, int width, int height) {}
+    private record Level(ResourceLocation id, int width, int height) {}
 
     // Largest first; the accent is the icon's most vivid color (0 when unknown).
     private record Icon(List<Level> levels, int accent) {
@@ -77,7 +77,7 @@ public final class ModIcons {
         int step = Math.max(1, Math.max(image.getWidth(), image.getHeight()) / 64);
         for (int y = 0; y < image.getHeight(); y += step) {
             for (int x = 0; x < image.getWidth(); x += step) {
-                int pixel = image.getPixel(x, y);
+                int pixel = argb(image.getPixelRGBA(x, y));
                 float[] hsb = java.awt.Color.RGBtoHSB(pixel >> 16 & 0xFF, pixel >> 8 & 0xFF, pixel & 0xFF, null);
                 double weight = (pixel >>> 24) / 255.0 * hsb[1] * hsb[1] * (0.3 + hsb[2]);
                 red += (pixel >> 16 & 0xFF) * weight;
@@ -98,7 +98,7 @@ public final class ModIcons {
     }
 
     private static Optional<Icon> get(String modId, ConfigTheme theme) {
-        Identifier themed = theme.icon();
+        ResourceLocation themed = theme.icon();
         if (themed != null) {
             int[] size = ConfigStyle.textureSize(themed);
             return Optional.of(new Icon(List.of(new Level(themed, size[0], size[1])), 0));
@@ -109,15 +109,16 @@ public final class ModIcons {
     private static Optional<Icon> load(String modId) {
         return GlazedPlatform.get().readModIcon(modId).flatMap(bytes -> {
             try {
-                NativeImage image = NativeImage.read(bytes);
+                // From a stream: 1.21.1 copies a byte array through the small native stack, which large icons overflow.
+                NativeImage image = NativeImage.read(new java.io.ByteArrayInputStream(bytes));
                 int accent = accentOf(image);
                 String base = "mod_icon/" + modId.replaceAll("[^a-z0-9_.-]", "_");
                 List<Level> levels = new ArrayList<>();
                 for (int i = 0; ; i++) {
-                    Identifier id = GlazedMenu.rl(i == 0 ? base : base + "_" + i);
+                    ResourceLocation id = GlazedMenu.rl(i == 0 ? base : base + "_" + i);
                     int width = image.getWidth();
                     int height = image.getHeight();
-                    Minecraft.getInstance().getTextureManager().register(id, new DynamicTexture(() -> "Glazed Menu icon of " + modId, image));
+                    Minecraft.getInstance().getTextureManager().register(id, new DynamicTexture(image));
                     levels.add(new Level(id, width, height));
                     if (Math.min(width, height) / 2 < SMALLEST) break;
                     image = half(image);
@@ -143,7 +144,7 @@ public final class ModIcons {
                 int blue = 0;
                 for (int dy = 0; dy < 2; dy++) {
                     for (int dx = 0; dx < 2; dx++) {
-                        int pixel = source.getPixel(x * 2 + dx, y * 2 + dy);
+                        int pixel = argb(source.getPixelRGBA(x * 2 + dx, y * 2 + dy));
                         int a = pixel >>> 24;
                         alpha += a;
                         red += (pixel >> 16 & 0xFF) * a;
@@ -152,9 +153,14 @@ public final class ModIcons {
                     }
                 }
                 int argb = alpha == 0 ? 0 : (alpha / 4) << 24 | (red / alpha) << 16 | (green / alpha) << 8 | blue / alpha;
-                result.setPixel(x, y, argb);
+                result.setPixelRGBA(x, y, argb(argb));
             }
         }
         return result;
+    }
+
+    // 1.21.1's images hold ABGR; swapping red and blue converts either way.
+    private static int argb(int abgr) {
+        return abgr & 0xFF00FF00 | (abgr & 0xFF) << 16 | abgr >> 16 & 0xFF;
     }
 }

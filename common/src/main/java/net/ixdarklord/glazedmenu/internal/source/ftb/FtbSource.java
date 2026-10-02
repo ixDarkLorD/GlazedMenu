@@ -2,16 +2,15 @@ package net.ixdarklord.glazedmenu.internal.source.ftb;
 
 import dev.ftb.mods.ftblibrary.config.manager.ConfigManager;
 import dev.ftb.mods.ftblibrary.config.manager.ConfigManagerClient;
-import dev.ftb.mods.ftblibrary.config.value.BaseValue;
-import dev.ftb.mods.ftblibrary.config.value.BooleanValue;
-import dev.ftb.mods.ftblibrary.config.value.Config;
-import dev.ftb.mods.ftblibrary.config.value.EnumValue;
-import dev.ftb.mods.ftblibrary.config.value.NumberValue;
-import dev.ftb.mods.ftblibrary.config.value.StringListValue;
-import dev.ftb.mods.ftblibrary.config.value.StringValue;
+import dev.ftb.mods.ftblibrary.config.NameMap;
 import dev.ftb.mods.ftblibrary.net.SyncConfigToServerPacket;
-import dev.ftb.mods.ftblibrary.platform.network.Play2ServerNetworking;
-import dev.ftb.mods.ftblibrary.util.NameMap;
+import dev.ftb.mods.ftblibrary.snbt.config.BaseValue;
+import dev.ftb.mods.ftblibrary.snbt.config.BooleanValue;
+import dev.ftb.mods.ftblibrary.snbt.config.EnumValue;
+import dev.ftb.mods.ftblibrary.snbt.config.NumberValue;
+import dev.ftb.mods.ftblibrary.snbt.config.SNBTConfig;
+import dev.ftb.mods.ftblibrary.snbt.config.StringListValue;
+import dev.ftb.mods.ftblibrary.snbt.config.StringValue;
 import net.ixdarklord.glazedmenu.api.config.ConfigScope;
 import net.ixdarklord.glazedmenu.api.config.ConfigValue;
 import net.ixdarklord.glazedmenu.api.config.type.ConfigType;
@@ -29,6 +28,7 @@ import net.ixdarklord.glazedmenu.internal.source.external.ExternalTypes;
 import net.ixdarklord.glazedmenu.internal.source.external.ExternalValue;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.network.protocol.common.ServerboundCustomPayloadPacket;
 import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.Nullable;
 
@@ -53,7 +53,7 @@ public final class FtbSource extends ExternalSource {
     public static final FtbSource INSTANCE = new FtbSource();
     private static final java.util.Set<String> TEST_CONFIGS = java.util.Set.of("ftblibrary-server");
     // The FTB config of each of Glazed Menu's configs, and whether it's a server's.
-    private final Map<ExternalConfig, Config> ftbConfigs = new HashMap<>();
+    private final Map<ExternalConfig, SNBTConfig> ftbConfigs = new HashMap<>();
     private final Map<ExternalConfig, Boolean> serverConfigs = new HashMap<>();
 
     private FtbSource() {}
@@ -69,7 +69,7 @@ public final class FtbSource extends ExternalSource {
         for (Map.Entry<String, Object> tracked : tracked().entrySet()) {
             try {
                 Object entry = tracked.getValue();
-                Config config = (Config) component(entry, "config");
+                SNBTConfig config = (SNBTConfig) component(entry, "config");
                 String type = String.valueOf(component(entry, "configType"));
                 // Startup configs (tracked as servers', named "<mod>-startup") are read once as the game starts, and FTB
                 // offers no editor for them; nor does Glazed Menu.
@@ -133,7 +133,7 @@ public final class FtbSource extends ExternalSource {
 
     // --- Reading FTB's configs ---
 
-    private static ExternalConfig build(String key, Config config, String groupPrefix, boolean server, @Nullable Path path) {
+    private static ExternalConfig build(String key, SNBTConfig config, String groupPrefix, boolean server, @Nullable Path path) {
         // Keys are "<mod>-<name>" ("ftblibrary-client").
         int dash = key.lastIndexOf('-');
         String modId = dash > 0 && GlazedPlatform.get().isModLoaded(key.substring(0, dash)) ? key.substring(0, dash) : modOf(groupPrefix);
@@ -152,7 +152,7 @@ public final class FtbSource extends ExternalSource {
         return GlazedPlatform.get().isModLoaded(first) ? first : "ftblibrary";
     }
 
-    private static void addChildren(ExternalConfigBuilder builder, Config group, String path) {
+    private static void addChildren(ExternalConfigBuilder builder, SNBTConfig group, String path) {
         List<BaseValue<?>> children;
         try {
             @SuppressWarnings("unchecked")
@@ -165,7 +165,7 @@ public final class FtbSource extends ExternalSource {
         children.sort(Comparator.comparingInt(FtbSource::displayOrder));
         for (BaseValue<?> child : children) {
             String key = path + "." + child.getKey();
-            if (child instanceof Config subgroup) {
+            if (child instanceof SNBTConfig subgroup) {
                 builder.push(child.getKey(), key, key + ".tooltip", comment(child));
                 addChildren(builder, subgroup, key);
                 builder.pop();
@@ -213,7 +213,7 @@ public final class FtbSource extends ExternalSource {
     // FTB's choices: a Java enum's constants, or else their names as text limited to those names.
     @SuppressWarnings({"unchecked", "rawtypes"})
     private static <T> ExternalConfigBuilder.Value<?> choice(ExternalConfigBuilder builder, EnumValue<T> value) {
-        NameMap<T> names = value.getNameMap();
+        NameMap<T> names = nameMap(value);
         T defaultValue = (T) defaultOf(value);
         if (defaultValue instanceof Enum<?> constant) {
             return builder.value(value.getKey(), (ConfigType) ConfigTypes.enumOf(constant.getDeclaringClass()), defaultValue, new ExternalValue.Binding<T>() {
@@ -250,7 +250,7 @@ public final class FtbSource extends ExternalSource {
     }
 
     // Saves as FTB's editor does: a client config to its file, a server's on the server.
-    private static void save(Config config, boolean server) {
+    private static void save(SNBTConfig config, boolean server) {
         var singleplayer = Minecraft.getInstance().getSingleplayerServer();
         if (server && singleplayer != null) {
             // In single player the server shares these values: it saves them on its own thread and runs the mod's
@@ -261,7 +261,8 @@ public final class FtbSource extends ExternalSource {
                 onServerEdited(key);
             });
         } else if (server) {
-            Play2ServerNetworking.send(SyncConfigToServerPacket.create(config));
+            var connection = Minecraft.getInstance().getConnection();
+            if (connection != null) connection.send(new ServerboundCustomPayloadPacket(SyncConfigToServerPacket.create(config)));
         } else {
             ConfigManager.getInstance().editedOnClient(config.getKey());
             ConfigManager.getInstance().save(config.getKey());
@@ -301,6 +302,16 @@ public final class FtbSource extends ExternalSource {
         Field field = owner.getDeclaredField(name);
         field.setAccessible(true);
         return field;
+    }
+
+    // FTB Library 2101 keeps an enum value's names private.
+    @SuppressWarnings("unchecked")
+    private static <T> NameMap<T> nameMap(EnumValue<T> value) {
+        try {
+            return (NameMap<T>) field(EnumValue.class, "nameMap").get(value);
+        } catch (ReflectiveOperationException e) {
+            throw new IllegalStateException(e);
+        }
     }
 
     private static Object defaultOf(BaseValue<?> value) {

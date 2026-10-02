@@ -1,8 +1,8 @@
 package net.ixdarklord.glazedmenu.internal.gui.style;
 
+import net.ixdarklord.glazedmenu.internal.compat.GuiGraphicsExtractor;
 import net.ixdarklord.glazedmenu.api.config.ConfigTheme;
 import net.ixdarklord.glazedmenu.internal.style.ConfigStyle;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
 
 /**
  * Each mod's color in Glazed Menu's lists (the mod list, the list of every mod's configs): its theme's accent if it set one,

@@ -1,14 +1,14 @@
 package net.ixdarklord.glazedmenu.internal.gui.editor;
 
+import net.ixdarklord.glazedmenu.internal.compat.GuiGraphicsExtractor;
+import net.ixdarklord.glazedmenu.internal.compat.MouseButtonEvent;
 import net.ixdarklord.glazedmenu.api.editor.EditSlot;
 import net.ixdarklord.glazedmenu.api.config.type.ColorType;
 import net.ixdarklord.glazedmenu.internal.gui.ColorPickerScreen;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.ixdarklord.glazedmenu.internal.style.ConfigStyle;
 import net.ixdarklord.glazedmenu.internal.style.StyledEditBox;
 import net.minecraft.client.gui.components.Tooltip;
-import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
 
 // A hex text box with a swatch of the color at its right end (a checkerboard shows through translucent colors);

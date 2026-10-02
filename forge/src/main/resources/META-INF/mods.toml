@@ -1,0 +1,38 @@
+modLoader = "javafml"
+loaderVersion = "[${min_forge_fml_version},)"
+issueTrackerURL = "${mod_issue_url}"
+license = "${mod_license}"
+
+[[mods]]
+modId = "${modid}"
+displayName = "${mod_name}"
+version = "${mc_version}+${mod_version}"
+description = "${mod_description}"
+authors = "${mod_author}"
+logoFile = "mod_logo.png"
+updateJSONURL = "${mod_forge_update_url}"
+# Client-only: servers neither need nor check it.
+displayTest = "${mod_forge_display_test}"
+
+# Not needed, but when Configured is installed Glazed Menu sets its screens up after it, so mods' buttons open Glazed
+# Menu's screens rather than Configured's.
+[[dependencies.${modid}]]
+modId = "configured"
+mandatory = false
+versionRange = "*"
+ordering = "AFTER"
+side = "CLIENT"
+
+[[dependencies.${modid}]]
+modId = "forge"
+mandatory = true
+versionRange = "[${min_forge_version},)"
+ordering = "NONE"
+side = "CLIENT"
+
+[[dependencies.${modid}]]
+modId = "minecraft"
+mandatory = true
+versionRange = "[${project.supported_min_mc_version},${max_mc_version}]"
+ordering = "NONE"
+side = "CLIENT"

@@ -1,5 +1,8 @@
 package net.ixdarklord.glazedmenu.internal.gui;
 
+import net.ixdarklord.glazedmenu.internal.compat.Compat;
+import net.ixdarklord.glazedmenu.internal.compat.CompatList;
+import net.ixdarklord.glazedmenu.internal.compat.GuiGraphicsExtractor;
 import net.ixdarklord.glazedmenu.api.editor.ConfigEditors;
 import net.ixdarklord.glazedmenu.api.editor.EditSlot;
 import net.ixdarklord.glazedmenu.api.editor.ValueEditor;
@@ -19,14 +22,13 @@ import net.ixdarklord.glazedmenu.internal.style.StyledScreen;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.ContainerObjectSelectionList;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.narration.NarratableEntry;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -195,7 +197,7 @@ public final class ListEditScreen<E> extends StyledScreen {
             case StringType ignored -> "";
             case EnumType<?> enumType -> enumType.constants().getFirst();
             case ColorType ignored -> 0xFFFFFFFF;
-            case IdentifierType ignored -> Identifier.withDefaultNamespace("stone");
+            case IdentifierType ignored -> ResourceLocation.withDefaultNamespace("stone");
             case ListType<?> ignored -> List.of();
             default -> null;
         };
@@ -256,7 +258,7 @@ public final class ListEditScreen<E> extends StyledScreen {
         }
     }
 
-    private final class ElementList extends ContainerObjectSelectionList<Row> {
+    private final class ElementList extends CompatList<Row> {
         ElementList(Minecraft minecraft, int width, int height, int y) {
             super(minecraft, width, height, y, 26);
         }
@@ -280,7 +282,7 @@ public final class ListEditScreen<E> extends StyledScreen {
     }
 
     // An element: its number, its editor, and move/remove buttons.
-    private final class Row extends ContainerObjectSelectionList.Entry<Row> {
+    private final class Row extends CompatList.Entry<Row> {
         private final int index;
         private final Element element;
         private final ValueEditor editor;
@@ -317,10 +319,10 @@ public final class ListEditScreen<E> extends StyledScreen {
             this.down.setPosition(right - 44, middle);
             this.up.setPosition(right - 66, middle);
             this.editor.widget().setPosition(right - 72 - this.editor.widget().getWidth(), middle);
-            this.editor.widget().extractRenderState(graphics, mouseX, mouseY, a);
-            this.up.extractRenderState(graphics, mouseX, mouseY, a);
-            this.down.extractRenderState(graphics, mouseX, mouseY, a);
-            this.remove.extractRenderState(graphics, mouseX, mouseY, a);
+            Compat.extractRenderState(this.editor.widget(), graphics, mouseX, mouseY, a);
+            Compat.extractRenderState(this.up, graphics, mouseX, mouseY, a);
+            Compat.extractRenderState(this.down, graphics, mouseX, mouseY, a);
+            Compat.extractRenderState(this.remove, graphics, mouseX, mouseY, a);
             if (invalid && this.editor.widget().isMouseOver(mouseX, mouseY)) {
                 graphics.setTooltipForNextFrame(font, font.split(this.element.error.copy().withStyle(ChatFormatting.RED), 240), mouseX, mouseY);
             }

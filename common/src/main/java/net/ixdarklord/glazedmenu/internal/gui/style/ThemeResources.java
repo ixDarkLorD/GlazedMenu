@@ -10,7 +10,7 @@ import net.ixdarklord.glazedmenu.api.config.type.ConfigTypes;
 import net.ixdarklord.glazedmenu.api.config.type.ValidationResult;
 import net.ixdarklord.glazedmenu.internal.core.GlazedMenu;
 import net.minecraft.client.Minecraft;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.Resource;
 
 import java.io.IOException;
@@ -29,10 +29,10 @@ public final class ThemeResources {
 
     public static ConfigTheme resolve(String modId, ConfigTheme theme) {
         // Glazed Menu's own path, then CoolCatLib's, where packs made for its screens put theirs.
-        Identifier location = null;
+        ResourceLocation location = null;
         Optional<Resource> resource = Optional.empty();
         for (String path : new String[]{"glazedmenu/config_theme.json", "coolcatcore/config_theme.json"}) {
-            location = Identifier.tryBuild(modId, path);
+            location = ResourceLocation.tryBuild(modId, path);
             if (location == null) return theme;
             resource = Minecraft.getInstance().getResourceManager().getResource(location);
             if (resource.isPresent()) break;
@@ -75,7 +75,7 @@ public final class ThemeResources {
         if (json.has("popup_sprite")) builder.popupSprite(identifier(json.get("popup_sprite")));
         if (json.has("effects")) {
             JsonElement effects = json.get("effects");
-            List<Identifier> ids = new ArrayList<>();
+            List<ResourceLocation> ids = new ArrayList<>();
             if (effects.isJsonArray()) effects.getAsJsonArray().forEach(element -> ids.add(identifier(element)));
             else ids.add(identifier(effects));
             builder.effects(ids);
@@ -132,8 +132,8 @@ public final class ThemeResources {
         return result.value();
     }
 
-    private static Identifier identifier(JsonElement json) {
-        Identifier id = Identifier.tryParse(json.getAsString());
+    private static ResourceLocation identifier(JsonElement json) {
+        ResourceLocation id = ResourceLocation.tryParse(json.getAsString());
         if (id == null) throw new IllegalArgumentException("Invalid texture path " + json.getAsString());
         return id;
     }

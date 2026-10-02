@@ -2,7 +2,7 @@ package net.ixdarklord.glazedmenu.internal.core;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.toasts.SystemToast;
-import net.minecraft.client.gui.components.toasts.ToastManager;
+import net.minecraft.client.gui.components.toasts.ToastComponent;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.Nullable;
@@ -37,7 +37,7 @@ public final class GlazedClient {
      */
     public static void toast(Component title, @Nullable Component message) {
         Minecraft minecraft = Minecraft.getInstance();
-        ToastManager toasts = minecraft.getToastManager();
+        ToastComponent toasts = minecraft.getToasts();
         SystemToast.SystemToastId id = SystemToast.SystemToastId.PERIODIC_NOTIFICATION;
         SystemToast.forceHide(toasts, id);
         boolean fits = message == null || minecraft.font.width(message) <= TOAST_LINE_WIDTH;

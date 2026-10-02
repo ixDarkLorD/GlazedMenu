@@ -5,7 +5,6 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonParser;
-import com.google.gson.Strictness;
 import com.google.gson.stream.JsonReader;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
@@ -35,7 +34,7 @@ public final class ConfigJson {
     /** Parses JSON leniently: comments, unquoted keys and single quotes are allowed. */
     public static JsonElement parseLenient(String text) throws JsonParseException {
         try (JsonReader reader = new JsonReader(new StringReader(text))) {
-            reader.setStrictness(Strictness.LENIENT);
+            reader.setLenient(true);
             return JsonParser.parseReader(reader);
         } catch (IOException e) {
             throw new JsonParseException(e);

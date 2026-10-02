@@ -1,19 +1,21 @@
 package net.ixdarklord.glazedmenu.internal.style;
 
+import net.ixdarklord.glazedmenu.internal.compat.Compat;
+import net.ixdarklord.glazedmenu.internal.compat.CompatScreen;
+import net.ixdarklord.glazedmenu.internal.compat.GuiGraphicsExtractor;
+import net.ixdarklord.glazedmenu.internal.compat.MouseButtonEvent;
+import net.ixdarklord.glazedmenu.internal.compat.RenderPipelines;
 import net.ixdarklord.glazedmenu.api.config.ConfigTheme;
 import net.ixdarklord.glazedmenu.api.theme.ConfigEffect;
 import net.minecraft.ChatFormatting;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.input.MouseButtonEvent;
-import net.minecraft.client.renderer.RenderPipelines;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.Nullable;
 
 // A panel floating over the screen it was opened from, which stays visible and dimmed underneath. Esc or a click
 // outside the panel closes it. Subclasses size the panel with setPanel and add widgets in initPopup.
-public abstract class StyledPopup extends Screen implements Overlay {
+public abstract class StyledPopup extends CompatScreen implements Overlay {
     protected static final int PADDING = 12;
     protected static final int TITLE_HEIGHT = 18;
     /**
@@ -73,7 +75,7 @@ public abstract class StyledPopup extends Screen implements Overlay {
     @Override
     protected final void init() {
         // The screen underneath is drawn too, so it must be laid out for the current size.
-        if (this.parent != null) this.parent.init(this.width, this.height);
+        if (this.parent != null) Compat.init(this.parent, this.width, this.height);
         this.initPopup();
     }
 
@@ -86,7 +88,7 @@ public abstract class StyledPopup extends Screen implements Overlay {
 
     @Override
     public void resize(int width, int height) {
-        if (this.parent != null) this.parent.resize(width, height);
+        if (this.parent != null) Compat.resize(this.parent, width, height);
         super.resize(width, height);
     }
 
@@ -108,9 +110,9 @@ public abstract class StyledPopup extends Screen implements Overlay {
     @Override
     public void extractBackground(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float a) {
         if (this.parent != null) {
-            this.parent.extractBackground(graphics, -1, -1, a);
+            Compat.extractBackground(this.parent, graphics, -1, -1, a);
             graphics.nextStratum();
-            this.parent.extractRenderState(graphics, -1, -1, a);
+            Compat.extractRenderState(this.parent, graphics, -1, -1, a);
             graphics.nextStratum();
             graphics.fill(0, 0, this.width, this.height, ConfigStyle.withAlpha(this.theme.colors(ConfigStyle.mode()).backdrop(), 0x99));
         } else {
@@ -121,7 +123,7 @@ public abstract class StyledPopup extends Screen implements Overlay {
         ConfigStyle.use(this.theme);
         // A soft drop shadow, then the theme's panel sprite, or the flat panel with an accent line along its top edge.
         ConfigStyle.rect(graphics, this.panelX + 3, this.panelY + 4, this.panelWidth, this.panelHeight, 0x66000000);
-        Identifier sprite = this.theme.popupSprite();
+        ResourceLocation sprite = this.theme.popupSprite();
         if (sprite != null) {
             graphics.blitSprite(RenderPipelines.GUI_TEXTURED, sprite, this.panelX, this.panelY, this.panelWidth, this.panelHeight);
         } else {

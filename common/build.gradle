@@ -1,4 +1,4 @@
-apply from: "https://raw.githubusercontent.com/ixDarkLorD/ModResources/main/gradle/v4/common.gradle"
+apply from: "${rootProject.sharedScripts}/common.gradle"
 
 // A plain jar of this module's own classes (Shadow's default bundles the whole runtime classpath).
 shadowJar {
@@ -18,17 +18,14 @@ repositories {
 }
 
 dependencies {
-    // CoolCatLib: Core and Canvas, for the optional integrations (internal.integration.coolcat and .canvas).
-    compileOnly "net.ixdarklord.coolcatlib:coolcatlib-core-common:${coolcatlib_version}"
-    compileOnly "net.ixdarklord.coolcatlib:coolcatlib-canvas-common:${coolcatlib_version}"
-    compileOnly(libs.forgeconfigapiport.common) { transitive = false }
-    compileOnly(libs.forgeconfigapiport.fabric) { transitive = false }
+    modCompileOnly(libs.forgeconfigapiport.common) { transitive = false }
+    modCompileOnly(libs.forgeconfigapiport.fabric) { transitive = false }
     compileOnly "com.electronwill.night-config:core:3.8.3"
-    compileOnly("maven.modrinth:cloth-config:${cloth_config_version}") { transitive = false }
-    compileOnly("maven.modrinth:yacl:${yacl_version}") { transitive = false }
-    compileOnly("maven.modrinth:midnightlib:${midnightlib_version}") { transitive = false }
+    modCompileOnly("maven.modrinth:cloth-config:${cloth_config_version}") { transitive = false }
+    modCompileOnly("maven.modrinth:yacl:${yacl_version}") { transitive = false }
+    modCompileOnly("maven.modrinth:midnightlib:${midnightlib_version}") { transitive = false }
     // MezzConfig (JEI's config library): its API alone.
-    compileOnly("net.mezzdev.config:mezz_config-26.1.2-config-api:${mezz_config_version}") { transitive = false }
+    modCompileOnly("net.mezzdev.config:mezz_config-${libs.versions.minecraft.get()}-config-api:${mezz_config_version}") { transitive = false }
     // FTB Library: its common jar.
-    compileOnly("dev.ftb.mods:ftb-library:${ftb_library_version}") { transitive = false }
+    modCompileOnly("dev.ftb.mods:ftb-library:${ftb_library_version}") { transitive = false }
 }

@@ -1,6 +1,6 @@
 package net.ixdarklord.glazedmenu.api.config;
 
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,11 +18,11 @@ import java.util.function.Function;
  * <pre>{@code
  * ConfigTheme.setForMod("mymod", ConfigTheme.builder()
  *         .colors(ConfigColorScheme.tinted(0xFFFF8A3D))
- *         .background(Identifier.fromNamespaceAndPath("mymod", "textures/gui/config_background.png"))
+ *         .background(ResourceLocation.fromNamespaceAndPath("mymod", "textures/gui/config_background.png"))
  *         .mode(ConfigTheme.BackgroundMode.COVER)
  *         .textureOpacity(0.8F)       // lets the panorama or world show through the texture a little
  *         .backgroundOpacity(0.3F)    // how strongly the backdrop color covers it
- *         .effects(Identifier.fromNamespaceAndPath("mymod", "snow"))   // animated effects, instead of the starfall
+ *         .effects(ResourceLocation.fromNamespaceAndPath("mymod", "snow"))   // animated effects, instead of the starfall
  *         .build());
  * }</pre>
  * The texture is a full path in a resource pack ({@code assets/mymod/textures/gui/config_background.png}). Without one,
@@ -57,7 +57,7 @@ import java.util.function.Function;
 public final class ConfigTheme {
     // Declared before DEFAULT, which uses it.
     /** The built-in effect: soft glows in the accent and small faint stars falling, shifting with the mouse. */
-    public static final Identifier STARFALL = Identifier.fromNamespaceAndPath("glazedmenu", "starfall");
+    public static final ResourceLocation STARFALL = ResourceLocation.fromNamespaceAndPath("glazedmenu", "starfall");
     /**
      * Glazed Menu's own look, for every mod that sets no theme: see-through to the title panorama or the world, with the dark
      * scheme tinted in the violet of Glazed Menu's logo (as its mod list).
@@ -70,15 +70,15 @@ public final class ConfigTheme {
 
     private final ConfigColorScheme colors;
     private final @Nullable ConfigColorScheme lightColors;
-    private final @Nullable Identifier icon;
-    private final @Nullable Identifier background;
+    private final @Nullable ResourceLocation icon;
+    private final @Nullable ResourceLocation background;
     private final BackgroundMode mode;
     private final int tileSize;
     private final float backgroundOpacity;
     private final float textureOpacity;
     private final boolean backgroundInWorld;
-    private final @Nullable Identifier popupSprite;
-    private final List<Identifier> effects;
+    private final @Nullable ResourceLocation popupSprite;
+    private final List<ResourceLocation> effects;
     private final @Nullable Object source;
 
     private ConfigTheme(Builder builder) {
@@ -156,12 +156,12 @@ public final class ConfigTheme {
     }
 
     /** The icon beside the title in the top bar, or null for the mod's own icon (its logo on NeoForge). */
-    public @Nullable Identifier icon() {
+    public @Nullable ResourceLocation icon() {
         return this.icon;
     }
 
     /** The background texture's full path, or null for the see-through background. */
-    public @Nullable Identifier background() {
+    public @Nullable ResourceLocation background() {
         return this.background;
     }
 
@@ -199,12 +199,12 @@ public final class ConfigTheme {
      * scheme's flat panel. It should be a nine-slice sprite; the title is drawn 12 pixels from its top-left corner and
      * content starts 30 pixels down, so its top border can hold a title bar.
      */
-    public @Nullable Identifier popupSprite() {
+    public @Nullable ResourceLocation popupSprite() {
         return this.popupSprite;
     }
 
     /** The effects drawn, by id, in order ({@link #STARFALL} by default; empty for none). */
-    public List<Identifier> effects() {
+    public List<ResourceLocation> effects() {
         return this.effects;
     }
 
@@ -244,15 +244,15 @@ public final class ConfigTheme {
     public static final class Builder {
         private ConfigColorScheme colors = ConfigColorScheme.DARK;
         private @Nullable ConfigColorScheme lightColors;
-        private @Nullable Identifier icon;
-        private @Nullable Identifier background;
+        private @Nullable ResourceLocation icon;
+        private @Nullable ResourceLocation background;
         private BackgroundMode mode = BackgroundMode.COVER;
         private int tileSize;
         private float backgroundOpacity = 0.35F;
         private float textureOpacity = 1.0F;
         private boolean backgroundInWorld;
-        private @Nullable Identifier popupSprite;
-        private List<Identifier> effects = List.of(STARFALL);
+        private @Nullable ResourceLocation popupSprite;
+        private List<ResourceLocation> effects = List.of(STARFALL);
         private @Nullable Object source;
 
         private Builder() {}
@@ -284,13 +284,13 @@ public final class ConfigTheme {
         }
 
         /** An icon texture's full path for the top bar, instead of the mod's own icon. */
-        public Builder icon(@Nullable Identifier texture) {
+        public Builder icon(@Nullable ResourceLocation texture) {
             this.icon = texture;
             return this;
         }
 
         /** A texture's full path, like {@code mymod:textures/gui/config_background.png}. */
-        public Builder background(@Nullable Identifier texture) {
+        public Builder background(@Nullable ResourceLocation texture) {
             this.background = texture;
             return this;
         }
@@ -331,7 +331,7 @@ public final class ConfigTheme {
          * A GUI sprite id (like {@code mymod:config/popup}, a texture in {@code textures/gui/sprites/}, usually with a
          * nine-slice {@code .mcmeta}) drawn as the panel of popups instead of the scheme's flat panel.
          */
-        public Builder popupSprite(@Nullable Identifier sprite) {
+        public Builder popupSprite(@Nullable ResourceLocation sprite) {
             this.popupSprite = sprite;
             return this;
         }
@@ -340,13 +340,13 @@ public final class ConfigTheme {
          * The effects the screens draw, by the ids they're registered under, instead of {@link #STARFALL}; drawn in this
          * order. With none, the screens are still.
          */
-        public Builder effects(Identifier... effects) {
+        public Builder effects(ResourceLocation... effects) {
             this.effects = List.of(effects);
             return this;
         }
 
         /** The effects, as a list. */
-        public Builder effects(List<Identifier> effects) {
+        public Builder effects(List<ResourceLocation> effects) {
             this.effects = List.copyOf(effects);
             return this;
         }

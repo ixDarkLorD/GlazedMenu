@@ -1,7 +1,7 @@
 package net.ixdarklord.glazedmenu.api.config;
 
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,7 +20,7 @@ import java.util.stream.Stream;
 @ApiStatus.NonExtendable
 public interface Config {
     /** {@code <modid>:<name>}. */
-    Identifier id();
+    ResourceLocation id();
 
     default String modId() {
         return this.id().getNamespace();

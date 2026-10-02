@@ -15,10 +15,11 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Consumer;
 
-// Where Glazed Menu's mod list comes in: in place of Mod Menu's and NeoForge's as they open, and as a Mods button on the
+// Where Glazed Menu's mod list comes in: in place of Mod Menu's, NeoForge's and Forge's as they open, and as a Mods button on the
 // title and pause screens when nothing else put one there.
 public final class ModListHooks {
-    private static final Set<String> MOD_LISTS = Set.of("com.terraformersmc.modmenu.gui.ModsScreen", "net.neoforged.neoforge.client.gui.ModListScreen");
+    private static final Set<String> MOD_LISTS = Set.of("com.terraformersmc.modmenu.gui.ModsScreen", "net.neoforged.neoforge.client.gui.ModListScreen",
+            "net.minecraftforge.client.gui.ModListScreen");
     private static final Set<String> MODS_BUTTONS = Set.of("fml.menu.mods", "modmenu.title", "glazedmenu.mods.button");
 
     private ModListHooks() {}
@@ -33,7 +34,8 @@ public final class ModListHooks {
      * Adds a Mods button: on the title screen it shares the Realms button's row, on the pause screen it takes Report
      * Bugs' place (as Mod Menu's does). Nothing when a mod list's button is there already, or Mod Menu will add its own.
      */
-    public static void addModsButton(Screen screen, List<? extends GuiEventListener> children, Consumer<Button> add, boolean titleScreen) {
+    public static void addModsButton(Screen screen, List<? extends GuiEventListener> children, boolean titleScreen) {
+        Consumer<Button> add = button -> ((net.ixdarklord.glazedmenu.internal.mixin.ScreenInvoker) screen).glazedmenu$addRenderableWidget(button);
         if (!GlazedSettings.modsButton() || GlazedPlatform.get().isModLoaded("modmenu")) return;
         for (GuiEventListener child : children) {
             if (!(child instanceof AbstractWidget widget)) continue;

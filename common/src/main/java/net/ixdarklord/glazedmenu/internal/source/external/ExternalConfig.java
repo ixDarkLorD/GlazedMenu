@@ -8,7 +8,7 @@ import net.ixdarklord.glazedmenu.api.config.ConfigTheme;
 import net.ixdarklord.glazedmenu.api.config.ConfigValue;
 import net.ixdarklord.glazedmenu.internal.core.GlazedMenu;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
@@ -22,7 +22,7 @@ import java.util.function.Supplier;
  * its values read and write the system's, and saving saves through it. Made by {@link ExternalConfigBuilder}.
  */
 public final class ExternalConfig implements Config {
-    private final Identifier id;
+    private final ResourceLocation id;
     private final ConfigScope scope;
     private final ExternalGroup root;
     private final Component title;
@@ -31,7 +31,7 @@ public final class ExternalConfig implements Config {
     private final Supplier<Access> access;
     private final Runnable saver;
 
-    ExternalConfig(Identifier id, ConfigScope scope, ExternalGroup root, Component title, String fileName, @Nullable Path filePath,
+    ExternalConfig(ResourceLocation id, ConfigScope scope, ExternalGroup root, Component title, String fileName, @Nullable Path filePath,
                    Supplier<Access> access, Runnable saver) {
         this.id = id;
         this.scope = scope;
@@ -54,7 +54,7 @@ public final class ExternalConfig implements Config {
     }
 
     @Override
-    public Identifier id() {
+    public ResourceLocation id() {
         return this.id;
     }
 

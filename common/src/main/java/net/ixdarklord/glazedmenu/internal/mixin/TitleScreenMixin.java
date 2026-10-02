@@ -18,6 +18,6 @@ public abstract class TitleScreenMixin extends Screen {
 
     @Inject(method = "init", at = @At("TAIL"))
     private void glazedmenu$addModsButton(CallbackInfo info) {
-        ModListHooks.addModsButton(this, this.children(), this::addRenderableWidget, true);
+        ModListHooks.addModsButton(this, this.children(), true);
     }
 }

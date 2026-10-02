@@ -1,11 +1,11 @@
 package net.ixdarklord.glazedmenu.internal.style;
 
+import net.ixdarklord.glazedmenu.internal.compat.GuiGraphicsExtractor;
+import net.ixdarklord.glazedmenu.internal.compat.RenderPipelines;
 import net.ixdarklord.glazedmenu.api.config.ConfigTheme;
 import net.ixdarklord.glazedmenu.api.theme.ConfigEffect;
 import net.ixdarklord.glazedmenu.internal.core.GlazedMenu;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.client.renderer.RenderPipelines;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 
 import java.util.Random;
 
@@ -14,7 +14,7 @@ import java.util.Random;
 // larger, brighter, faster, and move more. Positions come from the time, so it runs at any frame rate and looks the same
 // on every screen; only the parallax is eased toward the mouse.
 final class StarfallEffect implements ConfigEffect {
-    static final Identifier GLOW = GlazedMenu.rl("textures/gui/style/glow.png");
+    static final ResourceLocation GLOW = GlazedMenu.rl("textures/gui/style/glow.png");
     static final int GLOW_SIZE = 64;
     private static final int STAR_COUNT = 90;
     // How far the nearest layer shifts, in GUI pixels, as the mouse crosses the screen.

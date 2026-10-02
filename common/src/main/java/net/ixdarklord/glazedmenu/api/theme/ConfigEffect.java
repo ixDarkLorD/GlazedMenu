@@ -1,8 +1,9 @@
 package net.ixdarklord.glazedmenu.api.theme;
 
+import net.minecraft.resources.ResourceLocation;
+import net.ixdarklord.glazedmenu.internal.compat.GuiGraphicsExtractor;
 import net.ixdarklord.glazedmenu.api.config.ConfigColorScheme;
 import net.ixdarklord.glazedmenu.api.config.ConfigTheme;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
 
 /**
  * Client only: an animated effect for config screens, drawn at any of three layers. Register it with
@@ -10,9 +11,9 @@ import net.minecraft.client.gui.GuiGraphicsExtractor;
  * {@code ConfigBuilder.effects} for one config):
  * <pre>{@code
  * // Client setup:
- * ConfigEffects.register(Identifier.fromNamespaceAndPath("mymod", "snow"), new SnowEffect());
+ * ConfigEffects.register(ResourceLocation.fromNamespaceAndPath("mymod", "snow"), new SnowEffect());
  * // Anywhere, even common code:
- * Config.builder("mymod", ConfigScope.CLIENT).effects(Identifier.fromNamespaceAndPath("mymod", "snow"));
+ * Config.builder("mymod", ConfigScope.CLIENT).effects(ResourceLocation.fromNamespaceAndPath("mymod", "snow"));
  * }</pre>
  * Every method is optional. They run every frame on the render thread, so they should be cheap; an effect that throws is
  * logged once and switched off. Players can turn every effect off, and the Fast graphics preset always does.

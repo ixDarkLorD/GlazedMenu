@@ -1,11 +1,11 @@
 package net.ixdarklord.glazedmenu.internal.style;
 
+import net.ixdarklord.glazedmenu.internal.compat.GuiGraphicsExtractor;
 import net.ixdarklord.glazedmenu.api.config.ConfigColorScheme;
 import net.ixdarklord.glazedmenu.api.config.ConfigTheme;
 import net.ixdarklord.glazedmenu.internal.core.GlazedSettings;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
 
 /**

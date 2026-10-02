@@ -1,5 +1,11 @@
 package net.ixdarklord.glazedmenu.internal.modlist;
 
+import net.ixdarklord.glazedmenu.internal.compat.CompatList;
+import net.ixdarklord.glazedmenu.internal.compat.CompatWidget;
+import net.ixdarklord.glazedmenu.internal.compat.GuiGraphicsExtractor;
+import net.ixdarklord.glazedmenu.internal.compat.KeyEvent;
+import net.ixdarklord.glazedmenu.internal.compat.MouseButtonEvent;
+import net.ixdarklord.glazedmenu.internal.compat.RenderPipelines;
 import net.ixdarklord.glazedmenu.api.theme.ConfigEffect;
 import net.ixdarklord.glazedmenu.internal.style.ConfigIcons;
 import net.ixdarklord.glazedmenu.internal.style.GlazedBrand;
@@ -18,7 +24,6 @@ import net.ixdarklord.glazedmenu.internal.gui.style.ModIcons;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.ContainerObjectSelectionList;
 import net.minecraft.client.gui.components.events.GuiEventListener;
@@ -26,16 +31,12 @@ import net.minecraft.client.gui.narration.NarratableEntry;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.gui.screens.ConfirmLinkScreen;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.input.KeyEvent;
-import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.FormattedCharSequence;
-import net.minecraft.client.renderer.RenderPipelines;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.Nullable;
-import org.joml.Matrix3x2fStack;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -70,7 +71,7 @@ public final class GlazedModsScreen extends StyledScreen {
     private static final int HERO_HEIGHT = 70;
     private static final int HERO_ICON = 40;
     private static final float SELECT_MILLIS = 180;
-    private static final Identifier GRASS = Identifier.withDefaultNamespace("textures/block/grass_block_side.png");
+    private static final ResourceLocation GRASS = ResourceLocation.withDefaultNamespace("textures/block/grass_block_side.png");
     // Where the screen left off, for the next time it opens.
     private static Filter lastFilter = Filter.ALL;
     private static boolean lastDescending;
@@ -109,7 +110,7 @@ public final class GlazedModsScreen extends StyledScreen {
 
     // Libraries listed under All as well: the game, and CoolCatLib's (Glazed Menu's companions).
     // The loader's own parts (and Java), listed under Libraries but not with the other mods unless the player asks.
-    private static final java.util.Set<String> LOADER_PARTS = java.util.Set.of("java", "fabricloader", "mixinextras", "neoforge");
+    private static final java.util.Set<String> LOADER_PARTS = java.util.Set.of("java", "fabricloader", "mixinextras", "neoforge", "forge");
 
     private enum Filter {
         // Every mod a player installs, libraries included; not the modules bundled inside another mod, nor the loader's parts.
@@ -277,7 +278,7 @@ public final class GlazedModsScreen extends StyledScreen {
         } catch (java.io.IOException e) {
             GlazedMenu.LOGGER.warn("Couldn't make the mods folder {}", mods, e);
         }
-        net.minecraft.util.Util.getPlatform().openPath(mods);
+        net.minecraft.Util.getPlatform().openPath(mods);
     }
 
     // The icon shows the view a click switches to.
@@ -451,7 +452,7 @@ public final class GlazedModsScreen extends StyledScreen {
     // A mod's icon in a square: its own, a grass block for the game, or its initial in its color.
     private static void icon(GuiGraphicsExtractor graphics, ModEntry mod, int accent, int x, int y, int size) {
         if (ModIcons.draw(graphics, mod.id(), ConfigTheme.forMod(mod.id()), x, y, size)) return;
-        Matrix3x2fStack pose = graphics.pose();
+        GuiGraphicsExtractor.Pose pose = graphics.pose();
         if (mod.id().equals("minecraft")) {
             graphics.blit(RenderPipelines.GUI_TEXTURED, GRASS, x, y, 0, 0, size, size, 16, 16, 16, 16);
             return;
@@ -531,7 +532,7 @@ public final class GlazedModsScreen extends StyledScreen {
         // "Mods" at 1.5x, its capitals (7 pixels tall) centered on the tile; the count sits on the same baseline.
         float titleScale = 1.5F;
         float titleTop = top + (mark - 7 * titleScale) / 2;
-        Matrix3x2fStack pose = graphics.pose();
+        GuiGraphicsExtractor.Pose pose = graphics.pose();
         pose.pushMatrix();
         pose.translate(left + mark + 3, titleTop);
         pose.scale(titleScale, titleScale);
@@ -647,7 +648,7 @@ public final class GlazedModsScreen extends StyledScreen {
     // --- The drawer: tiles in rows ---
 
     // The mods as tiles a few to a row, or one to a row; the view is the player's choice (GlazedSettings).
-    private final class Drawer extends ContainerObjectSelectionList<Row> {
+    private final class Drawer extends CompatList<Row> {
         Drawer(Minecraft minecraft, int width, int height, int y) {
             super(minecraft, width, height, y, TILE_HEIGHT + TILE_GAP);
         }
@@ -779,7 +780,7 @@ public final class GlazedModsScreen extends StyledScreen {
             return;
         }
         graphics.fill(x + tail, y, x + width - tail, y + height, solid);
-        Matrix3x2fStack pose = graphics.pose();
+        GuiGraphicsExtractor.Pose pose = graphics.pose();
         // Turned a quarter: the gradient's top-to-bottom runs left to right.
         for (int side = 0; side < 2; side++) {
             pose.pushMatrix();
@@ -810,7 +811,7 @@ public final class GlazedModsScreen extends StyledScreen {
         int width = this.font.width(text) + 16;
         // The frame and chevron in the mod's color lifted toward the text color, so they don't sink into the tile.
         int bright = ConfigStyle.mix(accent, ConfigStyle.colors().text(), 0.45F);
-        Matrix3x2fStack pose = graphics.pose();
+        GuiGraphicsExtractor.Pose pose = graphics.pose();
         pose.pushMatrix();
         pose.translate(x, y);
         pose.scale(GROUP_MARK_SCALE, GROUP_MARK_SCALE);
@@ -835,7 +836,7 @@ public final class GlazedModsScreen extends StyledScreen {
         else if (doubleClick && ModCatalog.hasSettings(mod.id())) this.openSettings();
     }
 
-    private abstract static class Row extends ContainerObjectSelectionList.Entry<Row> {
+    private abstract static class Row extends CompatList.Entry<Row> {
         abstract boolean holds(ModEntry mod);
 
         @Override
@@ -1032,7 +1033,7 @@ public final class GlazedModsScreen extends StyledScreen {
 
     // Text at a scale, its baseline where full-size text at (x, y) would have it.
     private static void scaledText(GuiGraphicsExtractor graphics, Font font, Component text, int x, int y, float scale, int color) {
-        Matrix3x2fStack pose = graphics.pose();
+        GuiGraphicsExtractor.Pose pose = graphics.pose();
         pose.pushMatrix();
         pose.translate(x, y + 7 * (1 - scale));
         pose.scale(scale, scale);
@@ -1149,7 +1150,7 @@ public final class GlazedModsScreen extends StyledScreen {
 
     // The chosen mod: a banner in its color with its icon, name, version and authors; below the actions, a scrolling
     // description, then its details and the mods it needs and bundles, as chips that choose those mods.
-    private final class Details extends AbstractWidget {
+    private final class Details extends CompatWidget {
         private static final int PADDING = 12;
         private final List<LinkChip> links = new ArrayList<>();
         // Auto-scroll: a long description drifts down by itself (after a moment, slowly), rests at the end, glides back
@@ -1287,7 +1288,7 @@ public final class GlazedModsScreen extends StyledScreen {
             int nameRoom = Math.max(20, Math.round((textWidth - versionWidth - 6) / nameScale));
             FormattedCharSequence nameLine = ConfigStyle.ellipsize(font, name, nameRoom);
             int nameTop = y + 12;
-            Matrix3x2fStack pose = graphics.pose();
+            GuiGraphicsExtractor.Pose pose = graphics.pose();
             pose.pushMatrix();
             pose.translate(textX, nameTop);
             pose.scale(nameScale, nameScale);

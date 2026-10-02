@@ -1,5 +1,8 @@
 package net.ixdarklord.glazedmenu.internal.gui;
 
+import net.ixdarklord.glazedmenu.internal.compat.CompatWidget;
+import net.ixdarklord.glazedmenu.internal.compat.GuiGraphicsExtractor;
+import net.ixdarklord.glazedmenu.internal.compat.MouseButtonEvent;
 import net.ixdarklord.glazedmenu.api.config.ConfigTheme;
 import net.ixdarklord.glazedmenu.api.config.type.ConfigTypes;
 import net.ixdarklord.glazedmenu.api.config.type.ValidationResult;
@@ -9,11 +12,9 @@ import net.ixdarklord.glazedmenu.internal.style.FlatButton;
 import net.ixdarklord.glazedmenu.internal.style.StyledEditBox;
 import net.ixdarklord.glazedmenu.internal.style.StyledPopup;
 import net.ixdarklord.glazedmenu.internal.style.StyledScreen;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.Nullable;
@@ -183,7 +184,7 @@ public final class ColorPickerScreen extends StyledPopup {
     }
 
     // The square, the hue bar and the alpha bar; a press picks in whichever part it lands, and dragging stays there.
-    private final class PickerArea extends AbstractWidget {
+    private final class PickerArea extends CompatWidget {
         private static final int NONE = 0;
         private static final int SQUARE_PART = 1;
         private static final int HUE_PART = 2;
@@ -288,7 +289,7 @@ public final class ColorPickerScreen extends StyledPopup {
     }
 
     // The 16 dye colors, two rows of eight.
-    private final class Palette extends AbstractWidget {
+    private final class Palette extends CompatWidget {
         Palette(int x, int y) {
             super(x, y, 8 * (SWATCH + 2), 2 * (SWATCH + 2), Component.translatableWithFallback("glazedmenu.color.palette", "Dye colors"));
         }

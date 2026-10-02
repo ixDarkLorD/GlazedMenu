@@ -15,24 +15,8 @@ updateJSONURL = "${mod_neoforge_update_url}"
 [[mixins]]
 config = "${modid}.common.mixins.json"
 
-# Not needed: with CoolCatLib's mods installed, Glazed Menu shows Core's configs and Canvas's config screen effects, so it
-# sets up after them.
-[[dependencies.${modid}]]
-modId = "coolcatcore"
-type = "optional"
-versionRange = "[${coolcatlib_version},)"
-ordering = "AFTER"
-side = "CLIENT"
-
-[[dependencies.${modid}]]
-modId = "coolcatcanvas"
-type = "optional"
-versionRange = "[${coolcatlib_version},)"
-ordering = "AFTER"
-side = "CLIENT"
-
-# Not needed, but when Configured is installed Glazed Menu sets its screens up after it, so the screens of mods with
-# CoolCatLib configs are Glazed Menu's.
+# Not needed, but when Configured is installed Glazed Menu sets its screens up after it, so mods' buttons open Glazed
+# Menu's screens rather than Configured's.
 [[dependencies.${modid}]]
 modId = "configured"
 type = "optional"

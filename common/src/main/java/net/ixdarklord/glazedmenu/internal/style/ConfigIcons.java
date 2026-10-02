@@ -1,10 +1,10 @@
 package net.ixdarklord.glazedmenu.internal.style;
 
+import net.ixdarklord.glazedmenu.internal.compat.GuiGraphicsExtractor;
+import net.ixdarklord.glazedmenu.internal.compat.RenderPipelines;
 import net.ixdarklord.glazedmenu.api.config.ConfigScope;
 import net.ixdarklord.glazedmenu.internal.core.GlazedMenu;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.client.renderer.RenderPipelines;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 
 // The config screens' icons: white 64x64 textures (assets/glazedmenu/textures/gui/style/icons/) with linear filtering
 // (their .mcmeta sets "blur"), so they shrink smoothly to the size drawn; tinted as they're drawn. A resource pack can
@@ -65,7 +65,7 @@ public final class ConfigIcons {
         return new Icon(GlazedMenu.rl("textures/gui/style/icons/" + name + ".png"));
     }
 
-    public record Icon(Identifier texture) {
+    public record Icon(ResourceLocation texture) {
         public int width() {
             return SIZE;
         }

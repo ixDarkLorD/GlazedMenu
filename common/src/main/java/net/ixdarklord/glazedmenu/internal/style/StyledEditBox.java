@@ -1,13 +1,14 @@
 package net.ixdarklord.glazedmenu.internal.style;
 
+import net.ixdarklord.glazedmenu.internal.compat.CompatEditBox;
+import net.ixdarklord.glazedmenu.internal.compat.CursorTypes;
+import net.ixdarklord.glazedmenu.internal.compat.GuiGraphicsExtractor;
+import net.ixdarklord.glazedmenu.internal.compat.MouseButtonEvent;
+import net.ixdarklord.glazedmenu.internal.compat.TextCursorUtils;
 import net.ixdarklord.glazedmenu.api.theme.ConfigEffect;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.EditBox;
-import net.minecraft.client.gui.components.TextCursorUtils;
-import net.minecraft.client.input.MouseButtonEvent;
-import net.minecraft.util.Util;
-import com.mojang.blaze3d.platform.cursor.CursorTypes;
+import net.minecraft.Util;
 import net.ixdarklord.glazedmenu.internal.core.GlazedSettings;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
@@ -15,7 +16,7 @@ import org.jetbrains.annotations.Nullable;
 
 // A text field in the config screens' style. It keeps the vanilla layout (text inset as if bordered) but draws its
 // own field instead of the vanilla sprite, outlined in the accent while focused and in red while invalid.
-public class StyledEditBox extends EditBox {
+public class StyledEditBox extends CompatEditBox {
     // Text longer than the field glides to keep the cursor in view: the scroll (in pixels) eases toward its target.
     private static final float SCROLL_EASE_MILLIS = 60;
     private boolean drawingOwnFrame;
@@ -147,18 +148,8 @@ public class StyledEditBox extends EditBox {
 
     // The selection's other end (vanilla keeps it private).
     private int highlightPosition() {
-        try {
-            if (HIGHLIGHT == null) {
-                HIGHLIGHT = EditBox.class.getDeclaredField("highlightPos");
-                HIGHLIGHT.setAccessible(true);
-            }
-            return HIGHLIGHT.getInt(this);
-        } catch (ReflectiveOperationException e) {
-            return this.getCursorPosition();
-        }
+        return ((net.ixdarklord.glazedmenu.internal.mixin.EditBoxAccessor) this).glazedmenu$highlightPos();
     }
-
-    private static java.lang.reflect.@Nullable Field HIGHLIGHT;
 
     // The character under the mouse, by the smooth scroll.
     private int positionAt(double mouseX) {

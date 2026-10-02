@@ -12,7 +12,7 @@ import net.ixdarklord.glazedmenu.internal.source.external.ExternalConfig;
 import net.ixdarklord.glazedmenu.internal.source.external.ExternalConfigBuilder;
 import net.ixdarklord.glazedmenu.internal.source.external.ExternalSource;
 import net.ixdarklord.glazedmenu.internal.source.external.ExternalValue;
-import net.minecraft.client.GraphicsPreset;
+import net.minecraft.client.GraphicsStatus;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 
@@ -176,10 +176,10 @@ public final class GlazedSettings {
         return values.replaceFtbLibraryScreens;
     }
 
-    // The Fast graphics preset asks for the cheapest look, so it turns the screens' animations off.
+    // Fast graphics ask for the cheapest look, so it turns the screens' animations off.
     private static boolean fastGraphics() {
         Minecraft minecraft = Minecraft.getInstance();
-        return minecraft != null && minecraft.options.graphicsPreset().get() == GraphicsPreset.FAST;
+        return minecraft != null && minecraft.options.graphicsMode().get() == GraphicsStatus.FAST;
     }
 
     // --- In Glazed Menu's screens ---
@@ -198,7 +198,7 @@ public final class GlazedSettings {
                     .title(Component.translatableWithFallback(prefix + "title", "Glazed Menu"))
                     .file("glazedmenu.json", file());
             builder.push("modList", prefix + "modList", null, List.of("Glazed Menu's mod list"));
-            bool(builder, prefix + "modList.", "replaceModList", "Opens Glazed Menu's mod list where Mod Menu's or NeoForge's would open.",
+            bool(builder, prefix + "modList.", "replaceModList", "Opens Glazed Menu's mod list where Mod Menu's, NeoForge's or Forge's would open.",
                     () -> values.replaceModList, value -> values.replaceModList = value);
             bool(builder, prefix + "modList.", "modsButton", "Adds a Mods button to the title and pause screens when they have none.",
                     () -> values.modsButton, value -> values.modsButton = value);

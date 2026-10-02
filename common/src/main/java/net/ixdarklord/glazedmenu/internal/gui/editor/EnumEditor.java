@@ -1,5 +1,9 @@
 package net.ixdarklord.glazedmenu.internal.gui.editor;
 
+import net.ixdarklord.glazedmenu.internal.compat.GuiGraphicsExtractor;
+import net.ixdarklord.glazedmenu.internal.compat.InputWithModifiers;
+import net.ixdarklord.glazedmenu.internal.compat.MouseButtonEvent;
+import net.ixdarklord.glazedmenu.internal.compat.MouseButtonInfo;
 import net.ixdarklord.glazedmenu.api.editor.EditSlot;
 import net.ixdarklord.glazedmenu.api.editor.ValueEditor;
 import net.ixdarklord.glazedmenu.api.config.type.EnumType;
@@ -8,10 +12,6 @@ import net.ixdarklord.glazedmenu.internal.style.ConfigStyle;
 import net.ixdarklord.glazedmenu.internal.style.DropdownScreen;
 import net.ixdarklord.glazedmenu.internal.style.FlatButton;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.client.input.InputWithModifiers;
-import net.minecraft.client.input.MouseButtonEvent;
-import net.minecraft.client.input.MouseButtonInfo;
 import net.minecraft.network.chat.CommonComponents;
 
 // A selector between arrows: its arrows step to the previous or next constant, and its middle opens a dropdown of them

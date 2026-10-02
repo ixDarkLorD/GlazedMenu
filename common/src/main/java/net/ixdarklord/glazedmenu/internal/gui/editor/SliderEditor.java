@@ -1,5 +1,7 @@
 package net.ixdarklord.glazedmenu.internal.gui.editor;
 
+import net.ixdarklord.glazedmenu.internal.compat.CompatSlider;
+import net.ixdarklord.glazedmenu.internal.compat.GuiGraphicsExtractor;
 import net.ixdarklord.glazedmenu.api.theme.ConfigEffect;
 import net.ixdarklord.glazedmenu.api.editor.EditSlot;
 import net.ixdarklord.glazedmenu.api.editor.ValueEditor;
@@ -8,7 +10,6 @@ import net.ixdarklord.glazedmenu.internal.style.ConfigStyle;
 import net.ixdarklord.glazedmenu.internal.style.ThemeEffects;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractSliderButton;
 import net.minecraft.network.chat.Component;
 
@@ -44,7 +45,7 @@ public final class SliderEditor<N extends Number & Comparable<N>> implements Val
         this.slider.setFromValue(this.slot.get());
     }
 
-    private final class Slider extends AbstractSliderButton {
+    private final class Slider extends CompatSlider {
         Slider(int width, int height) {
             super(0, 0, width, height, Component.empty(), 0);
         }

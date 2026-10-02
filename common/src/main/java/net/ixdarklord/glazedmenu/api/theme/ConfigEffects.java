@@ -1,7 +1,7 @@
 package net.ixdarklord.glazedmenu.api.theme;
 
 import net.ixdarklord.glazedmenu.api.config.ConfigTheme;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,8 +17,8 @@ import java.util.function.Function;
  * Built in: {@link ConfigTheme#STARFALL} (soft glows and falling stars, every theme's default).
  */
 public final class ConfigEffects {
-    private static final Map<Identifier, ConfigEffect> EFFECTS = new ConcurrentHashMap<>();
-    private static Function<Identifier, @Nullable ConfigEffect> fallback = id -> null;
+    private static final Map<ResourceLocation, ConfigEffect> EFFECTS = new ConcurrentHashMap<>();
+    private static Function<ResourceLocation, @Nullable ConfigEffect> fallback = id -> null;
 
     private ConfigEffects() {}
 
@@ -27,23 +27,23 @@ public final class ConfigEffects {
      *
      * @throws IllegalArgumentException when the id is taken
      */
-    public static void register(Identifier id, ConfigEffect effect) {
+    public static void register(ResourceLocation id, ConfigEffect effect) {
         if (EFFECTS.putIfAbsent(id, effect) != null) throw new IllegalArgumentException("A config effect with the id " + id + " is already registered");
     }
 
-    public static @Nullable ConfigEffect get(Identifier id) {
+    public static @Nullable ConfigEffect get(ResourceLocation id) {
         ConfigEffect effect = EFFECTS.get(id);
         return effect != null ? effect : fallback.apply(id);
     }
 
     /** Effects registered elsewhere (with CoolCatLib: Canvas), for ids nobody registered here. */
     @ApiStatus.Internal
-    public static void setFallback(Function<Identifier, @Nullable ConfigEffect> effects) {
+    public static void setFallback(Function<ResourceLocation, @Nullable ConfigEffect> effects) {
         fallback = effects;
     }
 
     /** Every registered id. */
-    public static Set<Identifier> ids() {
+    public static Set<ResourceLocation> ids() {
         return Set.copyOf(EFFECTS.keySet());
     }
 }

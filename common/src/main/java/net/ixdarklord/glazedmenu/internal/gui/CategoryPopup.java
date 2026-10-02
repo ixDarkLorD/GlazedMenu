@@ -1,5 +1,7 @@
 package net.ixdarklord.glazedmenu.internal.gui;
 
+import net.ixdarklord.glazedmenu.internal.compat.GuiGraphicsExtractor;
+import net.ixdarklord.glazedmenu.internal.compat.KeyEvent;
 import net.ixdarklord.glazedmenu.internal.source.Access;
 import net.ixdarklord.glazedmenu.api.config.ConfigTheme;
 import net.ixdarklord.glazedmenu.api.config.Config;
@@ -14,10 +16,8 @@ import net.ixdarklord.glazedmenu.internal.style.ConfirmPopup;
 import net.ixdarklord.glazedmenu.internal.style.FlatButton;
 import net.ixdarklord.glazedmenu.internal.style.StyledPopup;
 import net.ixdarklord.glazedmenu.internal.gui.style.ThemeResources;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.input.KeyEvent;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.Nullable;

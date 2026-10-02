@@ -1,5 +1,9 @@
 package net.ixdarklord.glazedmenu.internal.gui;
 
+import net.ixdarklord.glazedmenu.internal.compat.CompatList;
+import net.ixdarklord.glazedmenu.internal.compat.GuiGraphicsExtractor;
+import net.ixdarklord.glazedmenu.internal.compat.KeyEvent;
+import net.ixdarklord.glazedmenu.internal.compat.MouseButtonEvent;
 import net.ixdarklord.glazedmenu.internal.source.Access;
 import net.ixdarklord.glazedmenu.api.config.Config;
 import net.ixdarklord.glazedmenu.api.config.ConfigNode;
@@ -15,15 +19,12 @@ import net.ixdarklord.glazedmenu.internal.style.StyledScreen;
 import net.ixdarklord.glazedmenu.internal.gui.style.ThemeResources;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.ContainerObjectSelectionList;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.narration.NarratableEntry;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.input.KeyEvent;
-import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.Nullable;
@@ -498,7 +499,7 @@ public final class ConfigScreen extends StyledScreen {
 
     // --- Sidebar ---
 
-    private final class TabList extends ContainerObjectSelectionList<TabEntry> {
+    private final class TabList extends CompatList<TabEntry> {
         TabList(Minecraft minecraft, int width, int height, int y) {
             super(minecraft, width, height, y, 24);
         }
@@ -532,7 +533,7 @@ public final class ConfigScreen extends StyledScreen {
     }
 
     // A category: highlighted with an accent bar when chosen, with a count of its unsaved changes.
-    private final class TabEntry extends ContainerObjectSelectionList.Entry<TabEntry> {
+    private final class TabEntry extends CompatList.Entry<TabEntry> {
         private final int index;
 
         TabEntry(int index) {

@@ -1,9 +1,10 @@
 package net.ixdarklord.glazedmenu.internal.style;
 
+import net.ixdarklord.glazedmenu.internal.compat.CompatButton;
+import net.ixdarklord.glazedmenu.internal.compat.GuiGraphicsExtractor;
 import net.ixdarklord.glazedmenu.api.theme.ConfigEffect;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.network.chat.CommonComponents;
@@ -12,7 +13,7 @@ import org.jetbrains.annotations.Nullable;
 
 // A flat button in the config screens' style: plain, accent-filled (the main action), red (destructive), or ghost
 // (just an icon until hovered). It can show an icon, text, or both.
-public class FlatButton extends Button.Plain {
+public class FlatButton extends CompatButton {
     private Style style = Style.NORMAL;
     private @Nullable ConfigIcons.Icon icon;
     private int iconColor;

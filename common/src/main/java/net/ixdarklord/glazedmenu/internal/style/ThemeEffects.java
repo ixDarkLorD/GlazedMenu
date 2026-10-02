@@ -1,14 +1,14 @@
 package net.ixdarklord.glazedmenu.internal.style;
 
+import net.ixdarklord.glazedmenu.internal.compat.GuiGraphicsExtractor;
 import net.ixdarklord.glazedmenu.internal.core.GlazedSettings;
 import net.ixdarklord.glazedmenu.api.config.ConfigTheme;
 import net.ixdarklord.glazedmenu.api.theme.ConfigEffect;
 import net.ixdarklord.glazedmenu.api.theme.ConfigEffects;
 import net.ixdarklord.glazedmenu.internal.core.GlazedMenu;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractWidget;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -17,8 +17,8 @@ import java.util.concurrent.ConcurrentHashMap;
 // then skipped, so one broken effect never breaks a screen.
 public final class ThemeEffects {
     private static final long START = System.nanoTime();
-    private static final Set<Identifier> MISSING = ConcurrentHashMap.newKeySet();
-    private static final Set<Identifier> FAILED = ConcurrentHashMap.newKeySet();
+    private static final Set<ResourceLocation> MISSING = ConcurrentHashMap.newKeySet();
+    private static final Set<ResourceLocation> FAILED = ConcurrentHashMap.newKeySet();
     private static ConfigEffect.Context lastContext = context(0, 0, -1, -1, 0);
 
     private ThemeEffects() {}
@@ -56,7 +56,7 @@ public final class ThemeEffects {
 
     private static void run(ConfigTheme theme, java.util.function.Consumer<ConfigEffect> call) {
         if (!GlazedSettings.themeEffects()) return;
-        for (Identifier id : theme.effects()) {
+        for (ResourceLocation id : theme.effects()) {
             ConfigEffect effect = ConfigEffects.get(id);
             if (effect == null) {
                 if (MISSING.add(id)) GlazedMenu.LOGGER.warn("Config screens: no effect is registered as {}", id);

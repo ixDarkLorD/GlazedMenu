@@ -1,4 +1,4 @@
 include("common")
 include(project_loaders.split(","))
 
-apply from: "https://raw.githubusercontent.com/ixDarkLorD/ModResources/main/gradle/v4/settings.gradle"
+apply from: "${providers.gradleProperty("shared_scripts_url").getOrElse("https://raw.githubusercontent.com/ixDarkLorD/ModResources/main/gradle/v4")}/settings.gradle"

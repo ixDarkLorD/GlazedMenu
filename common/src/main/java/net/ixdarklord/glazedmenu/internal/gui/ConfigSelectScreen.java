@@ -1,5 +1,10 @@
 package net.ixdarklord.glazedmenu.internal.gui;
 
+import net.ixdarklord.glazedmenu.internal.compat.CompatList;
+import net.ixdarklord.glazedmenu.internal.compat.GuiGraphicsExtractor;
+import net.ixdarklord.glazedmenu.internal.compat.KeyEvent;
+import net.ixdarklord.glazedmenu.internal.compat.MouseButtonEvent;
+import net.ixdarklord.glazedmenu.internal.compat.RenderPipelines;
 import net.ixdarklord.glazedmenu.internal.core.Names;
 import net.ixdarklord.glazedmenu.internal.source.Access;
 import net.ixdarklord.glazedmenu.api.config.ConfigNode;
@@ -22,23 +27,18 @@ import net.ixdarklord.glazedmenu.internal.core.GlazedMenu;
 import net.ixdarklord.glazedmenu.internal.gui.style.ThemeResources;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.ContainerObjectSelectionList;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.narration.NarratableEntry;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.input.KeyEvent;
-import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.sounds.SoundEvents;
-import org.joml.Matrix3x2fStack;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -58,7 +58,7 @@ public final class ConfigSelectScreen extends StyledScreen {
     // A taller header than the other screens, so the mod's icon is large enough to recognize.
     private static final int HEADER_HEIGHT = 46;
     private static final int HEADER_ICON = 32;
-    private static final Identifier MOD_LIST_ICON = GlazedMenu.rl("textures/gui/mod_list.png");
+    private static final ResourceLocation MOD_LIST_ICON = GlazedMenu.rl("textures/gui/mod_list.png");
     // Cards are portrait, 1:1.3, sized to fit: as wide as a row allows up to the maximum, and never taller than the list.
     private static final int TILE_MIN_WIDTH = 84;
     private static final int TILE_MAX_WIDTH = 116;
@@ -330,7 +330,7 @@ public final class ConfigSelectScreen extends StyledScreen {
         Component mark = Component.literal(name.isEmpty() ? "?" : name.substring(0, 1).toUpperCase(java.util.Locale.ROOT)).withStyle(ChatFormatting.BOLD);
         // The font's glyphs are 8 pixels tall; scaled to fill about two thirds of the square.
         float scale = Math.max(1, Math.round(size * 0.66F / 8F * 2) / 2F);
-        Matrix3x2fStack pose = graphics.pose();
+        GuiGraphicsExtractor.Pose pose = graphics.pose();
         pose.pushMatrix();
         pose.translate(x + size / 2F, y + size / 2F);
         pose.scale(scale, scale);
@@ -362,7 +362,7 @@ public final class ConfigSelectScreen extends StyledScreen {
         return ThemeResources.resolve(config.modId(), config.theme());
     }
 
-    private final class Rows extends ContainerObjectSelectionList<Row> {
+    private final class Rows extends CompatList<Row> {
         // The cards of every mod use the whole width; tiles and search results stay narrower, easier to read.
         boolean wide;
 
@@ -400,7 +400,7 @@ public final class ConfigSelectScreen extends StyledScreen {
         }
     }
 
-    private abstract static class Row extends ContainerObjectSelectionList.Entry<Row> {
+    private abstract static class Row extends CompatList.Entry<Row> {
         abstract int height();
 
         @Override
@@ -671,7 +671,7 @@ public final class ConfigSelectScreen extends StyledScreen {
         private final @Nullable UnaryOperator<Screen> nativeScreen;
         private final ConfigTheme theme;
         private final Component label;
-        private final Identifier artwork;
+        private final ResourceLocation artwork;
         int x;
         int y;
         int width;
@@ -772,7 +772,7 @@ public final class ConfigSelectScreen extends StyledScreen {
             int width = this.width;
             int height = this.height;
 
-            Matrix3x2fStack pose = graphics.pose();
+            GuiGraphicsExtractor.Pose pose = graphics.pose();
             pose.pushMatrix();
             pose.translate(this.x + width / 2F, this.y + height / 2F);
             pose.scale(scale, scale);
@@ -831,8 +831,8 @@ public final class ConfigSelectScreen extends StyledScreen {
 
     // A config's card artwork: the mod's own for that config if it ships one
     // (assets/<modid>/textures/gui/config/cards/<config name>.png), otherwise Glazed Menu's for its scope.
-    private static Identifier artworkOf(Config config) {
-        Identifier own = Identifier.fromNamespaceAndPath(config.modId(), "textures/gui/config/cards/" + config.name() + ".png");
+    private static ResourceLocation artworkOf(Config config) {
+        ResourceLocation own = ResourceLocation.fromNamespaceAndPath(config.modId(), "textures/gui/config/cards/" + config.name() + ".png");
         if (Minecraft.getInstance().getResourceManager().getResource(own).isPresent()) return own;
         return GlazedMenu.rl("textures/gui/cards/" + config.scope().name().toLowerCase(Locale.ROOT) + ".png");
     }

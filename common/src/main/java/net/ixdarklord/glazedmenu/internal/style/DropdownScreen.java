@@ -1,9 +1,11 @@
 package net.ixdarklord.glazedmenu.internal.style;
 
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.ixdarklord.glazedmenu.internal.compat.Compat;
+import net.ixdarklord.glazedmenu.internal.compat.CompatScreen;
+import net.ixdarklord.glazedmenu.internal.compat.GuiGraphicsExtractor;
+import net.ixdarklord.glazedmenu.internal.compat.KeyEvent;
+import net.ixdarklord.glazedmenu.internal.compat.MouseButtonEvent;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.input.KeyEvent;
-import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector2i;
@@ -16,7 +18,7 @@ import java.util.function.Function;
 // A list of choices dropping down from a box (or up, when there's no room below), over the screen it was opened from,
 // which stays visible. Clicking a choice picks it; clicking elsewhere or Esc closes it. The arrow keys move the
 // highlight, Enter picks it, and the wheel scrolls a long list.
-public final class DropdownScreen<T> extends Screen implements Overlay {
+public final class DropdownScreen<T> extends CompatScreen implements Overlay {
     private static final int ROW_HEIGHT = 14;
     private static final int MAX_ROWS = 8;
     private static final int TOOLTIP_WIDTH = 200;
@@ -70,7 +72,7 @@ public final class DropdownScreen<T> extends Screen implements Overlay {
 
     @Override
     protected void init() {
-        if (this.parent != null) this.parent.init(this.width, this.height);
+        if (this.parent != null) Compat.init(this.parent, this.width, this.height);
         this.rows = Math.min(MAX_ROWS, this.values.size());
         int widest = this.values.stream().mapToInt(value -> this.font.width(this.name.apply(value))).max().orElse(0) + 28;
         this.panelWidth = Math.min(Math.max(this.anchorWidth, widest), this.width - 8);
@@ -83,16 +85,16 @@ public final class DropdownScreen<T> extends Screen implements Overlay {
 
     @Override
     public void resize(int width, int height) {
-        if (this.parent != null) this.parent.resize(width, height);
+        if (this.parent != null) Compat.resize(this.parent, width, height);
         super.resize(width, height);
     }
 
     @Override
     public void extractBackground(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float a) {
         if (this.parent != null) {
-            this.parent.extractBackground(graphics, -1, -1, a);
+            Compat.extractBackground(this.parent, graphics, -1, -1, a);
             graphics.nextStratum();
-            this.parent.extractRenderState(graphics, -1, -1, a);
+            Compat.extractRenderState(this.parent, graphics, -1, -1, a);
             graphics.nextStratum();
         }
     }

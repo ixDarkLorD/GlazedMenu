@@ -1,5 +1,8 @@
 package net.ixdarklord.glazedmenu.internal.gui;
 
+import net.ixdarklord.glazedmenu.internal.compat.Compat;
+import net.ixdarklord.glazedmenu.internal.compat.CompatList;
+import net.ixdarklord.glazedmenu.internal.compat.GuiGraphicsExtractor;
 import net.ixdarklord.glazedmenu.internal.source.Values;
 import net.ixdarklord.glazedmenu.api.config.ConfigDependency;
 import net.ixdarklord.glazedmenu.api.config.ConfigNode;
@@ -15,7 +18,6 @@ import net.ixdarklord.glazedmenu.internal.style.FlatButton;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.ContainerObjectSelectionList;
 import net.minecraft.client.gui.components.events.GuiEventListener;
@@ -32,7 +34,7 @@ import java.util.Optional;
 
 // The rows of a config page: settings (name, description, editor, reset), section headers and notices. The list
 // draws no background of its own; it sits on the screen's panel.
-public final class ConfigEntryList extends ContainerObjectSelectionList<ConfigEntryList.Entry> {
+public final class ConfigEntryList extends CompatList<ConfigEntryList.Entry> {
     private static final int TOOLTIP_WIDTH = 260;
     private static final int STATUS_ICON = 11;
 
@@ -80,7 +82,7 @@ public final class ConfigEntryList extends ContainerObjectSelectionList<ConfigEn
         ConfigStyle.rect(graphics, x, this.scrollBarY(), 3, this.scrollerHeight(), ConfigStyle.withAlpha(ConfigStyle.accent(), 0xB0));
     }
 
-    public abstract static class Entry extends ContainerObjectSelectionList.Entry<Entry> {
+    public abstract static class Entry extends CompatList.Entry<Entry> {
         abstract int preferredHeight();
 
         void refresh() {}
@@ -144,8 +146,8 @@ public final class ConfigEntryList extends ContainerObjectSelectionList<ConfigEn
             this.reset.active = editable && !this.session.isDefault(this.value);
             this.reset.setPosition(x + width - 22, y + (height - 20) / 2);
             widget.setPosition(this.reset.getX() - 4 - widget.getWidth(), y + (height - widget.getHeight()) / 2);
-            widget.extractRenderState(graphics, mouseX, mouseY, a);
-            this.reset.extractRenderState(graphics, mouseX, mouseY, a);
+            Compat.extractRenderState(widget, graphics, mouseX, mouseY, a);
+            Compat.extractRenderState(this.reset, graphics, mouseX, mouseY, a);
 
             int textX = x + 10;
             int labelWidth = widget.getX() - textX - 8;

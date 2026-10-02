@@ -5,9 +5,11 @@
   "package": "net.ixdarklord.glazedmenu.internal.mixin",
   "plugin": "net.ixdarklord.glazedmenu.internal.mixin.GlazedMixinPlugin",
   "client": [
+    "EditBoxAccessor",
     "GuiFadeMixin",
     "MinecraftMixin",
     "PauseScreenMixin",
+    "ScreenInvoker",
     "TitleScreenMixin"
   ],
   "injectors": {

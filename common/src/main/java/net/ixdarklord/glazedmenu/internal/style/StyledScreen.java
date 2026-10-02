@@ -1,16 +1,17 @@
 package net.ixdarklord.glazedmenu.internal.style;
 
+import net.ixdarklord.glazedmenu.internal.compat.CompatScreen;
+import net.ixdarklord.glazedmenu.internal.compat.GuiGraphicsExtractor;
 import net.ixdarklord.glazedmenu.internal.core.GlazedSettings;
 import net.ixdarklord.glazedmenu.api.config.ConfigTheme;
 import net.minecraft.ChatFormatting;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.Nullable;
 
 // A full-screen config screen: the theme's background, a top bar (title), a body, and a bottom bar (actions).
 // Subclasses place widgets with the frame's coordinates and draw static content in extractPanels.
-public abstract class StyledScreen extends Screen {
+public abstract class StyledScreen extends CompatScreen {
     protected static final int MARGIN = 10;
     protected static final int BAR_HEIGHT = 28;
     protected static final int GAP = 6;

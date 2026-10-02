@@ -1,16 +1,16 @@
 package net.ixdarklord.glazedmenu.internal.style;
 
+import net.ixdarklord.glazedmenu.internal.compat.GuiGraphicsExtractor;
+import net.ixdarklord.glazedmenu.internal.compat.RenderPipelines;
 import net.ixdarklord.glazedmenu.internal.core.GlazedSettings;
 import net.ixdarklord.glazedmenu.api.config.ConfigColorScheme;
 import net.ixdarklord.glazedmenu.api.config.ConfigTheme;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.locale.Language;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.FormattedText;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.FormattedCharSequence;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,7 +20,7 @@ import java.util.Map;
 // The look shared by every config screen: panels with softened corners, drawn in the current theme's colors, and
 // the themed background.
 public final class ConfigStyle {
-    private static final Map<Identifier, int[]> TEXTURE_SIZES = new HashMap<>();
+    private static final Map<ResourceLocation, int[]> TEXTURE_SIZES = new HashMap<>();
     private static ConfigTheme theme = ConfigTheme.DEFAULT;
 
     private ConfigStyle() {}
@@ -235,7 +235,7 @@ public final class ConfigStyle {
         Minecraft minecraft = Minecraft.getInstance();
         ConfigTheme current = theme;
         ConfigColorScheme colors = current.colors(mode());
-        Identifier texture = current.background();
+        ResourceLocation texture = current.background();
         boolean textured = texture != null && (minecraft.level == null || current.backgroundInWorld());
         float textureOpacity = textured ? GlazedSettings.textureOpacity(current.textureOpacity()) : 0;
         // What shows through: the panorama or the world, blurred.
@@ -292,7 +292,7 @@ public final class ConfigStyle {
         return withAlpha(mix(upper, lower, blend), GlazedSettings.panelAlpha(Math.round(faint + (strong - faint) * edge)));
     }
 
-    private static void texture(GuiGraphicsExtractor graphics, Identifier texture, ConfigTheme current, int width, int height, int color) {
+    private static void texture(GuiGraphicsExtractor graphics, ResourceLocation texture, ConfigTheme current, int width, int height, int color) {
         int[] size = textureSize(texture);
         int textureWidth = size[0];
         int textureHeight = size[1];
@@ -318,11 +318,19 @@ public final class ConfigStyle {
     }
 
     // Read once from the loaded texture; a missing texture shows as the missing-texture checkerboard.
-    public static int[] textureSize(Identifier texture) {
+    public static int[] textureSize(ResourceLocation texture) {
         return TEXTURE_SIZES.computeIfAbsent(texture, id -> {
             try {
-                var gpuTexture = Minecraft.getInstance().getTextureManager().getTexture(id).getTexture();
-                return new int[]{Math.max(1, gpuTexture.getWidth(0)), Math.max(1, gpuTexture.getHeight(0))};
+                // 1.21.1's textures don't know their size: a generated one has its image, a file is read for it.
+                Minecraft minecraft = Minecraft.getInstance();
+                if (minecraft.getTextureManager().getTexture(id) instanceof net.minecraft.client.renderer.texture.DynamicTexture dynamic && dynamic.getPixels() != null) {
+                    return new int[]{Math.max(1, dynamic.getPixels().getWidth()), Math.max(1, dynamic.getPixels().getHeight())};
+                }
+                try (var stream = minecraft.getResourceManager().open(id); var image = com.mojang.blaze3d.platform.NativeImage.read(stream)) {
+                    return new int[]{Math.max(1, image.getWidth()), Math.max(1, image.getHeight())};
+                }
+            } catch (java.io.IOException e) {
+                return new int[]{256, 256};
             } catch (RuntimeException e) {
                 return new int[]{256, 256};
             }
@@ -330,7 +338,7 @@ public final class ConfigStyle {
     }
 
     /** Forgets texture sizes, after resources reload. */
-    public static void clearTextureCache(@Nullable Identifier texture) {
+    public static void clearTextureCache(@Nullable ResourceLocation texture) {
         if (texture == null) TEXTURE_SIZES.clear();
         else TEXTURE_SIZES.remove(texture);
     }
