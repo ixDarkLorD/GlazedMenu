@@ -1,0 +1,34 @@
+apply from: "https://raw.githubusercontent.com/ixDarkLorD/ModResources/main/gradle/v4/common.gradle"
+
+// A plain jar of this module's own classes (Shadow's default bundles the whole runtime classpath).
+shadowJar {
+    configurations = []
+    archiveClassifier = null
+}
+
+// The config systems Glazed Menu reads, compiled against but never bundled: each is only touched once its mod is loaded.
+// NeoForge's config API (Forge Config API Port's copies, for common code; the classes Glazed Menu uses are the same as
+// NeoForge's), Cloth Config, YACL, MidnightLib, MezzConfig (their Fabric jars; the classes Glazed Menu uses are the same on NeoForge).
+repositories {
+    maven {
+        name = "FTB"
+        url = "https://maven.ftb.dev/releases"
+        content { includeGroup "dev.ftb.mods" }
+    }
+}
+
+dependencies {
+    // CoolCatLib: Core and Canvas, for the optional integrations (internal.integration.coolcat and .canvas).
+    compileOnly "net.ixdarklord.coolcatlib:coolcatlib-core-common:${coolcatlib_version}"
+    compileOnly "net.ixdarklord.coolcatlib:coolcatlib-canvas-common:${coolcatlib_version}"
+    compileOnly(libs.forgeconfigapiport.common) { transitive = false }
+    compileOnly(libs.forgeconfigapiport.fabric) { transitive = false }
+    compileOnly "com.electronwill.night-config:core:3.8.3"
+    compileOnly("maven.modrinth:cloth-config:${cloth_config_version}") { transitive = false }
+    compileOnly("maven.modrinth:yacl:${yacl_version}") { transitive = false }
+    compileOnly("maven.modrinth:midnightlib:${midnightlib_version}") { transitive = false }
+    // MezzConfig (JEI's config library): its API alone.
+    compileOnly("net.mezzdev.config:mezz_config-26.1.2-config-api:${mezz_config_version}") { transitive = false }
+    // FTB Library: its common jar.
+    compileOnly("dev.ftb.mods:ftb-library:${ftb_library_version}") { transitive = false }
+}

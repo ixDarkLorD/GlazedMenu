@@ -1,0 +1,113 @@
+package net.ixdarklord.glazedmenu.internal.source.spec;
+
+import com.electronwill.nightconfig.core.UnmodifiableConfig;
+import fuzs.forgeconfigapiport.fabric.impl.core.ForgeConfigSpecAdapter;
+import net.ixdarklord.glazedmenu.api.config.RestartRequirement;
+import net.minecraftforge.common.ForgeConfigSpec;
+import net.neoforged.fml.config.IConfigSpec;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
+
+// A Forge ForgeConfigSpec, as Forge Config API Port registers it on Fabric: wrapped in its copy of NeoForge's configs.
+public record ForgeSpecView(ForgeConfigSpec spec) implements SpecView {
+    public static @Nullable SpecView of(IConfigSpec spec) {
+        return spec instanceof ForgeConfigSpecAdapter adapter && adapter.spec() instanceof ForgeConfigSpec forgeSpec ? new ForgeSpecView(forgeSpec) : null;
+    }
+
+    @Override
+    public UnmodifiableConfig values() {
+        return this.spec.getValues();
+    }
+
+    @Override
+    public @Nullable String groupComment(List<String> path) {
+        return this.spec.getLevelComment(path);
+    }
+
+    @Override
+    public @Nullable String groupTranslationKey(List<String> path) {
+        return this.spec.getLevelTranslationKey(path);
+    }
+
+    @Override
+    public @Nullable ValueView value(Object handle) {
+        return handle instanceof ForgeConfigSpec.ConfigValue<?> value ? new Value<>(this.spec, value) : null;
+    }
+
+    @Override
+    public boolean isLoaded() {
+        return this.spec.isLoaded();
+    }
+
+    @Override
+    public void save() {
+        this.spec.save();
+    }
+
+    private record Value<T>(ForgeConfigSpec spec, ForgeConfigSpec.ConfigValue<T> handle) implements ValueView {
+        private ForgeConfigSpec.ValueSpec valueSpec() {
+            return this.spec.getSpec().get(this.handle.getPath());
+        }
+
+        @Override
+        public List<String> path() {
+            return this.handle.getPath();
+        }
+
+        @Override
+        public Object get() {
+            return this.handle.get();
+        }
+
+        @Override
+        @SuppressWarnings("unchecked")
+        public void set(Object value) {
+            this.handle.set((T) value);
+        }
+
+        @Override
+        public Object defaultValue() {
+            return this.handle.getDefault();
+        }
+
+        @Override
+        public @Nullable Class<?> valueClass() {
+            return this.valueSpec().getClazz();
+        }
+
+        @Override
+        public @Nullable String comment() {
+            return this.valueSpec().getComment();
+        }
+
+        @Override
+        public @Nullable String translationKey() {
+            return this.valueSpec().getTranslationKey();
+        }
+
+        @Override
+        @SuppressWarnings("rawtypes")
+        public @Nullable Number min() {
+            ForgeConfigSpec.Range range = this.valueSpec().getRange();
+            return range != null && range.getMin() instanceof Number min ? min : null;
+        }
+
+        @Override
+        @SuppressWarnings("rawtypes")
+        public @Nullable Number max() {
+            ForgeConfigSpec.Range range = this.valueSpec().getRange();
+            return range != null && range.getMax() instanceof Number max ? max : null;
+        }
+
+        @Override
+        public RestartRequirement restart() {
+            return this.valueSpec().needsWorldRestart() ? RestartRequirement.WORLD : RestartRequirement.NONE;
+        }
+
+        @Override
+        public boolean test(Object value) {
+            return this.valueSpec().test(value);
+        }
+    }
+}

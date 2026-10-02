@@ -1,0 +1,55 @@
+modLoader = "javafml"
+loaderVersion = "[${min_neoforge_fml_version},)"
+issueTrackerURL = "${mod_issue_url}"
+license = "${mod_license}"
+
+[[mods]]
+modId = "${modid}"
+displayName = "${mod_name}"
+version = "${mc_version}+${mod_version}"
+description = "${mod_description}"
+authors = "${mod_author}"
+logoFile = "mod_logo.png"
+updateJSONURL = "${mod_neoforge_update_url}"
+
+[[mixins]]
+config = "${modid}.common.mixins.json"
+
+# Not needed: with CoolCatLib's mods installed, Glazed Menu shows Core's configs and Canvas's config screen effects, so it
+# sets up after them.
+[[dependencies.${modid}]]
+modId = "coolcatcore"
+type = "optional"
+versionRange = "[${coolcatlib_version},)"
+ordering = "AFTER"
+side = "CLIENT"
+
+[[dependencies.${modid}]]
+modId = "coolcatcanvas"
+type = "optional"
+versionRange = "[${coolcatlib_version},)"
+ordering = "AFTER"
+side = "CLIENT"
+
+# Not needed, but when Configured is installed Glazed Menu sets its screens up after it, so the screens of mods with
+# CoolCatLib configs are Glazed Menu's.
+[[dependencies.${modid}]]
+modId = "configured"
+type = "optional"
+versionRange = "*"
+ordering = "AFTER"
+side = "CLIENT"
+
+[[dependencies.${modid}]]
+modId = "neoforge"
+type = "required"
+versionRange = "[${project.supported_min_neoforge_version},)"
+ordering = "NONE"
+side = "CLIENT"
+
+[[dependencies.${modid}]]
+modId = "minecraft"
+type = "required"
+versionRange = "[${project.supported_min_mc_version},${max_mc_version}]"
+ordering = "NONE"
+side = "CLIENT"

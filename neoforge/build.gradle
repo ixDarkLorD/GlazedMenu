@@ -1,0 +1,6 @@
+apply from: "https://raw.githubusercontent.com/ixDarkLorD/ModResources/main/gradle/v4/neoforge.gradle"
+
+// Uploaded as <minecraft>+<mod version> (the shared scripts would prefix it with "<minecraft>-").
+publisher {
+    setProjectVersion("${project.version}")
+}

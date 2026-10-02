@@ -1,0 +1,11 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "compatibilityLevel": "JAVA_17",
+  "package": "net.ixdarklord.glazedmenu.internal.mixin.fabric",
+  "plugin": "net.ixdarklord.glazedmenu.internal.mixin.GlazedMixinPlugin",
+  "client": [],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
