@@ -11,7 +11,7 @@ apply from: "https://raw.githubusercontent.com/ixDarkLorD/ModResources/main/grad
 // Versions read <minecraft>+<mod version>, like 26.1.2+1.0 (the shared scripts' own form is 26.1.2-1).
 subprojects {
     version = "${libs.versions.minecraft.get()}+${mod_version}"
-    // Every jar carries the mod's license (All Rights Reserved).
+    // Every jar carries the mod's license (MPL-2.0).
     tasks.withType(Jar).configureEach {
         from(rootProject.file("LICENSE"))
     }
