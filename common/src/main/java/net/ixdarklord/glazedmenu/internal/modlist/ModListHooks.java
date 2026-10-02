@@ -36,7 +36,10 @@ public final class ModListHooks {
     public static void addModsButton(Screen screen, List<? extends GuiEventListener> children, Consumer<Button> add, boolean titleScreen) {
         if (!GlazedSettings.modsButton() || GlazedPlatform.get().isModLoaded("modmenu")) return;
         for (GuiEventListener child : children) {
-            if (child instanceof AbstractWidget widget && (MODS_BUTTONS.contains(key(widget)) || widget.getMessage().getString().equalsIgnoreCase("Mods"))) return;
+            if (!(child instanceof AbstractWidget widget)) continue;
+            // A button without a translation key has none to match (the set can't be asked about null).
+            String key = key(widget);
+            if (key != null && MODS_BUTTONS.contains(key) || widget.getMessage().getString().equalsIgnoreCase("Mods")) return;
         }
         Component name = Component.translatableWithFallback("glazedmenu.mods.button", "Mods");
         for (GuiEventListener child : children) {

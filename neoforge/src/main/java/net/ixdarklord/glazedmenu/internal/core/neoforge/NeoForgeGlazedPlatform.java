@@ -94,9 +94,15 @@ final class NeoForgeGlazedPlatform implements GlazedPlatform {
         return ModList.get().getModContainerById(modId).map(container -> container.getModInfo().getDisplayName());
     }
 
+    // A mod's square icon (iconFile, since NeoForge 26.2), else its logo (logoFile, the older name).
+    private static Optional<String> iconFile(IModInfo mod) {
+        Optional<String> icon = mod.getConfig().<String>getConfigElement("iconFile");
+        return icon.isPresent() ? icon : mod.getLogoFile();
+    }
+
     @Override
     public Optional<byte[]> readModIcon(String modId) {
-        return ModList.get().getModContainerById(modId).flatMap(container -> container.getModInfo().getLogoFile().flatMap(logo -> {
+        return ModList.get().getModContainerById(modId).flatMap(container -> iconFile(container.getModInfo()).flatMap(logo -> {
             try (InputStream stream = container.getModInfo().getOwningFile().getFile().getContents().openFile(logo)) {
                 return stream == null ? Optional.empty() : Optional.of(stream.readAllBytes());
             } catch (IOException e) {
