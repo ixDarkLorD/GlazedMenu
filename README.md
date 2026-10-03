@@ -1,10 +1,10 @@
 <p align="center"><img src="common/src/main/resources/mod_logo.png" width="160" alt="Glazed Menu"></p>
 <h1 align="center">Glazed Menu</h1>
 <p align="center"><b>A glassy mod list and config screens for every mod.</b><br>
-Client side · Fabric &amp; NeoForge · Minecraft 26.1 – 26.1.2</p>
+Client side · Fabric, NeoForge &amp; Forge · Minecraft 1.20 – 26.3</p>
 <hr>
 
-Glazed Menu replaces Mod Menu's and NeoForge's mod lists with its own, and gives the configs of almost any mod a
+Glazed Menu replaces Mod Menu's, NeoForge's and Forge's mod lists with its own, and gives the configs of almost any mod a
 clean, themed screen. It needs no other mod.
 
 ## The mod list
@@ -40,14 +40,14 @@ Glazed Menu.
 }
 ```
 
-**NeoForge**, in `META-INF/neoforge.mods.toml`:
+**NeoForge and Forge**, in `neoforge.mods.toml` or `mods.toml`:
 ```toml
 [modproperties.yourmodid]
 library = true
 ```
 
 ### Update notices
-**NeoForge** uses your mod's usual `updateJSONURL`, so there is nothing to add.
+**NeoForge and Forge** use your mod's usual `updateJSONURL`, so there is nothing to add.
 
 **Fabric**: point Glazed Menu at an update file in `fabric.mod.json`:
 ```json
@@ -55,14 +55,14 @@ library = true
   "glazedmenu": { "update_json": "https://example.com/updates/yourmodid.json" }
 }
 ```
-The file uses NeoForge's update JSON format. Glazed Menu takes the `<minecraft>-recommended` version for the running
-game (or `<minecraft>-latest`), and shows a notice when it's newer than the installed one:
+The file uses the Forge and NeoForge update JSON format. Glazed Menu takes the `<minecraft>-recommended` version for
+the running game (or `<minecraft>-latest`), and shows a notice when it's newer than the installed one:
 ```json
 {
   "homepage": "https://modrinth.com/mod/yourmod",
   "promos": {
-    "26.1.2-recommended": "1.2.0",
-    "26.1.2-latest": "1.3.0-beta"
+    "1.21.1-recommended": "1.2.0",
+    "1.21.1-latest": "1.3.0-beta"
   }
 }
 ```
@@ -88,17 +88,18 @@ optional; colors are `"#RRGGBB"` or `"#AARRGGBB"`:
 - `background_mode`: `stretch`, `cover` or `tile` (with `tile_size`). Also `texture_opacity`, `background_in_world`,
   `popup_sprite` and `effects`.
 
-With CoolCatLib: Core, its theme API (`ConfigTheme.builder()`, `ConfigTheme.setForMod(...)`) themes your screens too.
-
 ### Config card artwork
 Each of your configs gets a card in Glazed Menu's config screens. To use your own artwork instead of the built-in one
 for its kind (client, server, ...), ship `assets/<modid>/textures/gui/config/cards/<config name>.png`. The image is
 portrait (about 1:1.3), for example 512×672.
 
 ### Your own config screen
-If your mod has its own config screen (Mod Menu's `ModMenuApi`, NeoForge's `IConfigScreenFactory`), its Settings
-button opens it. Generic screens made for any mod (NeoForge's, Configured's, Forge Config API Port's, MidnightLib's) are
-replaced by Glazed Menu's when Glazed Menu can read the configs behind them.
+If your mod has its own config screen (Mod Menu's `ModMenuApi`, NeoForge's `IConfigScreenFactory`, Forge's
+`ConfigScreenFactory`), its Settings button opens it.
+
+## Versions
+Each Minecraft version lives on its own branch: `main` (26.1 – 26.1.2), `26.2`, `26.3`, `1.21-1.21.1` (also Forge) and
+`1.20-1.20.1` (Fabric and Forge).
 
 ## Building
 `./gradlew build`. CoolCatLib: Core and Canvas (optional integrations) are compiled against from Maven, including
