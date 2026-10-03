@@ -115,7 +115,8 @@ public final class GlazedModsScreen extends StyledScreen {
         // Every mod a player installs, libraries included; not the modules bundled inside another mod, nor the loader's parts.
         ALL("glazedmenu.mods.filter.all", "All", mod -> !ModCatalog.isChild(mod) && (!LOADER_PARTS.contains(mod.id()) || GlazedSettings.showLibraries())),
         CONFIGURABLE("glazedmenu.mods.filter.configurable", "With Settings", mod -> ModCatalog.hasSettings(mod.id())),
-        LIBRARIES("glazedmenu.mods.filter.libraries", "Libraries", mod -> mod.library() || ModCatalog.isChild(mod));
+        // Libraries, and the mods that bundle some (their modules are grouped under them, as under All).
+        LIBRARIES("glazedmenu.mods.filter.libraries", "Libraries", mod -> !ModCatalog.isChild(mod) && (mod.library() || !ModCatalog.children(mod.id()).isEmpty()));
 
         final String key;
         final String fallback;
@@ -233,9 +234,9 @@ public final class GlazedModsScreen extends StyledScreen {
         this.actions.clear();
         this.actions.add(FlatButton.of(Component.translatableWithFallback("glazedmenu.mods.settings", "Settings"), 80, button -> this.openSettings())
                 .style(FlatButton.Style.PRIMARY).withIcon(ConfigIcons.GEAR));
-        this.actions.add(FlatButton.of(Component.translatableWithFallback("glazedmenu.mods.website", "Website"), 70, button -> this.openLink(this.selected == null ? null : this.selected.homepage())));
-        this.actions.add(FlatButton.of(Component.translatableWithFallback("glazedmenu.mods.issues", "Issues"), 64, button -> this.openLink(this.selected == null ? null : this.selected.issues())));
-        this.actions.add(FlatButton.of(Component.translatableWithFallback("glazedmenu.mods.source", "Source"), 64, button -> this.openLink(this.selected == null ? null : this.selected.sources())));
+        this.actions.add(FlatButton.of(Component.translatableWithFallback("glazedmenu.mods.website", "Website"), 84, button -> this.openLink(this.selected == null ? null : this.selected.homepage())).withIcon(ConfigIcons.GLOBE));
+        this.actions.add(FlatButton.of(Component.translatableWithFallback("glazedmenu.mods.issues", "Issues"), 74, button -> this.openLink(this.selected == null ? null : this.selected.issues())).withIcon(ConfigIcons.BUG));
+        this.actions.add(FlatButton.of(Component.translatableWithFallback("glazedmenu.mods.source", "Source"), 78, button -> this.openLink(this.selected == null ? null : this.selected.sources())).withIcon(ConfigIcons.CODE));
         this.actions.forEach(this::addRenderableWidget);
         this.refilter(true);
         if (this.drawer != null) this.drawer.setScrollAmount(lastScroll);
@@ -309,10 +310,10 @@ public final class GlazedModsScreen extends StyledScreen {
         return (int) ModCatalog.all().stream().filter(filter.test).filter(this::matches).count();
     }
 
-    // Under All, a mod's bundled mods (Fabric API's modules) are a group under it: hidden until it's opened, or shown when
-    // the search finds them. The other filters list every mod on its own.
+    // Under All and Libraries, a mod's bundled mods (Fabric API's modules) are a group under it: hidden until it's opened,
+    // or shown when the search finds them. With Settings lists every mod on its own.
     private boolean grouped() {
-        return this.filter == Filter.ALL;
+        return this.filter == Filter.ALL || this.filter == Filter.LIBRARIES;
     }
 
     /** The mods grouped under this one in the drawer. */
@@ -394,7 +395,7 @@ public final class GlazedModsScreen extends StyledScreen {
                 mod != null && isLink(mod.issues()),
                 mod != null && isLink(mod.sources())
         };
-        int[] natural = {80, 70, 64, 64};
+        int[] natural = {80, 84, 74, 78};
         int total = 0;
         int count = 0;
         for (int i = 0; i < natural.length; i++) {
@@ -542,7 +543,8 @@ public final class GlazedModsScreen extends StyledScreen {
         Component count = Component.translatableWithFallback("glazedmenu.mods.count", "%s loaded", total);
         pose.pushMatrix();
         pose.translate(left + mark + 3 + titleWidth + 6, titleTop + 7 * titleScale - 7);
-        graphics.text(this.font, count, 0, 0, ConfigStyle.colors().textDim(), false);
+        // The header floats on the background itself: on the light scheme the dim text color is too faint there.
+        graphics.text(this.font, count, 0, 0, ConfigStyle.mode() == ConfigTheme.Mode.LIGHT ? ConfigStyle.colors().text() : ConfigStyle.colors().textDim(), false);
         pose.popMatrix();
         // How many mods have updates: a small green capsule (an arrow and the number) after the count, where it fits.
         long updates = ModUpdates.count();
@@ -879,7 +881,10 @@ public final class GlazedModsScreen extends StyledScreen {
             // A group's mods hang off a line in their parent's color.
             if (this.tray != null) {
                 int trayAccent = accentOf(this.tray.id());
-                graphics.fill(x + 4, y - 2, x + 5, this.last ? y + ROW_HEIGHT / 2 + 1 : y + ROW_HEIGHT + 2, ConfigStyle.withAlpha(trayAccent, 0x90));
+                // Each row draws just its own stretch of the line (the gap above it and the row), so the stretches meet
+                // without overlapping: the line is translucent, and an overlap would show as a brighter dash.
+                int gap = this.getHeight() - ROW_HEIGHT;
+                graphics.fill(x + 4, y - gap, x + 5, this.last ? y + ROW_HEIGHT / 2 + 1 : y + ROW_HEIGHT, ConfigStyle.withAlpha(trayAccent, 0x90));
                 graphics.fill(x + 5, y + ROW_HEIGHT / 2, x + INDENT - 1, y + ROW_HEIGHT / 2 + 1, ConfigStyle.withAlpha(trayAccent, 0x90));
                 x += INDENT;
                 width -= INDENT;
