@@ -1,1 +1,0 @@
-A frosted-glass mod list and config screens for every mod, with grid and list views, groups, themes and update notices.
