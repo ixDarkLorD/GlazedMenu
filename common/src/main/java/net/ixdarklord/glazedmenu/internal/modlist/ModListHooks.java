@@ -18,7 +18,8 @@ import java.util.function.Consumer;
 // Where Glazed Menu's mod list comes in: in place of Mod Menu's and NeoForge's as they open, and as a Mods button on the
 // title and pause screens when nothing else put one there.
 public final class ModListHooks {
-    private static final Set<String> MOD_LISTS = Set.of("com.terraformersmc.modmenu.gui.ModsScreen", "net.neoforged.neoforge.client.gui.ModListScreen");
+    private static final Set<String> MOD_LISTS = Set.of("com.terraformersmc.modmenu.gui.ModsScreen", "net.neoforged.neoforge.client.gui.ModListScreen",
+            "net.neoforged.neoforge.client.gui.modlist.ModListScreen");
     private static final Set<String> MODS_BUTTONS = Set.of("fml.menu.mods", "modmenu.title", "glazedmenu.mods.button");
 
     private ModListHooks() {}
