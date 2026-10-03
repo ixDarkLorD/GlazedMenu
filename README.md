@@ -33,11 +33,10 @@ Glazed Menu works with your mod as it is. These are optional extras, all read fr
 Glazed Menu.
 
 ### List your mod under Libraries
-**Fabric**, in `fabric.mod.json` (Mod Menu's own badge is read too):
+**Fabric**, in `fabric.mod.json`:
 ```json
 "custom": {
-  "glazedmenu": { "library": true },
-  "modmenu": { "badges": ["library"] }
+  "glazedmenu": { "library": true }
 }
 ```
 
