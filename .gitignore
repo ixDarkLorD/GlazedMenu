@@ -28,5 +28,5 @@ logs/
 # Smoke test output (tools/autotest/run.py)
 tools/autotest/results/
 
-# Screenshot bundles made for uploading
-publishing/*.zip
+# Page text, logo and screenshots for the mod's pages: kept locally, not in the repo
+publishing/
