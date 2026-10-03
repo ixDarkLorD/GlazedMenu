@@ -121,10 +121,16 @@ public final class GlazedBrand {
         }
     }
 
-    /** A gradient color lifted toward white by {@code amount} (0 to 1), to stand out more; unchanged on the light scheme. */
+    /**
+     * A gradient color made to stand out more by {@code amount} (0 to 1): lifted toward white on the dark scheme, and
+     * deepened toward a dark ink on the light one, where the gradient's own pale shades fade into the background.
+     */
     public static int lift(int color, float amount) {
-        return ConfigStyle.mode() == ConfigTheme.Mode.LIGHT ? color : ConfigStyle.mix(color, 0xFFFFFFFF, amount);
+        if (ConfigStyle.mode() == ConfigTheme.Mode.LIGHT) return ConfigStyle.mix(color, LIGHT_INK, Math.min(1, amount * 1.7F));
+        return ConfigStyle.mix(color, 0xFFFFFFFF, amount);
     }
+
+    private static final int LIGHT_INK = 0xFF1A1438;
 
     /** Bold text with the gradient running along it, flowing. Returns its width. */
     public static int text(GuiGraphicsExtractor graphics, Font font, String text, int x, int y) {

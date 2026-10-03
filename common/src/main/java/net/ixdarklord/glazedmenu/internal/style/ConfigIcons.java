@@ -34,6 +34,12 @@ public final class ConfigIcons {
     public static final Icon CONFIGS = icon("configs");
     /** A folder: opens one. */
     public static final Icon FOLDER = icon("folder");
+    /** A globe: a mod's website. */
+    public static final Icon GLOBE = icon("globe");
+    /** A bug: a mod's issue tracker. */
+    public static final Icon BUG = icon("bug");
+    /** Angle brackets: a mod's source code. */
+    public static final Icon CODE = icon("code");
     public static final Icon SUN = icon("sun");
     public static final Icon MOON = icon("moon");
 
