@@ -27,3 +27,6 @@ logs/
 
 # Smoke test output (tools/autotest/run.py)
 tools/autotest/results/
+
+# Screenshot bundles made for uploading
+publishing/*.zip
