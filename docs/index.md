@@ -64,7 +64,7 @@ Glazed Menu replaces Mod Menu's, NeoForge's and Forge's mod lists with its own, 
 
     [:octicons-arrow-right-24: Looks](guide/looks.md)
 
--   :material-code-braces:{ .lg .middle } **Friendly to mod authors**
+-   :material-file-cog-outline:{ .lg .middle } **Friendly to mod authors**
 
     ---
 
@@ -72,11 +72,37 @@ Glazed Menu replaces Mod Menu's, NeoForge's and Forge's mod lists with its own, 
 
     [:octicons-arrow-right-24: For mod authors](authors/index.md)
 
+-   :material-code-braces:{ .lg .middle } **A Java API**
+
+    ---
+
+    Open Glazed Menu's screens from your own code, build a theme, draw your own effects and change how a value is edited.
+
+    [:octicons-arrow-right-24: Java API](api/index.md)
+
+-   :material-history:{ .lg .middle } **What's new**
+
+    ---
+
+    Every release, for each Minecraft version, straight from the version branches.
+
+    [:octicons-arrow-right-24: Changelog](changelog.md)
+
 </div>
+
+## Get started
+
+1. **Download** the jar for your loader and Minecraft version from [Modrinth](https://modrinth.com/mod/glazedmenu) or [CurseForge](https://www.curseforge.com/minecraft/mc-mods/glazed-menu).
+2. **Drop it** in your `mods` folder. It is client side and needs no other mod.
+3. **Open it** with the **Mods** button on the title or pause screen, or type `/glazedmenu mods` in chat.
 
 ## A closer look
 
 ![The config screen: categories on the left, the settings on the right](assets/shots/config-screen.jpg){ .gm-shot loading=lazy }
+
+![A mod's configs as cards](assets/shots/config-cards.jpg){ .gm-shot loading=lazy }
+
+![The mod list in grid view](assets/shots/mod-list-grid.jpg){ .gm-shot loading=lazy }
 
 ![The mod list in light mode](assets/shots/mod-list-light.jpg){ .gm-shot loading=lazy }
 

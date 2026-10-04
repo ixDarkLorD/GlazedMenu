@@ -124,15 +124,9 @@ body {
 }
 
 .gm-menu {
-  display: none;
+  display: block;
   flex-shrink: 0;
   margin: 0 0.4rem;
-}
-
-@media screen and (min-width: 76.25em) {
-  .gm-menu {
-    display: block;
-  }
 }
 
 .gm-menu__button {
@@ -224,6 +218,44 @@ body {
   background: var(--gm-glass-strong);
   color: var(--md-accent-fg-color);
   font-weight: 600;
+}
+
+/* Narrow screens: the page menu takes the place of the theme's drawer button, the logo stays as the way home, and
+   the pane scrolls when it's taller than the screen. */
+@media screen and (max-width: 76.2344em) {
+  .md-header__button.md-icon[for="__drawer"] {
+    display: none;
+  }
+
+  .md-header__button.md-logo {
+    display: inline-block;
+  }
+
+  .gm-menu {
+    margin: 0 0.1rem;
+  }
+
+  .gm-menu__panel {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    max-height: calc(100vh - 5.5rem);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  .gm-menu__link {
+    padding: 0.45rem 0.5rem;
+    font-size: 0.75rem;
+  }
+}
+
+@media screen and (max-width: 29.9375em) {
+  .gm-menu__button {
+    padding: 0 0.5rem;
+  }
+
+  .gm-menu__button span {
+    display: none;
+  }
 }
 
 /* ---- Side navigation: a glass sheet ---- */
