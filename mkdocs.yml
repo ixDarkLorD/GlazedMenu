@@ -33,8 +33,6 @@ theme:
         icon: material/weather-night
         name: Switch to light mode
   features:
-    - navigation.tabs
-    - navigation.tabs.sticky
     - navigation.sections
     - navigation.instant
     - navigation.instant.progress
@@ -62,8 +60,8 @@ extra_javascript:
   - javascripts/viewer.js
 
 extra:
-  # The top bar's icons, by tab title (overrides/partials/tabs-item.html). The pages' own icons and the
-  # descriptions shown in the tabs' panes are in their front matter.
+  # The icons of the Menu's groups, by title (overrides/partials/header.html). The pages' own icons and the
+  # descriptions shown in the Menu are in their front matter.
   menu_icons:
     Home: material/home-outline
     Players: material/gamepad-variant-outline

@@ -22,11 +22,11 @@ hide:
 [:fontawesome-brands-github: Source](https://github.com/ixDarkLorD/GlazedMenu){ .md-button }
 
 <p class="gm-hero__badges">
-  <img alt="Minecraft 1.20 to 26.3" src="https://img.shields.io/badge/Minecraft-1.20%20%E2%80%93%2026.3-5fe1d0?style=flat-square">
-  <img alt="Fabric, NeoForge and Forge" src="https://img.shields.io/badge/Loaders-Fabric%20%7C%20NeoForge%20%7C%20Forge-9d8cff?style=flat-square">
-  <img alt="Client side" src="https://img.shields.io/badge/Side-Client-ff8fc7?style=flat-square">
-  <a href="https://github.com/ixDarkLorD/GlazedMenu/blob/main/LICENSE"><img alt="License: MPL-2.0" src="https://img.shields.io/badge/License-MPL--2.0-8b93a8?style=flat-square"></a>
-  <a href="https://discord.gg/ZapGEPqm2V"><img alt="Discord" src="https://img.shields.io/discord/1173075408556654592?style=flat-square&logo=discord&logoColor=white&label=Discord&color=5865F2"></a>
+  <img src="https://raw.githubusercontent.com/ixDarkLorD/ModResources/main/badges/glazed-menu/fabric.svg" alt="Fabric" height="26">
+  <img src="https://raw.githubusercontent.com/ixDarkLorD/ModResources/main/badges/glazed-menu/neoforge.svg" alt="NeoForge" height="26">
+  <img src="https://raw.githubusercontent.com/ixDarkLorD/ModResources/main/badges/glazed-menu/forge.svg" alt="Forge" height="26">
+  <img src="https://raw.githubusercontent.com/ixDarkLorD/ModResources/main/badges/glazed-menu/client-side.svg" alt="Client side" height="26">
+  <a href="https://discord.gg/ZapGEPqm2V"><img src="https://img.shields.io/discord/1173075408556654592?style=flat&logo=discord&logoColor=white&label=&labelColor=6f52dd&color=3A3F58" alt="Discord" height="26"></a>
 </p>
 
 <div class="gm-hero__shot">

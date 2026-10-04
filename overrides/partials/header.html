@@ -1,5 +1,5 @@
 {#-
-  Material's header (9.7), with Glazed Menu's page menu after the title: a "Menu" button opening a pane of every page.
+  Material's header (9.7), with Glazed Menu's page menu (shown first, at the bar's left): a "Menu" button opening a pane of every page.
   The links carry their path from the site root (data-gm-path); javascripts/menu.js makes them absolute, since instant
   navigation keeps the header while the page under it changes.
 -#}
@@ -42,11 +42,23 @@
         <span>Menu</span>
       </summary>
       <div class="gm-menu__panel">
+        {% set icons = config.extra.menu_icons or {} %}
+        {% macro entry(page) %}
+          <a class="gm-menu__link" href="{{ page.url | url }}" data-gm-path="{{ page.url }}">
+            <span class="gm-menu__icon">{% include ".icons/" ~ (page.meta.icon or icons[page.title] or "material/file-document-outline") ~ ".svg" %}</span>
+            <span class="gm-menu__text">
+              <span class="gm-menu__title">{{ page.title }}</span>
+              {% if page.meta.description %}
+                <span class="gm-menu__description">{{ page.meta.description }}</span>
+              {% endif %}
+            </span>
+          </a>
+        {% endmacro %}
         <div class="gm-menu__group">
           <span class="gm-menu__heading">{{ config.site_name }}</span>
           {% for item in nav %}
             {% if item.is_page %}
-              <a class="gm-menu__link" href="{{ item.url | url }}" data-gm-path="{{ item.url }}">{{ item.title }}</a>
+              {{ entry(item) }}
             {% endif %}
           {% endfor %}
         </div>
@@ -56,7 +68,7 @@
               <span class="gm-menu__heading">{{ item.title }}</span>
               {% for child in item.children %}
                 {% if child.is_page %}
-                  <a class="gm-menu__link" href="{{ child.url | url }}" data-gm-path="{{ child.url }}">{{ child.title }}</a>
+                  {{ entry(child) }}
                 {% endif %}
               {% endfor %}
             </div>
