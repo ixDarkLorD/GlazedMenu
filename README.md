@@ -5,6 +5,7 @@ Client side · Fabric, NeoForge &amp; Forge · Minecraft 1.20 – 26.3</p>
 <p align="center">
   <a href="https://modrinth.com/mod/glazedmenu"><img src="https://img.shields.io/badge/Modrinth-Glazed%20Menu-00AF5C?logo=modrinth&logoColor=white" alt="Glazed Menu on Modrinth"></a>
   <a href="https://www.curseforge.com/minecraft/mc-mods/glazed-menu"><img src="https://img.shields.io/badge/CurseForge-Glazed%20Menu-F16436?logo=curseforge&logoColor=white" alt="Glazed Menu on CurseForge"></a>
+  <a href="https://ixdarklord.github.io/GlazedMenu/"><img src="https://img.shields.io/badge/Docs-Glazed%20Menu-9D8CFF?logo=materialformkdocs&logoColor=white" alt="Glazed Menu documentation"></a>
 </p>
 <hr>
 
@@ -14,6 +15,10 @@ clean, themed screen. It needs no other mod.
 ## Download
 - [Modrinth](https://modrinth.com/mod/glazedmenu)
 - [CurseForge](https://www.curseforge.com/minecraft/mc-mods/glazed-menu)
+
+## Documentation
+Guides for players and mod authors, the Java API and the changelog are at
+[ixdarklord.github.io/GlazedMenu](https://ixdarklord.github.io/GlazedMenu/).
 
 ## The mod list
 - **Grid or list view**, filters for **All**, **With Settings** and **Libraries**, search, and A–Z / Z–A sorting.
