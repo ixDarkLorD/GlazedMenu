@@ -10,6 +10,7 @@ version = "${mc_version}+${mod_version}"
 description = "${mod_description}"
 authors = "${mod_author}"
 logoFile = "mod_logo.png"
+displayURL = "${mod_page_url}"
 updateJSONURL = "${mod_forge_update_url}"
 # Client-only: servers neither need nor check it.
 displayTest = "${mod_forge_display_test}"
