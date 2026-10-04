@@ -33,7 +33,7 @@
 
   "custom": {
     "glazedmenu": {
-      "update_json": "${mod_neoforge_update_url}"
+      "update_json": "${mod_fabric_update_url}"
     }
   },
 
