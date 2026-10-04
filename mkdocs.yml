@@ -105,4 +105,10 @@ nav:
       - Overview: authors/index.md
       - Libraries and Updates: authors/metadata.md
       - Theming: authors/theming.md
+  - Java API:
+      - Overview: api/index.md
+      - Screens: api/screens.md
+      - Themes in Code: api/themes.md
+      - Effects: api/effects.md
+      - Configs and Editors: api/editors.md
   - Changelog: changelog.md

@@ -2,7 +2,7 @@
 
 Glazed Menu works with your mod as it is: it lists it, reads its configs if they use a [supported library](../guide/config-screens.md#which-configs-it-reads), and links to its own config screen if it has one.
 
-Everything here is an optional extra. All of it is read from files, so your mod never depends on Glazed Menu.
+Everything here is an optional extra. All of it is read from files, so your mod never depends on Glazed Menu. For what files can't do, there is a [Java API](../api/index.md).
 
 <div class="grid cards" markdown>
 
@@ -21,6 +21,14 @@ Everything here is an optional extra. All of it is read from files, so your mod 
     Give your config screens your own colors, background and card artwork.
 
     [:octicons-arrow-right-24: Theming](theming.md)
+
+-   :material-code-braces:{ .lg .middle } **Java API**
+
+    ---
+
+    Open Glazed Menu's screens from your own code, build themes, and draw your own effects.
+
+    [:octicons-arrow-right-24: Java API](../api/index.md)
 
 </div>
 
