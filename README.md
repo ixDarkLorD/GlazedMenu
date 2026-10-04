@@ -1,7 +1,7 @@
 <p align="center"><img src="common/src/main/resources/mod_logo.png" width="160" alt="Glazed Menu"></p>
 <h1 align="center">Glazed Menu</h1>
 <p align="center"><b>A glassy mod list and config screens for every mod.</b><br>
-Client side · Fabric &amp; NeoForge · Minecraft 26.1 – 26.1.2</p>
+Client side · Fabric &amp; NeoForge · Minecraft 26.3</p>
 <p align="center">
   <a href="https://modrinth.com/mod/glazedmenu"><img src="https://img.shields.io/badge/Modrinth-Glazed%20Menu-00AF5C?logo=modrinth&logoColor=white" alt="Glazed Menu on Modrinth"></a>
   <a href="https://www.curseforge.com/minecraft/mc-mods/glazed-menu"><img src="https://img.shields.io/badge/CurseForge-Glazed%20Menu-F16436?logo=curseforge&logoColor=white" alt="Glazed Menu on CurseForge"></a>
