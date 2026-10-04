@@ -22,10 +22,10 @@ hide:
 [:fontawesome-brands-github: Source](https://github.com/ixDarkLorD/GlazedMenu){ .md-button }
 
 <p class="gm-hero__badges">
-  <img alt="Minecraft" src="https://img.shields.io/badge/Minecraft-1.20%20%E2%80%93%2026.3-5fe1d0?style=flat-square">
-  <img alt="Loaders" src="https://img.shields.io/badge/Loaders-Fabric%20%7C%20NeoForge%20%7C%20Forge-9d8cff?style=flat-square">
-  <a href="https://modrinth.com/mod/glazedmenu"><img alt="Modrinth downloads" src="https://img.shields.io/modrinth/dt/jHNhGgr3?style=flat-square&logo=modrinth&label=Modrinth&color=1BD96A"></a>
-  <a href="https://www.curseforge.com/minecraft/mc-mods/glazed-menu"><img alt="CurseForge downloads" src="https://img.shields.io/curseforge/dt/1722133?style=flat-square&logo=curseforge&label=CurseForge&color=F16436"></a>
+  <img alt="Minecraft 1.20 to 26.3" src="https://img.shields.io/badge/Minecraft-1.20%20%E2%80%93%2026.3-5fe1d0?style=flat-square">
+  <img alt="Fabric, NeoForge and Forge" src="https://img.shields.io/badge/Loaders-Fabric%20%7C%20NeoForge%20%7C%20Forge-9d8cff?style=flat-square">
+  <img alt="Client side" src="https://img.shields.io/badge/Side-Client-ff8fc7?style=flat-square">
+  <a href="https://github.com/ixDarkLorD/GlazedMenu/blob/main/LICENSE"><img alt="License: MPL-2.0" src="https://img.shields.io/badge/License-MPL--2.0-8b93a8?style=flat-square"></a>
 </p>
 
 <div class="gm-hero__shot">
@@ -34,9 +34,9 @@ hide:
 
 </div>
 
-## What it does
+## What it does { .gm-heading }
 
-Glazed Menu replaces Mod Menu's, NeoForge's and Forge's mod lists with its own, and gives the configs of almost any mod one clean, themed screen.
+<p class="gm-lead">Glazed Menu replaces Mod Menu's, NeoForge's and Forge's mod lists with its own, and gives the configs of almost any mod one clean, themed screen.</p>
 
 <div class="grid cards" markdown>
 
@@ -90,23 +90,63 @@ Glazed Menu replaces Mod Menu's, NeoForge's and Forge's mod lists with its own, 
 
 </div>
 
-## Get started
+## Get started { .gm-heading }
 
-1. **Download** the jar for your loader and Minecraft version from [Modrinth](https://modrinth.com/mod/glazedmenu) or [CurseForge](https://www.curseforge.com/minecraft/mc-mods/glazed-menu).
-2. **Drop it** in your `mods` folder. It is client side and needs no other mod.
-3. **Open it** with the **Mods** button on the title or pause screen, or type `/glazedmenu mods` in chat.
+<p class="gm-lead">Three steps, and no other mod to install.</p>
 
-## A closer look
+<div class="grid cards gm-steps" markdown>
 
-![The config screen: categories on the left, the settings on the right](assets/shots/config-screen.jpg){ .gm-shot loading=lazy }
+-   <span class="gm-step">1</span> **Download**
 
-![A mod's configs as cards](assets/shots/config-cards.jpg){ .gm-shot loading=lazy }
+    ---
 
-![The mod list in grid view](assets/shots/mod-list-grid.jpg){ .gm-shot loading=lazy }
+    Get the jar for your loader and Minecraft version from [Modrinth](https://modrinth.com/mod/glazedmenu) or [CurseForge](https://www.curseforge.com/minecraft/mc-mods/glazed-menu).
 
-![The mod list in light mode](assets/shots/mod-list-light.jpg){ .gm-shot loading=lazy }
+-   <span class="gm-step">2</span> **Drop it in**
 
-## Versions and loaders
+    ---
+
+    Put it in your `mods` folder. It is client side, so servers don't need it.
+
+-   <span class="gm-step">3</span> **Open it**
+
+    ---
+
+    Press the **Mods** button on the title or pause screen, or type `/glazedmenu mods` in chat.
+
+</div>
+
+## A closer look { .gm-heading }
+
+<p class="gm-lead">The same glass, on every screen.</p>
+
+<div class="gm-gallery" markdown>
+
+<figure markdown="span">
+  [![The config screen: categories on the left, the settings on the right](assets/shots/config-screen.jpg){ loading=lazy }](assets/shots/config-screen.jpg){ target=_blank }
+  <figcaption>One config screen for every mod</figcaption>
+</figure>
+
+<figure markdown="span">
+  [![A mod's configs as cards](assets/shots/config-cards.jpg){ loading=lazy }](assets/shots/config-cards.jpg){ target=_blank }
+  <figcaption>Each config as a card</figcaption>
+</figure>
+
+<figure markdown="span">
+  [![The mod list in grid view](assets/shots/mod-list-grid.jpg){ loading=lazy }](assets/shots/mod-list-grid.jpg){ target=_blank }
+  <figcaption>The mod list as a grid</figcaption>
+</figure>
+
+<figure markdown="span">
+  [![The mod list in light mode](assets/shots/mod-list-light.jpg){ loading=lazy }](assets/shots/mod-list-light.jpg){ target=_blank }
+  <figcaption>Light mode, complete</figcaption>
+</figure>
+
+</div>
+
+## Versions and loaders { .gm-heading }
+
+<p class="gm-lead">Each Minecraft version has its own build and its own branch.</p>
 
 | Minecraft | Fabric | NeoForge | Forge | Source |
 |---|:-:|:-:|:-:|---|
@@ -115,3 +155,12 @@ Glazed Menu replaces Mod Menu's, NeoForge's and Forge's mod lists with its own, 
 | **26.1 – 26.1.2** | :material-check: | :material-check: | – | [`main`](https://github.com/ixDarkLorD/GlazedMenu/tree/main) |
 | **1.21 – 1.21.1** | :material-check: | :material-check: | :material-check: | [`1.21-1.21.1`](https://github.com/ixDarkLorD/GlazedMenu/tree/1.21-1.21.1) |
 | **1.20 – 1.20.1** | :material-check: | – | :material-check: | [`1.20-1.20.1`](https://github.com/ixDarkLorD/GlazedMenu/tree/1.20-1.20.1) |
+
+<div class="gm-cta" markdown>
+
+**Ready to try it?**
+
+[:simple-modrinth: Get it on Modrinth](https://modrinth.com/mod/glazedmenu){ .md-button .md-button--primary }
+[:simple-curseforge: Get it on CurseForge](https://www.curseforge.com/minecraft/mc-mods/glazed-menu){ .md-button }
+
+</div>

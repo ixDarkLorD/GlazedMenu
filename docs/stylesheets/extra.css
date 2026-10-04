@@ -462,3 +462,134 @@ body {
 .gm-hero__title .headerlink {
   display: none;
 }
+
+/* ---- Home: sections under the hero ---- */
+/* The home page has no "edit this page" button beside its hero. */
+.md-content__inner:has(.gm-hero) > .md-content__button {
+  display: none;
+}
+
+.md-typeset h2.gm-heading {
+  margin: 4rem 0 0.4rem;
+  text-align: center;
+  font-size: 1.7rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.md-typeset h2.gm-heading .headerlink {
+  display: none;
+}
+
+.md-typeset .gm-lead {
+  max-width: 38rem;
+  margin: 0 auto 1.6rem;
+  text-align: center;
+  color: var(--md-default-fg-color--light);
+}
+
+/* The numbered steps of "Get started". */
+.md-typeset .gm-step {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  margin-right: 0.35rem;
+  border-radius: 999px;
+  background: linear-gradient(120deg, var(--gm-aqua), var(--gm-violet));
+  color: #0b0e17;
+  font-size: 0.75rem;
+  font-weight: 700;
+  vertical-align: middle;
+}
+
+/* Screenshots, two to a row, each in a glass frame with its caption. */
+.gm-gallery {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.md-typeset .gm-gallery figure {
+  display: block;
+  width: auto;
+  max-width: none;
+  margin: 0;
+  padding: 8px 8px 0;
+  border-radius: 22px;
+  background: var(--gm-glass);
+  border: 1px solid var(--gm-edge);
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.28), inset 0 1px 0 var(--gm-shine);
+  transition: transform 220ms ease, box-shadow 220ms ease;
+}
+
+.md-typeset .gm-gallery figure:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 22px 54px rgba(0, 0, 0, 0.38), inset 0 1px 0 var(--gm-shine);
+}
+
+.md-typeset .gm-gallery figure a,
+.md-typeset .gm-gallery figure img {
+  display: block;
+}
+
+.md-typeset .gm-gallery figure img {
+  width: 100%;
+  border-radius: 15px;
+}
+
+.md-typeset .gm-gallery figcaption {
+  max-width: none;
+  margin: 0;
+  padding: 0.55rem 0.4rem 0.65rem;
+  font-style: normal;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-align: center;
+  color: var(--md-default-fg-color--light);
+}
+
+@media screen and (max-width: 44.9375em) {
+  .gm-gallery {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .md-typeset h2.gm-heading {
+    margin-top: 3rem;
+    font-size: 1.4rem;
+  }
+}
+
+/* The versions table sits in the middle of the page. */
+.md-content__inner:has(.gm-hero) .md-typeset__scrollwrap {
+  text-align: center;
+}
+
+.md-content__inner:has(.gm-hero) .md-typeset__table {
+  display: inline-block;
+  text-align: left;
+}
+
+/* The closing pane: the downloads once more. */
+.gm-cta {
+  margin: 4rem auto 1rem;
+  padding: 1.6rem 1rem 1.8rem;
+  max-width: 40rem;
+  text-align: center;
+  border-radius: 26px;
+  background: var(--gm-glass);
+  border: 1px solid var(--gm-edge);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3), inset 0 1px 0 var(--gm-shine);
+}
+
+.md-typeset .gm-cta p:first-child {
+  margin: 0 0 0.9rem;
+  font-size: 1.15rem;
+}
+
+.md-typeset .gm-cta .md-button {
+  margin: 0.25rem;
+}
