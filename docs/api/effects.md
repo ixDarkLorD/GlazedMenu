@@ -1,3 +1,8 @@
+---
+icon: material/creation-outline
+description: Animations for config screens
+---
+
 # Effects
 
 An effect is an animation drawn on config screens. Every theme uses the built-in starfall, soft glows in the accent with small stars falling, unless it names its own.

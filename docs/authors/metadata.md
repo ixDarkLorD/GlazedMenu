@@ -1,3 +1,8 @@
+---
+icon: material/bookshelf
+description: Mark a library, announce updates
+---
+
 # Libraries and Updates
 
 Two things Glazed Menu reads from your mod's metadata.

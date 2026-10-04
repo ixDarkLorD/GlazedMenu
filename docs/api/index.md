@@ -1,3 +1,8 @@
+---
+icon: material/rocket-launch-outline
+description: Set up, and what the API covers
+---
+
 # Java API
 
 Everything on the [Mod Authors](../authors/index.md) pages is done with files. The Java API is for what files can't do: opening Glazed Menu's screens from your own buttons and keys, building a theme in code, drawing your own animated effects, and changing the widget that edits a value.

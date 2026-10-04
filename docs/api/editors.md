@@ -1,3 +1,8 @@
+---
+icon: material/form-textbox
+description: The config model, types and editors
+---
+
 # Configs and Editors
 
 Glazed Menu reads every config library into one shape, so one screen can edit them all. This page covers that shape, the value types in it, and how to change the widget that edits a type.

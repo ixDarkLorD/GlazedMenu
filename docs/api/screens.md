@@ -1,3 +1,8 @@
+---
+icon: material/monitor-dashboard
+description: Open configs, popups and the color picker
+---
+
 # Screens
 
 `net.ixdarklord.glazedmenu.api.ConfigScreens` opens Glazed Menu's screens from your own code: a button in your GUI, a key binding, an item.

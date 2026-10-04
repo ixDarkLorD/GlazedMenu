@@ -123,10 +123,12 @@ body {
   --gm-menu-bg: #ffffff;
 }
 
+/* The button is the bar's first item, at its left edge, ahead of the logo and the title. */
 .gm-menu {
   display: block;
   flex-shrink: 0;
-  margin: 0 0.4rem;
+  order: -1;
+  margin: 0 0.4rem 0 0.1rem;
 }
 
 .gm-menu__button {
@@ -232,7 +234,7 @@ body {
   }
 
   .gm-menu {
-    margin: 0 0.1rem;
+    margin: 0 0.2rem 0 0;
   }
 
   .gm-menu__panel {
@@ -258,6 +260,195 @@ body {
   }
 }
 
+/* ---- Top bar, wide screens: a row of tabs under the title. Each tab is a pill with its icon; a section opens a pane
+   of its pages (overrides/partials/tabs-item.html). Narrow screens keep the Menu button instead. ---- */
+.md-tabs {
+  background: transparent;
+  color: var(--md-default-fg-color);
+}
+
+@media screen and (min-width: 76.25em) {
+  /* Two rows no longer fit a pill: the bar becomes a rounded pane. */
+  .md-header {
+    border-radius: 24px;
+  }
+
+  .gm-menu {
+    display: none;
+  }
+
+  .md-tabs,
+  .md-tabs__list {
+    overflow: visible;
+    contain: none;
+  }
+
+  .md-tabs__list {
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0 0 0.5rem;
+  }
+
+  .md-tabs__item {
+    position: relative;
+    height: auto;
+    padding: 0;
+  }
+
+  .md-tabs__link {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    margin: 0;
+    padding: 0.36rem 0.8rem;
+    border-radius: 999px;
+    border: 1px solid transparent;
+    font-size: 0.7rem;
+    font-weight: 600;
+    opacity: 0.8;
+    transition: background 160ms ease, opacity 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
+  }
+
+  .md-tabs__link:hover,
+  .md-tabs__link:focus-visible,
+  .gm-tab:hover > .md-tabs__link,
+  .gm-tab:focus-within > .md-tabs__link {
+    opacity: 1;
+    background: var(--gm-glass-strong);
+    border-color: var(--gm-edge);
+  }
+
+  .md-tabs__item--active > .md-tabs__link,
+  .md-tabs__item--active > .md-tabs__link:hover,
+  .gm-tab.md-tabs__item--active:hover > .md-tabs__link {
+    opacity: 1;
+    color: #0b0e17;
+    border-color: transparent;
+    background: linear-gradient(120deg, var(--gm-aqua), var(--gm-violet));
+    box-shadow: 0 6px 18px rgba(95, 225, 208, 0.3);
+  }
+
+  .gm-tab__icon,
+  .gm-tab__chevron {
+    display: inline-flex;
+    flex: none;
+  }
+
+  .gm-tab__icon svg,
+  .gm-tab__chevron svg {
+    width: 0.95rem;
+    height: 0.95rem;
+    fill: currentColor;
+  }
+
+  .gm-tab__chevron {
+    margin: 0 -0.25rem 0 -0.1rem;
+    opacity: 0.7;
+  }
+
+  .gm-tab__chevron svg {
+    transition: transform 200ms ease;
+  }
+
+  .gm-tab:hover .gm-tab__chevron svg,
+  .gm-tab:focus-within .gm-tab__chevron svg {
+    transform: rotate(180deg);
+  }
+
+  /* The padding bridges the gap to the tab, so the pointer can cross it without closing the pane. */
+  .gm-tab__panel {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    z-index: 10;
+    padding-top: 0.7rem;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-0.3rem);
+    transition: opacity 160ms ease, transform 160ms ease, visibility 160ms;
+  }
+
+  .gm-tab:hover .gm-tab__panel,
+  .gm-tab:focus-within .gm-tab__panel {
+    opacity: 1;
+    visibility: visible;
+    transform: none;
+  }
+
+  /* The bar is already frosted, so the pane can't blur what's behind it: it's opaque instead. */
+  .gm-tab__list {
+    display: grid;
+    grid-template-columns: 17rem;
+    gap: 0.15rem;
+    margin: 0;
+    padding: 0.45rem;
+    list-style: none;
+    white-space: normal;
+    color: var(--md-default-fg-color);
+    background: var(--gm-menu-bg);
+    border: 1px solid var(--gm-edge);
+    border-radius: var(--gm-radius);
+    box-shadow: 0 18px 50px rgba(0, 0, 0, 0.35), inset 0 1px 0 var(--gm-shine);
+  }
+
+  /* Five pages or more: two columns. */
+  .gm-tab__list:has(> li:nth-child(5)) {
+    grid-template-columns: 17rem 17rem;
+  }
+
+  .gm-tab__entry {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.45rem 0.55rem;
+    border-radius: 12px;
+    color: inherit;
+    transition: background 140ms ease;
+  }
+
+  .gm-tab__entry:hover,
+  .gm-tab__entry:focus-visible,
+  .gm-tab__entry--active {
+    background: var(--gm-glass-strong);
+  }
+
+  .gm-tab__entry .gm-tab__icon {
+    padding: 0.4rem;
+    border-radius: 10px;
+    color: var(--md-accent-fg-color);
+    background: var(--gm-glass-strong);
+    border: 1px solid var(--gm-edge);
+  }
+
+  .gm-tab__entry--active .gm-tab__icon {
+    color: #0b0e17;
+    border-color: transparent;
+    background: linear-gradient(120deg, var(--gm-aqua), var(--gm-violet));
+  }
+
+  .gm-tab__entry .gm-tab__icon svg {
+    width: 1rem;
+    height: 1rem;
+  }
+
+  .gm-tab__text {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    line-height: 1.3;
+  }
+
+  .gm-tab__title {
+    font-size: 0.72rem;
+    font-weight: 600;
+  }
+
+  .gm-tab__description {
+    font-size: 0.62rem;
+    color: var(--md-default-fg-color--light);
+  }
+}
+
 /* ---- Side navigation: a glass sheet ---- */
 @media screen and (min-width: 76.25em) {
   .md-sidebar--primary .md-sidebar__scrollwrap {
@@ -269,6 +460,25 @@ body {
     -webkit-backdrop-filter: blur(14px);
     backdrop-filter: blur(14px);
     box-shadow: inset 0 1px 0 var(--gm-shine);
+  }
+}
+
+/* The side bars' headings ("Players", "Table of contents"): the theme backs them with the page's solid color so they
+   can stick over the list as it scrolls, which shows as a dark block on the glass. Here they're part of the list. */
+@media screen and (min-width: 76.25em) {
+  .md-sidebar .md-nav--primary .md-nav__title,
+  .md-sidebar .md-nav--lifted > .md-nav__list > .md-nav__item--active > .md-nav__link {
+    position: static;
+    background: transparent;
+    box-shadow: none;
+  }
+}
+
+@media screen and (min-width: 60em) {
+  .md-sidebar .md-nav--secondary .md-nav__title {
+    position: static;
+    background: transparent;
+    box-shadow: none;
   }
 }
 
@@ -370,6 +580,38 @@ body {
 .md-typeset .md-button--primary:focus {
   color: #0b0e17;
   background: linear-gradient(120deg, var(--gm-violet), var(--gm-pink));
+}
+
+/* The download buttons, in each platform's own colors: Modrinth's green, CurseForge's orange. */
+.md-typeset .md-button.gm-button--modrinth,
+.md-typeset .md-button.gm-button--curseforge {
+  border: none;
+  color: #0d0d0d;
+  font-weight: 700;
+}
+
+.md-typeset .md-button.gm-button--modrinth {
+  background: #1bd96a;
+  box-shadow: 0 8px 26px rgba(27, 217, 106, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+
+.md-typeset .md-button.gm-button--curseforge {
+  background: #f16436;
+  box-shadow: 0 8px 26px rgba(241, 100, 54, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+.md-typeset .md-button.gm-button--modrinth:hover,
+.md-typeset .md-button.gm-button--modrinth:focus {
+  color: #0d0d0d;
+  background: #45e88a;
+  box-shadow: 0 12px 32px rgba(27, 217, 106, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+
+.md-typeset .md-button.gm-button--curseforge:hover,
+.md-typeset .md-button.gm-button--curseforge:focus {
+  color: #0d0d0d;
+  background: #f5825c;
+  box-shadow: 0 12px 32px rgba(241, 100, 54, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.4);
 }
 
 /* ---- Screenshots: a pane with a soft glow ---- */

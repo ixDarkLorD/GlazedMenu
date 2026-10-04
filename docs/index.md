@@ -17,8 +17,8 @@ hide:
 
 <p class="gm-hero__lead">Client side, for Fabric, NeoForge and Forge, on Minecraft 1.20 to 26.3. It needs no other mod.</p>
 
-[:simple-modrinth: Modrinth](https://modrinth.com/mod/glazedmenu){ .md-button .md-button--primary }
-[:simple-curseforge: CurseForge](https://www.curseforge.com/minecraft/mc-mods/glazed-menu){ .md-button }
+[:simple-modrinth: Modrinth](https://modrinth.com/mod/glazedmenu){ .md-button .gm-button--modrinth }
+[:simple-curseforge: CurseForge](https://www.curseforge.com/minecraft/mc-mods/glazed-menu){ .md-button .gm-button--curseforge }
 [:fontawesome-brands-github: Source](https://github.com/ixDarkLorD/GlazedMenu){ .md-button }
 
 <p class="gm-hero__badges">
@@ -26,6 +26,7 @@ hide:
   <img alt="Fabric, NeoForge and Forge" src="https://img.shields.io/badge/Loaders-Fabric%20%7C%20NeoForge%20%7C%20Forge-9d8cff?style=flat-square">
   <img alt="Client side" src="https://img.shields.io/badge/Side-Client-ff8fc7?style=flat-square">
   <a href="https://github.com/ixDarkLorD/GlazedMenu/blob/main/LICENSE"><img alt="License: MPL-2.0" src="https://img.shields.io/badge/License-MPL--2.0-8b93a8?style=flat-square"></a>
+  <a href="https://discord.gg/ZapGEPqm2V"><img alt="Discord" src="https://img.shields.io/discord/1173075408556654592?style=flat-square&logo=discord&logoColor=white&label=Discord&color=5865F2"></a>
 </p>
 
 <div class="gm-hero__shot">
@@ -177,7 +178,7 @@ hide:
 
 **Ready to try it?**
 
-[:simple-modrinth: Get it on Modrinth](https://modrinth.com/mod/glazedmenu){ .md-button .md-button--primary }
-[:simple-curseforge: Get it on CurseForge](https://www.curseforge.com/minecraft/mc-mods/glazed-menu){ .md-button }
+[:simple-modrinth: Get it on Modrinth](https://modrinth.com/mod/glazedmenu){ .md-button .gm-button--modrinth }
+[:simple-curseforge: Get it on CurseForge](https://www.curseforge.com/minecraft/mc-mods/glazed-menu){ .md-button .gm-button--curseforge }
 
 </div>

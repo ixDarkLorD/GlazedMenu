@@ -1,3 +1,8 @@
+---
+icon: material/brush-variant
+description: Colors, background and card artwork
+---
+
 # Theming
 
 Give your mod's config screens their own look. A resource pack can ship the same files to theme any mod.

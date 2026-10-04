@@ -1,3 +1,8 @@
+---
+icon: material/palette-swatch-outline
+description: Build your mod's theme in code
+---
+
 # Themes in Code
 
 A theme is how a mod's config screens look: the colors for dark and light mode, an optional background texture, the icon beside the title, the panel popups use, and the [effects](effects.md) drawn.

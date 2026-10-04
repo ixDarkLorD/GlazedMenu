@@ -1,3 +1,8 @@
+---
+icon: material/account-hard-hat-outline
+description: What Glazed Menu does with your mod
+---
+
 # For Mod Authors
 
 Glazed Menu works with your mod as it is: it lists it, reads its configs if they use a [supported library](../guide/config-screens.md#which-configs-it-reads), and links to its own config screen if it has one.
