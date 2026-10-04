@@ -504,57 +504,152 @@ body {
   vertical-align: middle;
 }
 
-/* Screenshots, two to a row, each in a glass frame with its caption. */
-.gm-gallery {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 1rem;
-}
-
-.md-typeset .gm-gallery figure {
-  display: block;
-  width: auto;
-  max-width: none;
-  margin: 0;
-  padding: 8px 8px 0;
-  border-radius: 22px;
+/* The screenshot window: one glass frame, the screenshots side by side inside it, one showing at a time. The track
+   scrolls and snaps, so it can be swiped; javascripts/viewer.js adds the arrows, the caption and the dots. */
+.gm-viewer {
+  max-width: 54rem;
+  margin: 0 auto;
+  padding: 10px;
+  border-radius: 26px;
   background: var(--gm-glass);
   border: 1px solid var(--gm-edge);
-  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.28), inset 0 1px 0 var(--gm-shine);
-  transition: transform 220ms ease, box-shadow 220ms ease;
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.4), inset 0 1px 0 var(--gm-shine);
 }
 
-.md-typeset .gm-gallery figure:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 22px 54px rgba(0, 0, 0, 0.38), inset 0 1px 0 var(--gm-shine);
+.gm-viewer__track {
+  display: flex;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+  border-radius: 18px;
 }
 
-.md-typeset .gm-gallery figure a,
-.md-typeset .gm-gallery figure img {
+.gm-viewer__track::-webkit-scrollbar {
+  display: none;
+}
+
+.gm-viewer__track:focus-visible {
+  outline: 2px solid var(--md-accent-fg-color);
+  outline-offset: 2px;
+}
+
+.md-typeset .gm-viewer__slide {
   display: block;
-}
-
-.md-typeset .gm-gallery figure img {
+  flex: 0 0 100%;
   width: 100%;
-  border-radius: 15px;
-}
-
-.md-typeset .gm-gallery figcaption {
   max-width: none;
   margin: 0;
-  padding: 0.55rem 0.4rem 0.65rem;
+  scroll-snap-align: start;
+}
+
+.md-typeset .gm-viewer__slide img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 18px;
+}
+
+.md-typeset .gm-viewer__slide figcaption {
+  max-width: none;
+  margin: 0;
+  padding: 0.6rem 0.4rem 0.3rem;
   font-style: normal;
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   font-weight: 600;
   text-align: center;
   color: var(--md-default-fg-color--light);
 }
 
-@media screen and (max-width: 44.9375em) {
-  .gm-gallery {
-    grid-template-columns: minmax(0, 1fr);
-  }
+/* With the script, the caption moves to the bar between the arrows. */
+.md-typeset .gm-viewer[data-gm-ready] .gm-viewer__slide figcaption {
+  display: none;
+}
 
+.gm-viewer__bar {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.6rem 0.2rem 0.2rem;
+}
+
+.gm-viewer__caption {
+  flex: 1;
+  min-width: 0;
+  text-align: center;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--md-default-fg-color);
+}
+
+.gm-viewer__arrow {
+  flex-shrink: 0;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 999px;
+  background: var(--gm-glass-strong);
+  border: 1px solid var(--gm-edge);
+  box-shadow: inset 0 1px 0 var(--gm-shine);
+  color: var(--md-default-fg-color);
+  font-size: 1.2rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: transform 160ms ease, background 160ms ease;
+}
+
+.gm-viewer__arrow:hover {
+  transform: scale(1.08);
+  background: linear-gradient(120deg, var(--gm-aqua), var(--gm-violet));
+  color: #0b0e17;
+}
+
+.gm-viewer__dots {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.15rem;
+  padding: 0.1rem 0 0.35rem;
+}
+
+/* A dot is a small mark inside a larger target, so it's easy to hit. */
+.gm-viewer__dot {
+  width: 1.2rem;
+  height: 1.2rem;
+  padding: 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.gm-viewer__dot::before {
+  content: "";
+  display: block;
+  width: 0.4rem;
+  height: 0.4rem;
+  margin: 0 auto;
+  border-radius: 999px;
+  background: var(--md-default-fg-color--lighter);
+  transition: width 200ms ease, background 200ms ease;
+}
+
+.gm-viewer__dot:hover::before {
+  background: var(--md-default-fg-color);
+}
+
+.gm-viewer__dot--active::before {
+  width: 1rem;
+  background: linear-gradient(120deg, var(--gm-aqua), var(--gm-violet));
+}
+
+.gm-viewer__arrow:focus-visible,
+.gm-viewer__dot:focus-visible {
+  outline: 2px solid var(--md-accent-fg-color);
+  outline-offset: 2px;
+}
+
+@media screen and (max-width: 44.9375em) {
   .md-typeset h2.gm-heading {
     margin-top: 3rem;
     font-size: 1.4rem;

@@ -120,28 +120,45 @@ hide:
 
 <p class="gm-lead">The same glass, on every screen.</p>
 
-<div class="gm-gallery" markdown>
-
-<figure markdown="span">
-  [![The config screen: categories on the left, the settings on the right](assets/shots/config-screen.jpg){ loading=lazy }](assets/shots/config-screen.jpg){ target=_blank }
-  <figcaption>One config screen for every mod</figcaption>
-</figure>
-
-<figure markdown="span">
-  [![A mod's configs as cards](assets/shots/config-cards.jpg){ loading=lazy }](assets/shots/config-cards.jpg){ target=_blank }
-  <figcaption>Each config as a card</figcaption>
-</figure>
-
-<figure markdown="span">
-  [![The mod list in grid view](assets/shots/mod-list-grid.jpg){ loading=lazy }](assets/shots/mod-list-grid.jpg){ target=_blank }
-  <figcaption>The mod list as a grid</figcaption>
-</figure>
-
-<figure markdown="span">
-  [![The mod list in light mode](assets/shots/mod-list-light.jpg){ loading=lazy }](assets/shots/mod-list-light.jpg){ target=_blank }
-  <figcaption>Light mode, complete</figcaption>
-</figure>
-
+<div class="gm-viewer" data-gm-viewer>
+  <div class="gm-viewer__track" tabindex="0" aria-label="Screenshots">
+    <figure class="gm-viewer__slide">
+      <img src="assets/shots/config-screen.jpg" alt="A config screen: categories on the left, the settings on the right" width="1280" height="720">
+      <figcaption>One config screen for every mod</figcaption>
+    </figure>
+    <figure class="gm-viewer__slide">
+      <img src="assets/shots/config-cards.jpg" alt="A mod's configs as cards" width="1280" height="720" loading="lazy">
+      <figcaption>Each config as a card</figcaption>
+    </figure>
+    <figure class="gm-viewer__slide">
+      <img src="assets/shots/category-popup.jpg" alt="A category opened as a popup" width="1280" height="720" loading="lazy">
+      <figcaption>A category as a popup</figcaption>
+    </figure>
+    <figure class="gm-viewer__slide">
+      <img src="assets/shots/color-picker.jpg" alt="The color picker" width="1280" height="720" loading="lazy">
+      <figcaption>The color picker</figcaption>
+    </figure>
+    <figure class="gm-viewer__slide">
+      <img src="assets/shots/configs-all-mods.jpg" alt="Configs from every mod in one place" width="1280" height="720" loading="lazy">
+      <figcaption>Every mod's configs in one place</figcaption>
+    </figure>
+    <figure class="gm-viewer__slide">
+      <img src="assets/shots/mod-list-grid.jpg" alt="The mod list in grid view" width="1280" height="720" loading="lazy">
+      <figcaption>The mod list as a grid</figcaption>
+    </figure>
+    <figure class="gm-viewer__slide">
+      <img src="assets/shots/mod-list-libraries.jpg" alt="The Libraries filter, with bundled mods grouped" width="1280" height="720" loading="lazy">
+      <figcaption>Libraries, grouped</figcaption>
+    </figure>
+    <figure class="gm-viewer__slide">
+      <img src="assets/shots/mod-list-light.jpg" alt="The mod list in light mode" width="1280" height="720" loading="lazy">
+      <figcaption>The mod list in light mode</figcaption>
+    </figure>
+    <figure class="gm-viewer__slide">
+      <img src="assets/shots/config-screen-light.jpg" alt="The config screen in light mode" width="1280" height="720" loading="lazy">
+      <figcaption>Config screens in light mode</figcaption>
+    </figure>
+  </div>
 </div>
 
 ## Versions and loaders { .gm-heading }
