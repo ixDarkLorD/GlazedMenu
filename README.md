@@ -6,6 +6,7 @@ Client side · Fabric &amp; NeoForge · Minecraft 26.2</p>
   <a href="https://modrinth.com/mod/glazedmenu"><img src="https://img.shields.io/badge/Modrinth-Glazed%20Menu-00AF5C?logo=modrinth&logoColor=white" alt="Glazed Menu on Modrinth"></a>
   <a href="https://www.curseforge.com/minecraft/mc-mods/glazed-menu"><img src="https://img.shields.io/badge/CurseForge-Glazed%20Menu-F16436?logo=curseforge&logoColor=white" alt="Glazed Menu on CurseForge"></a>
   <a href="https://ixdarklord.github.io/GlazedMenu/"><img src="https://img.shields.io/badge/Docs-Glazed%20Menu-9D8CFF?logo=materialformkdocs&logoColor=white" alt="Glazed Menu documentation"></a>
+  <a href="https://discord.gg/ZapGEPqm2V"><img src="https://img.shields.io/discord/1173075408556654592?logo=discord&logoColor=white&label=Discord&color=5865F2" alt="Discord"></a>
 </p>
 <hr>
 
