@@ -2,10 +2,18 @@
 <h1 align="center">Glazed Menu</h1>
 <p align="center"><b>A glassy mod list and config screens for every mod.</b><br>
 Client side · Fabric &amp; NeoForge · Minecraft 26.1 – 26.1.2</p>
+<p align="center">
+  <a href="https://modrinth.com/mod/glazedmenu"><img src="https://img.shields.io/badge/Modrinth-Glazed%20Menu-00AF5C?logo=modrinth&logoColor=white" alt="Glazed Menu on Modrinth"></a>
+  <a href="https://www.curseforge.com/minecraft/mc-mods/glazed-menu"><img src="https://img.shields.io/badge/CurseForge-Glazed%20Menu-F16436?logo=curseforge&logoColor=white" alt="Glazed Menu on CurseForge"></a>
+</p>
 <hr>
 
 Glazed Menu replaces Mod Menu's and NeoForge's mod lists with its own, and gives the configs of almost any mod a
 clean, themed screen. It needs no other mod.
+
+## Download
+- [Modrinth](https://modrinth.com/mod/glazedmenu)
+- [CurseForge](https://www.curseforge.com/minecraft/mc-mods/glazed-menu)
 
 ## The mod list
 - **Grid or list view**, filters for **All**, **With Settings** and **Libraries**, search, and A–Z / Z–A sorting.

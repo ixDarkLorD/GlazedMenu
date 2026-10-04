@@ -10,6 +10,7 @@ version = "${mc_version}+${mod_version}"
 description = "${mod_description}"
 authors = "${mod_author}"
 iconFile = "mod_logo.png"
+displayURL = "${mod_page_url}"
 updateJSONURL = "${mod_neoforge_update_url}"
 
 [[mixins]]
