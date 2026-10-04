@@ -1,0 +1,108 @@
+site_name: Glazed Menu
+site_description: "A glassy mod list and config screens for every mod."
+site_author: ixDarkLorD
+site_url: https://ixdarklord.github.io/GlazedMenu/
+repo_url: https://github.com/ixDarkLorD/GlazedMenu
+repo_name: ixDarkLorD/GlazedMenu
+edit_uri: edit/docs/docs/
+copyright: "Made by ixDarkLorD"
+
+theme:
+  name: material
+  logo: assets/favicon.png
+  favicon: assets/favicon.png
+  icon:
+    repo: fontawesome/brands/github
+  font:
+    text: Outfit
+    code: JetBrains Mono
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: custom
+      accent: custom
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: custom
+      accent: custom
+      toggle:
+        icon: material/weather-night
+        name: Switch to light mode
+  features:
+    - navigation.sections
+    - navigation.instant
+    - navigation.instant.progress
+    - navigation.tracking
+    - navigation.top
+    - navigation.footer
+    - navigation.indexes
+    - toc.follow
+    - search.suggest
+    - search.highlight
+    - search.share
+    - content.code.copy
+    - content.code.annotate
+    - content.tabs.link
+    - content.action.edit
+
+hooks:
+  - hooks/changelog.py
+
+extra_css:
+  - stylesheets/extra.css
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/ixDarkLorD/GlazedMenu
+      name: Source on GitHub
+    - icon: simple/modrinth
+      link: https://modrinth.com/mod/glazedmenu
+      name: Glazed Menu on Modrinth
+    - icon: simple/curseforge
+      link: https://www.curseforge.com/minecraft/mc-mods/glazed-menu
+      name: Glazed Menu on CurseForge
+
+markdown_extensions:
+  - abbr
+  - admonition
+  - attr_list
+  - def_list
+  - footnotes
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.details
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.keys
+  - pymdownx.snippets
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+
+nav:
+  - Home: index.md
+  - Players:
+      - The Mod List: guide/mod-list.md
+      - Config Screens: guide/config-screens.md
+      - Looks: guide/looks.md
+  - Mod Authors:
+      - Overview: authors/index.md
+      - Libraries and Updates: authors/metadata.md
+      - Theming: authors/theming.md
+  - Changelog: changelog.md
