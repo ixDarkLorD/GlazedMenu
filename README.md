@@ -3,10 +3,15 @@
 <p align="center"><b>A glassy mod list and config screens for every mod.</b><br>
 Client side · Fabric &amp; NeoForge · Minecraft 26.3</p>
 <p align="center">
-  <a href="https://modrinth.com/mod/glazedmenu"><img src="https://img.shields.io/badge/Modrinth-Glazed%20Menu-00AF5C?logo=modrinth&logoColor=white" alt="Glazed Menu on Modrinth"></a>
-  <a href="https://www.curseforge.com/minecraft/mc-mods/glazed-menu"><img src="https://img.shields.io/badge/CurseForge-Glazed%20Menu-F16436?logo=curseforge&logoColor=white" alt="Glazed Menu on CurseForge"></a>
-  <a href="https://ixdarklord.github.io/GlazedMenu/"><img src="https://img.shields.io/badge/Docs-Glazed%20Menu-9D8CFF?logo=materialformkdocs&logoColor=white" alt="Glazed Menu documentation"></a>
-  <a href="https://discord.gg/ZapGEPqm2V"><img src="https://img.shields.io/discord/1173075408556654592?logo=discord&logoColor=white&label=Discord&color=5865F2" alt="Discord"></a>
+  <a href="https://modrinth.com/mod/glazedmenu"><img src="https://raw.githubusercontent.com/ixDarkLorD/ModResources/main/badges/glazed-menu/modrinth.svg" alt="Modrinth" height="26"></a>
+  <a href="https://www.curseforge.com/minecraft/mc-mods/glazed-menu"><img src="https://raw.githubusercontent.com/ixDarkLorD/ModResources/main/badges/glazed-menu/curseforge.svg" alt="CurseForge" height="26"></a>
+  <a href="https://ixdarklord.github.io/GlazedMenu/"><img src="https://raw.githubusercontent.com/ixDarkLorD/ModResources/main/badges/glazed-menu/docs.svg" alt="Docs" height="26"></a>
+</p>
+<p align="center">
+  <img src="https://raw.githubusercontent.com/ixDarkLorD/ModResources/main/badges/glazed-menu/fabric.svg" alt="Fabric" height="26">
+  <img src="https://raw.githubusercontent.com/ixDarkLorD/ModResources/main/badges/glazed-menu/neoforge.svg" alt="NeoForge" height="26">
+  <img src="https://raw.githubusercontent.com/ixDarkLorD/ModResources/main/badges/glazed-menu/client-side.svg" alt="Client side" height="26">
+  <a href="https://discord.gg/ZapGEPqm2V"><img src="https://img.shields.io/discord/1173075408556654592?style=flat&logo=discord&logoColor=white&label=&labelColor=6f52dd&color=3A3F58" alt="Discord" height="26"></a>
 </p>
 <hr>
 
