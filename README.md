@@ -11,7 +11,7 @@ Client side · Fabric &amp; NeoForge · Minecraft 26.3</p>
   <img src="https://raw.githubusercontent.com/ixDarkLorD/ModResources/main/badges/glazed-menu/fabric.svg" alt="Fabric" height="26">
   <img src="https://raw.githubusercontent.com/ixDarkLorD/ModResources/main/badges/glazed-menu/neoforge.svg" alt="NeoForge" height="26">
   <img src="https://raw.githubusercontent.com/ixDarkLorD/ModResources/main/badges/glazed-menu/client-side.svg" alt="Client side" height="26">
-  <a href="https://discord.gg/ZapGEPqm2V"><img src="https://img.shields.io/discord/1173075408556654592?style=flat&logo=discord&logoColor=white&label=&labelColor=6f52dd&color=3A3F58" alt="Discord" height="26"></a>
+  <a href="https://discord.gg/ZapGEPqm2V"><img src="https://img.shields.io/discord/1173075408556654592?style=flat&logo=discord&logoColor=white&label=&labelColor=6f52dd&color=3A3F58" alt="Discord" width="110" height="26"></a>
 </p>
 <hr>
 
