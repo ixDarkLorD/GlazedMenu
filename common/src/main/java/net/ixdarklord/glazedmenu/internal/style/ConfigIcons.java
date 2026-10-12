@@ -28,6 +28,38 @@ public final class ConfigIcons {
     public static final Icon WARNING = icon("warning");
     public static final Icon LIST = icon("list");
     public static final Icon GRID = icon("grid");
+    /** A star, filled and in outline: a favorite, and making one. */
+    public static final Icon STAR = icon("star");
+    public static final Icon STAR_OUTLINE = icon("star_outline");
+    /** An eye, open and struck out: showing a hidden thing again, and hiding one. */
+    public static final Icon EYE = icon("eye");
+    public static final Icon EYE_OFF = icon("eye_off");
+    /** The game's options, by category, and the screens that go with them. */
+    public static final Icon MOUSE = icon("mouse");
+    public static final Icon CHAT = icon("chat");
+    public static final Icon SOUND = icon("sound");
+    public static final Icon FONT = icon("font");
+    public static final Icon KEYBOARD = icon("keyboard");
+    public static final Icon PERSON = icon("person");
+    public static final Icon SLIDERS = icon("sliders");
+    /** The pause screen's, and the lists of worlds and servers'. */
+    public static final Icon PLAY = icon("play");
+    public static final Icon PAUSE = icon("pause");
+    public static final Icon TROPHY = icon("trophy");
+    public static final Icon CHART = icon("chart");
+    public static final Icon EXIT = icon("exit");
+    public static final Icon LAN = icon("lan");
+    public static final Icon SERVER = icon("server");
+    public static final Icon TRASH = icon("trash");
+    public static final Icon EDIT = icon("edit");
+    public static final Icon COPY = icon("copy");
+    public static final Icon CONNECT = icon("connect");
+    /** A flag: reporting a player. */
+    public static final Icon FLAG = icon("flag");
+    /** A paper plane: sending a chat message. */
+    public static final Icon SEND = icon("send");
+    /** A skull: the death screen. */
+    public static final Icon SKULL = icon("skull");
     /** A gear: a mod's settings. */
     public static final Icon GEAR = icon("gear");
     /** A gear and a wrench: the mods' configs. */

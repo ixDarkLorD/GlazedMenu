@@ -28,6 +28,9 @@ public final class ThemeResources {
     private ThemeResources() {}
 
     public static ConfigTheme resolve(String modId, ConfigTheme theme) {
+        // Glazed Menu's own screens take the theme its mod list is drawn with (one registered for it, where there is
+        // one), so they're all in the same colors.
+        if (modId.equals(GlazedMenu.MOD_ID) && theme == ConfigTheme.DEFAULT) theme = ConfigTheme.forMod(modId);
         // Glazed Menu's own path, then CoolCatLib's, where packs made for its screens put theirs.
         Identifier location = null;
         Optional<Resource> resource = Optional.empty();

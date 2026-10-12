@@ -106,6 +106,22 @@ final class NeoForgeGlazedPlatform implements GlazedPlatform {
     }
 
     @Override
+    public String loaderName() {
+        return "neoforge";
+    }
+
+    // A mod inside another's jar has a path in that jar, not on disk.
+    @Override
+    public Optional<Path> modFile(String modId) {
+        IModFileInfo file = ModList.get().getModFileById(modId);
+        if (file == null) return Optional.empty();
+        Path path = file.getFile().getFilePath();
+        boolean onDisk = path.getFileSystem() == java.nio.file.FileSystems.getDefault() && java.nio.file.Files.isRegularFile(path)
+                && path.getFileName().toString().endsWith(".jar");
+        return onDisk ? Optional.of(path) : Optional.empty();
+    }
+
+    @Override
     public Path configDir() {
         return FMLPaths.CONFIGDIR.get();
     }
@@ -126,6 +142,23 @@ final class NeoForgeGlazedPlatform implements GlazedPlatform {
             String url = result.url() != null ? result.url() : container.getModInfo().getModURL().map(Object::toString).orElse("");
             return Optional.of(new net.ixdarklord.glazedmenu.internal.modlist.ModUpdates.Update(result.target().toString(), url));
         });
+    }
+
+    // NeoForge's key binds can need Ctrl, Shift or Alt held.
+    @Override
+    public boolean isKeyModifier(com.mojang.blaze3d.platform.InputConstants.Key key) {
+        return net.neoforged.neoforge.client.settings.KeyModifier.isKeyCodeModifier(key);
+    }
+
+    @Override
+    public void bindKey(net.minecraft.client.KeyMapping mapping, com.mojang.blaze3d.platform.InputConstants.Key modifier,
+                        com.mojang.blaze3d.platform.InputConstants.Key key) {
+        mapping.setKeyModifierAndCode(net.neoforged.neoforge.client.settings.KeyModifier.getKeyModifier(modifier), key);
+    }
+
+    @Override
+    public void resetKey(net.minecraft.client.KeyMapping mapping) {
+        mapping.setToDefault();
     }
 
     // "A, B and C" or "A & B", as people write them in mods.toml.

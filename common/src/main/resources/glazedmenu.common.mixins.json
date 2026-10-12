@@ -5,10 +5,24 @@
   "package": "net.ixdarklord.glazedmenu.internal.mixin",
   "plugin": "net.ixdarklord.glazedmenu.internal.mixin.GlazedMixinPlugin",
   "client": [
+    "BackupConfirmScreenAccessor",
+    "ChatComponentAccessor",
+    "ChatComponentMixin",
+    "ChatListenerMixin",
+    "ChatScreenAccessor",
+    "CommandSuggestionsAccessor",
+    "ConnectScreenMixin",
+    "DeathScreenAccessor",
+    "GameRendererMixin",
+    "GenericMessageScreenMixin",
     "GuiFadeMixin",
+    "GuiMixin",
+    "LevelLoadingScreenMixin",
     "MinecraftMixin",
     "PauseScreenMixin",
-    "TitleScreenMixin"
+    "SuggestionsListAccessor",
+    "TitleScreenMixin",
+    "WorldOpenFlowsMixin"
   ],
   "injectors": {
     "defaultRequire": 1
