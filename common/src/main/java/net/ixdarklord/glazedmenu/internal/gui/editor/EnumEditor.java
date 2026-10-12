@@ -1,5 +1,6 @@
 package net.ixdarklord.glazedmenu.internal.gui.editor;
 
+import com.mojang.blaze3d.platform.InputConstants;
 import net.ixdarklord.glazedmenu.api.editor.EditSlot;
 import net.ixdarklord.glazedmenu.api.editor.ValueEditor;
 import net.ixdarklord.glazedmenu.api.config.type.EnumType;
@@ -65,7 +66,7 @@ public final class EnumEditor<E extends Enum<E>> implements ValueEditor {
 
         @Override
         public void onPress(InputWithModifiers input) {
-            if (input instanceof MouseButtonEvent event && event.button() == 0) {
+            if (input instanceof MouseButtonEvent event && event.button() == InputConstants.MOUSE_BUTTON_LEFT) {
                 if (event.x() < this.getX() + ARROW_ZONE) EnumEditor.this.step(true);
                 else if (event.x() >= this.getRight() - ARROW_ZONE) EnumEditor.this.step(false);
                 else EnumEditor.this.openDropdown();
@@ -76,7 +77,7 @@ public final class EnumEditor<E extends Enum<E>> implements ValueEditor {
 
         @Override
         protected boolean isValidClickButton(MouseButtonInfo buttonInfo) {
-            return buttonInfo.button() == 0 || buttonInfo.button() == 1;
+            return buttonInfo.button() == InputConstants.MOUSE_BUTTON_LEFT || buttonInfo.button() == InputConstants.MOUSE_BUTTON_RIGHT;
         }
 
         @Override

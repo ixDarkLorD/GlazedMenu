@@ -49,6 +49,32 @@ public interface GlazedPlatform {
         return Optional.empty();
     }
 
+    /** The loader's name as Modrinth lists it ("fabric", "neoforge"), or empty when it isn't known. */
+    default String loaderName() {
+        return "";
+    }
+
+    /** The mod's own jar on disk: none for a mod inside another's jar, or one run from folders in development. */
+    default Optional<Path> modFile(String modId) {
+        return Optional.empty();
+    }
+
+    /** Whether a key only modifies others here (Ctrl, Shift, Alt on NeoForge, where a key bind may need one held). */
+    default boolean isKeyModifier(com.mojang.blaze3d.platform.InputConstants.Key key) {
+        return false;
+    }
+
+    /** Binds a key, with the modifier key held with it ({@code InputConstants.UNKNOWN} for none) where the loader has those. */
+    default void bindKey(net.minecraft.client.KeyMapping mapping, com.mojang.blaze3d.platform.InputConstants.Key modifier,
+                         com.mojang.blaze3d.platform.InputConstants.Key key) {
+        mapping.setKey(key);
+    }
+
+    /** Sets a key bind back to its default. */
+    default void resetKey(net.minecraft.client.KeyMapping mapping) {
+        mapping.setKey(mapping.getDefaultKey());
+    }
+
     static GlazedPlatform get() {
         if (Holder.platform == null) throw new IllegalStateException("Glazed Menu's loader module hasn't started");
         return Holder.platform;

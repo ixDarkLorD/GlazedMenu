@@ -7,6 +7,7 @@ import net.ixdarklord.glazedmenu.api.config.ConfigTheme;
 import net.ixdarklord.glazedmenu.api.config.type.EnumType;
 import net.ixdarklord.glazedmenu.internal.gui.CategoryPopup;
 import net.ixdarklord.glazedmenu.internal.gui.ConfigScreen;
+import net.ixdarklord.glazedmenu.internal.gui.ConfigSelectScreen;
 import net.ixdarklord.glazedmenu.internal.source.ConfigSources;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
@@ -45,6 +46,7 @@ public final class CoolCatIntegration {
             Minecraft minecraft = Minecraft.getInstance();
             if (minecraft.gui.screen() instanceof ConfigScreen screen) screen.onConfigSynced(wrapped);
             if (minecraft.gui.screen() instanceof CategoryPopup popup) popup.onConfigSynced(wrapped);
+            if (minecraft.gui.screen() instanceof ConfigSelectScreen select) select.onConfigSynced(wrapped);
         });
     }
 

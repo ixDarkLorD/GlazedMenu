@@ -121,6 +121,21 @@ final class FabricGlazedPlatform implements GlazedPlatform {
     }
 
     @Override
+    public String loaderName() {
+        return "fabric";
+    }
+
+    @Override
+    public Optional<Path> modFile(String modId) {
+        return FabricLoader.getInstance().getModContainer(modId).filter(mod -> mod.getOrigin().getKind() == ModOrigin.Kind.PATH)
+                .flatMap(mod -> mod.getOrigin().getPaths().stream().filter(FabricGlazedPlatform::isJarOnDisk).findFirst());
+    }
+
+    private static boolean isJarOnDisk(Path path) {
+        return path.getFileSystem() == java.nio.file.FileSystems.getDefault() && Files.isRegularFile(path) && path.getFileName().toString().endsWith(".jar");
+    }
+
+    @Override
     public Path configDir() {
         return FabricLoader.getInstance().getConfigDir();
     }

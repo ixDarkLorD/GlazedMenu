@@ -1,5 +1,6 @@
 package net.ixdarklord.glazedmenu.internal.style;
 
+import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.KeyEvent;
@@ -20,11 +21,12 @@ public final class DropdownScreen<T> extends Screen implements Overlay {
     private static final int ROW_HEIGHT = 14;
     private static final int MAX_ROWS = 8;
     private static final int TOOLTIP_WIDTH = 200;
-    private static final int KEY_ESCAPE = 256;
-    private static final int KEY_ENTER = 257;
-    private static final int KEY_NUMPAD_ENTER = 335;
-    private static final int KEY_DOWN = 264;
-    private static final int KEY_UP = 265;
+    // SDL's codes since 26.3: a shortcut's letter is its keycode (KeyEvent.shortcutKey), any other key its scancode (KeyEvent.key).
+    private static final int KEY_ESCAPE = InputConstants.KEY_ESCAPE;
+    private static final int KEY_ENTER = InputConstants.KEY_RETURN;
+    private static final int KEY_NUMPAD_ENTER = InputConstants.KEY_NUMPADENTER;
+    private static final int KEY_DOWN = InputConstants.KEY_DOWN;
+    private static final int KEY_UP = InputConstants.KEY_UP;
 
     private final @Nullable Screen parent;
     private final List<T> values;
@@ -172,7 +174,7 @@ public final class DropdownScreen<T> extends Screen implements Overlay {
     @Override
     public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
         int index = this.rowAt(event.x(), event.y());
-        if (index >= 0 && event.button() == 0) {
+        if (index >= 0 && event.button() == InputConstants.MOUSE_BUTTON_LEFT) {
             this.pick(index);
         } else if (index < 0) {
             this.onClose();

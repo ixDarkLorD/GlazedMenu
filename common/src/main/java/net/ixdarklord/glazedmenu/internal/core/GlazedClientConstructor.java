@@ -33,6 +33,8 @@ public final class GlazedClientConstructor {
         net.ixdarklord.glazedmenu.api.config.ConfigTheme.setForMod(GlazedMenu.MOD_ID, net.ixdarklord.glazedmenu.internal.style.GlazedBrand.THEME);
         ThemeEffects.init();
         ConfigSources.register(GlazedSettings.SOURCE);
+        ConfigSources.register(net.ixdarklord.glazedmenu.internal.source.game.GameOptionsSource.INSTANCE);
+        ConfigSources.register(net.ixdarklord.glazedmenu.internal.game.GameRulesSource.INSTANCE);
         if (platform.isModLoaded("coolcatcore")) CoolCatIntegration.init();
         if (platform.isModLoaded("coolcatcanvas")) CanvasEffects.init();
         if (platform.hasNeoForgeConfigs()) ConfigSources.register(ModConfigSource.INSTANCE);

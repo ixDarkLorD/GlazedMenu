@@ -1,5 +1,12 @@
 package net.ixdarklord.glazedmenu.internal.core.neoforge;
 
+import net.ixdarklord.glazedmenu.internal.game.ChatLink;
+import net.ixdarklord.glazedmenu.internal.net.ChatPayloads;
+import net.minecraft.client.multiplayer.ClientPacketListener;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.neoforged.neoforge.client.network.ClientPacketDistributor;
+import net.neoforged.neoforge.client.network.event.RegisterClientPayloadHandlersEvent;
+
 import net.ixdarklord.glazedmenu.api.ConfigScreens;
 import net.ixdarklord.glazedmenu.internal.core.GenericScreens;
 import net.ixdarklord.glazedmenu.internal.core.GlazedMenu;
@@ -32,6 +39,21 @@ public final class GlazedNeoForge {
         NeoForge.EVENT_BUS.addListener((ClientTickEvent.Pre event) -> GlazedClientConstructor.tick(Minecraft.getInstance()));
         NeoForge.EVENT_BUS.addListener((RegisterClientCommandsEvent event) ->
                 event.getDispatcher().register(GlazedCommand.<CommandSourceStack>build(CommandSourceStack::sendFailure)));
+        // The chat's talk with a server that has Glazed Menu too (GlazedNeoForgeCommon has the rest of it).
+        ChatLink.setTransport(new ChatLink.Transport() {
+            @Override
+            public boolean canSend(CustomPacketPayload.Type<?> type) {
+                ClientPacketListener connection = Minecraft.getInstance().getConnection();
+                return connection != null && connection.hasChannel(type);
+            }
+
+            @Override
+            public void send(CustomPacketPayload payload) {
+                ClientPacketDistributor.sendToServer(payload);
+            }
+        });
+        modEventBus.addListener((RegisterClientPayloadHandlersEvent event) -> event.register(ChatPayloads.TypingOf.TYPE, (payload, context) ->
+                context.enqueueWork(() -> ChatLink.typing(payload.player(), payload.typing()))));
         // Glazed Menu's own button opens its settings.
         container.registerExtensionPoint(IConfigScreenFactory.class, (IConfigScreenFactory) (mod, parent) -> ConfigScreens.create(parent, GlazedMenu.MOD_ID));
         // Queued work runs after every mod's setup, so the mods' configs and screens are all known by then (and, as

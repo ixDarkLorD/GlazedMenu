@@ -1,5 +1,6 @@
 package net.ixdarklord.glazedmenu.internal.gui;
 
+import com.mojang.blaze3d.platform.InputConstants;
 import net.ixdarklord.glazedmenu.internal.source.Access;
 import net.ixdarklord.glazedmenu.api.config.ConfigTheme;
 import net.ixdarklord.glazedmenu.api.config.Config;
@@ -34,7 +35,8 @@ import java.util.stream.Collectors;
  */
 public final class CategoryPopup extends StyledPopup {
     private static final int WIDTH = 340;
-    private static final int KEY_S = 83;
+    // SDL's codes since 26.3: a shortcut's letter is its keycode (KeyEvent.shortcutKey), any other key its scancode (KeyEvent.key).
+    private static final int KEY_S = 's';
 
     private final ConfigEditSession session;
     private final ConfigNode node;
@@ -251,7 +253,7 @@ public final class CategoryPopup extends StyledPopup {
 
     @Override
     public boolean keyPressed(KeyEvent event) {
-        if (event.hasControlDownWithQuirk() && event.key() == KEY_S) {
+        if (event.hasControlDownWithQuirk() && event.shortcutKey() == KEY_S) {
             if (this.saveButton != null && this.saveButton.active) this.save();
             return true;
         }

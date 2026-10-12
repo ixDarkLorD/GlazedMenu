@@ -1,5 +1,6 @@
 package net.ixdarklord.glazedmenu.internal.modlist;
 
+import com.mojang.blaze3d.platform.InputConstants;
 import net.ixdarklord.glazedmenu.api.theme.ConfigEffect;
 import net.ixdarklord.glazedmenu.internal.style.ConfigIcons;
 import net.ixdarklord.glazedmenu.internal.style.GlazedBrand;
@@ -12,6 +13,7 @@ import net.ixdarklord.glazedmenu.api.config.ConfigTheme;
 import net.ixdarklord.glazedmenu.api.ConfigScreens;
 import net.ixdarklord.glazedmenu.internal.core.GlazedMenu;
 import net.ixdarklord.glazedmenu.internal.core.GlazedClient;
+import net.ixdarklord.glazedmenu.internal.core.GlazedPlatform;
 import net.ixdarklord.glazedmenu.internal.core.GlazedSettings;
 import net.ixdarklord.glazedmenu.internal.gui.style.ModColors;
 import net.ixdarklord.glazedmenu.internal.gui.style.ModIcons;
@@ -29,6 +31,7 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
+import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.FormattedCharSequence;
@@ -51,12 +54,13 @@ import java.util.function.Predicate;
  * Keys: arrows move between tiles, Enter opens the chosen mod's settings, Ctrl+F searches.
  */
 public final class GlazedModsScreen extends StyledScreen {
-    private static final int KEY_F = 70;
-    private static final int KEY_ENTER = 257;
-    private static final int KEY_RIGHT = 262;
-    private static final int KEY_LEFT = 263;
-    private static final int KEY_DOWN = 264;
-    private static final int KEY_UP = 265;
+    // SDL's codes since 26.3: a shortcut's letter is its keycode (KeyEvent.shortcutKey), any other key its scancode (KeyEvent.key).
+    private static final int KEY_F = InputConstants.KEYCODE_F;
+    private static final int KEY_ENTER = InputConstants.KEY_RETURN;
+    private static final int KEY_RIGHT = InputConstants.KEY_RIGHT;
+    private static final int KEY_LEFT = InputConstants.KEY_LEFT;
+    private static final int KEY_DOWN = InputConstants.KEY_DOWN;
+    private static final int KEY_UP = InputConstants.KEY_UP;
     private static final int HEADER = 24;
     private static final int CHIPS = 16;
     private static final int TILE_WIDTH = 50;
@@ -74,6 +78,9 @@ public final class GlazedModsScreen extends StyledScreen {
     // Where the screen left off, for the next time it opens.
     private static Filter lastFilter = Filter.ALL;
     private static boolean lastDescending;
+    private static boolean lastRecent;
+    // When each mod's file was last changed (installed or updated), read once; 0 for a mod without a file of its own.
+    private static final java.util.Map<String, Long> FILE_TIMES = new java.util.HashMap<>();
     private static @Nullable String lastSelected;
     // Where the drawer was scrolled, kept for the session: coming back from another screen continues from there.
     private static double lastScroll;
@@ -85,6 +92,8 @@ public final class GlazedModsScreen extends StyledScreen {
     private final List<FlatButton> actions = new ArrayList<>();
     private Filter filter = lastFilter;
     private boolean descending = lastDescending;
+    // Newest files first, instead of by name.
+    private boolean recent = lastRecent;
     private String query = "";
     private List<ModEntry> shown = List.of();
     private @Nullable ModEntry selected;
@@ -94,6 +103,8 @@ public final class GlazedModsScreen extends StyledScreen {
     private @Nullable StyledEditBox search;
     private @Nullable FlatButton sortButton;
     private @Nullable FlatButton viewButton;
+    private @Nullable FlatButton favoriteButton;
+    private @Nullable FlatButton hideButton;
 
     public GlazedModsScreen(@Nullable Screen parent) {
         super(Component.translatableWithFallback("glazedmenu.mods.title", "Mods"), ConfigTheme.forMod(GlazedMenu.MOD_ID));
@@ -116,7 +127,10 @@ public final class GlazedModsScreen extends StyledScreen {
         ALL("glazedmenu.mods.filter.all", "All", mod -> !ModCatalog.isChild(mod) && (!LOADER_PARTS.contains(mod.id()) || GlazedSettings.showLibraries())),
         CONFIGURABLE("glazedmenu.mods.filter.configurable", "With Settings", mod -> ModCatalog.hasSettings(mod.id())),
         // Libraries, and the mods that bundle some (their modules are grouped under them, as under All).
-        LIBRARIES("glazedmenu.mods.filter.libraries", "Libraries", mod -> !ModCatalog.isChild(mod) && (mod.library() || !ModCatalog.children(mod.id()).isEmpty()));
+        LIBRARIES("glazedmenu.mods.filter.libraries", "Libraries", mod -> !ModCatalog.isChild(mod) && (mod.library() || !ModCatalog.children(mod.id()).isEmpty())),
+        // The mods the player starred, and the ones they hid from every other filter; each shown once it has any.
+        FAVORITES("glazedmenu.mods.filter.favorites", "Favorites", mod -> ModMarks.isFavorite(mod.id())),
+        HIDDEN("glazedmenu.mods.filter.hidden", "Hidden", mod -> true);
 
         final String key;
         final String fallback;
@@ -127,6 +141,26 @@ public final class GlazedModsScreen extends StyledScreen {
             this.fallback = fallback;
             this.test = test;
         }
+
+        // A hidden mod is listed under Hidden and nowhere else.
+        boolean lists(ModEntry mod) {
+            return this == HIDDEN ? ModMarks.isHidden(mod.id()) : !ModMarks.isHidden(mod.id()) && this.test.test(mod);
+        }
+
+        // Favorites and Hidden have no chip while they'd be empty.
+        boolean optional() {
+            return this == FAVORITES || this == HIDDEN;
+        }
+    }
+
+    private static long fileTime(String modId) {
+        return FILE_TIMES.computeIfAbsent(modId, id -> GlazedPlatform.get().modFile(id).map(file -> {
+            try {
+                return java.nio.file.Files.getLastModifiedTime(file).toMillis();
+            } catch (java.io.IOException e) {
+                return 0L;
+            }
+        }).orElse(0L));
     }
 
     // --- Layout ---
@@ -192,14 +226,29 @@ public final class GlazedModsScreen extends StyledScreen {
         // The filter chips, laid out as they're drawn; the sort switch at the right of their row.
         this.chips.clear();
         int x = this.frameLeft() + 2;
+        // A filter chosen earlier that's empty now (its last favorite unstarred, its last hidden mod shown) gives way.
+        if (this.filter.optional() && ModCatalog.all().stream().noneMatch(this.filter::lists)) {
+            this.filter = Filter.ALL;
+            lastFilter = Filter.ALL;
+        }
         for (Filter chip : Filter.values()) {
+            if (chip.optional() && ModCatalog.all().stream().noneMatch(chip::lists)) continue;
             int width = this.font.width(Component.translatableWithFallback(chip.key, chip.fallback)) + 30;
             this.chips.add(new Chip(chip, x, this.chipsY(), width));
             x += width + 4;
         }
         this.sortButton = this.addRenderableWidget(FlatButton.of(this.sortLabel(), 56, button -> {
-            this.descending = !this.descending;
+            // A–Z, then Z–A, then the most recently installed or updated first.
+            if (this.recent) {
+                this.recent = false;
+                this.descending = false;
+            } else if (this.descending) {
+                this.recent = true;
+            } else {
+                this.descending = true;
+            }
             lastDescending = this.descending;
+            lastRecent = this.recent;
             ((FlatButton) button).setMessage(this.sortLabel());
             ((FlatButton) button).withIcon(this.descending ? ConfigIcons.UP : ConfigIcons.DOWN);
             this.refilter(false);
@@ -238,6 +287,16 @@ public final class GlazedModsScreen extends StyledScreen {
         this.actions.add(FlatButton.of(Component.translatableWithFallback("glazedmenu.mods.issues", "Issues"), 74, button -> this.openLink(this.selected == null ? null : this.selected.issues())).withIcon(ConfigIcons.BUG));
         this.actions.add(FlatButton.of(Component.translatableWithFallback("glazedmenu.mods.source", "Source"), 78, button -> this.openLink(this.selected == null ? null : this.selected.sources())).withIcon(ConfigIcons.CODE));
         this.actions.forEach(this::addRenderableWidget);
+        this.favoriteButton = this.addRenderableWidget(FlatButton.icon(ConfigIcons.STAR_OUTLINE, CommonComponents.EMPTY, button -> {
+            if (this.selected == null) return;
+            ModMarks.toggleFavorite(this.selected.id());
+            this.rebuildWidgets();
+        }).style(FlatButton.Style.NORMAL));
+        this.hideButton = this.addRenderableWidget(FlatButton.icon(ConfigIcons.EYE_OFF, CommonComponents.EMPTY, button -> {
+            if (this.selected == null) return;
+            ModMarks.toggleHidden(this.selected.id());
+            this.rebuildWidgets();
+        }).style(FlatButton.Style.NORMAL));
         this.refilter(true);
         if (this.drawer != null) this.drawer.setScrollAmount(lastScroll);
     }
@@ -293,6 +352,7 @@ public final class GlazedModsScreen extends StyledScreen {
     }
 
     private Component sortLabel() {
+        if (this.recent) return Component.translatableWithFallback("glazedmenu.mods.sort.recent", "Recent");
         return this.descending ? Component.literal("Z–A") : Component.literal("A–Z");
     }
 
@@ -307,7 +367,7 @@ public final class GlazedModsScreen extends StyledScreen {
     }
 
     private int count(Filter filter) {
-        return (int) ModCatalog.all().stream().filter(filter.test).filter(this::matches).count();
+        return (int) ModCatalog.all().stream().filter(filter::lists).filter(this::matches).count();
     }
 
     // Under All and Libraries, a mod's bundled mods (Fabric API's modules) are a group under it: hidden until it's opened,
@@ -332,10 +392,13 @@ public final class GlazedModsScreen extends StyledScreen {
 
     private void refilter(boolean keepScroll) {
         Comparator<ModEntry> byName = Comparator.comparing(mod -> mod.name().toLowerCase(Locale.ROOT));
+        // The game first, then the favorites, then by name or by how recently each mod's file changed.
         Comparator<ModEntry> order = Comparator.<ModEntry, Boolean>comparing(mod -> !mod.id().equals("minecraft"))
-                .thenComparing(this.descending ? byName.reversed() : byName);
+                .thenComparing(mod -> !ModMarks.isFavorite(mod.id()))
+                .thenComparing(this.recent ? Comparator.<ModEntry, Long>comparing(mod -> -fileTime(mod.id())).thenComparing(byName)
+                        : this.descending ? byName.reversed() : byName);
         List<ModEntry> shown = new ArrayList<>();
-        for (ModEntry mod : ModCatalog.all().stream().filter(this.filter.test).sorted(order).toList()) {
+        for (ModEntry mod : ModCatalog.all().stream().filter(this.filter::lists).sorted(order).toList()) {
             List<ModEntry> children = this.group(mod);
             List<ModEntry> found = this.query.isBlank() ? children : children.stream().filter(this::matches).toList();
             if (!this.matches(mod) && found.isEmpty()) continue;
@@ -364,7 +427,7 @@ public final class GlazedModsScreen extends StyledScreen {
     private static final int UPDATE_LINE = 15;
 
     private static int updateBoxHeight(ModUpdates.Update update) {
-        return updateOpen ? UPDATE_LINE + (isLink(update.url()) ? 22 : 12) : UPDATE_LINE;
+        return updateOpen ? UPDATE_LINE + 22 : UPDATE_LINE;
     }
 
     // How far the actions and the description move down for the chosen mod's update box.
@@ -403,7 +466,9 @@ public final class GlazedModsScreen extends StyledScreen {
             total += natural[i];
             count++;
         }
-        int room = this.detailsWidth() - 24 - Math.max(0, count - 1) * 4;
+        // The star and the eye sit at the row's right end, for any mod.
+        int marks = this.layoutMarks();
+        int room = this.detailsWidth() - 24 - marks - Math.max(0, count - 1) * 4;
         float shrink = total > room ? room / (float) total : 1;
         int x = this.detailsX() + 12;
         int y = this.bodyTop() + HERO_HEIGHT + 6 + this.updateSpace();
@@ -416,6 +481,31 @@ public final class GlazedModsScreen extends StyledScreen {
             x += button.getWidth() + 4;
         }
     }
+
+    // Places the favorite and hide buttons, showing what a press does now; returns the room they take from the row.
+    private int layoutMarks() {
+        if (this.favoriteButton == null || this.hideButton == null) return 0;
+        ModEntry mod = this.selected;
+        this.favoriteButton.visible = mod != null;
+        this.hideButton.visible = mod != null;
+        if (mod == null) return 0;
+        boolean favorite = ModMarks.isFavorite(mod.id());
+        boolean hidden = ModMarks.isHidden(mod.id());
+        int right = this.detailsX() + this.detailsWidth() - 12;
+        int y = this.bodyTop() + HERO_HEIGHT + 6 + this.updateSpace();
+        this.hideButton.setPosition(right - 20, y);
+        this.favoriteButton.setPosition(right - 44, y);
+        this.favoriteButton.withIcon(favorite ? ConfigIcons.STAR : ConfigIcons.STAR_OUTLINE).iconColor(favorite ? FAVORITE_COLOR : 0)
+                .tooltip(favorite ? Component.translatableWithFallback("glazedmenu.mods.unfavorite", "Remove from favorites")
+                        : Component.translatableWithFallback("glazedmenu.mods.favorite", "Add to favorites: listed first"));
+        this.hideButton.withIcon(hidden ? ConfigIcons.EYE : ConfigIcons.EYE_OFF)
+                .tooltip(hidden ? Component.translatableWithFallback("glazedmenu.mods.unhide", "Show in the list again")
+                        : Component.translatableWithFallback("glazedmenu.mods.hide", "Hide from the list (kept under Hidden)"));
+        return 52;
+    }
+
+    // Favorites: gold, on the star and the tag.
+    private static final int FAVORITE_COLOR = 0xFFF2B93B;
 
     private static boolean isLink(@Nullable String url) {
         return url != null && (url.startsWith("https://") || url.startsWith("http://"));
@@ -474,7 +564,7 @@ public final class GlazedModsScreen extends StyledScreen {
     @Override
     public boolean keyPressed(KeyEvent event) {
         if (this.isLeaving()) return true;
-        if (event.hasControlDownWithQuirk() && event.key() == KEY_F && this.search != null) {
+        if (event.hasControlDownWithQuirk() && event.shortcutKey() == KEY_F && this.search != null) {
             this.setFocused(this.search);
             return true;
         }
@@ -1315,6 +1405,8 @@ public final class GlazedModsScreen extends StyledScreen {
             else if (mod.library()) tags.add(Component.translatableWithFallback("glazedmenu.mods.tag.library", "LIBRARY"));
             if (mod.side() == ModEntry.Side.CLIENT) tags.add(Component.translatableWithFallback("glazedmenu.mods.tag.client", "CLIENT"));
             if (mod.side() == ModEntry.Side.SERVER) tags.add(Component.translatableWithFallback("glazedmenu.mods.tag.server", "SERVER"));
+            if (ModMarks.isFavorite(mod.id())) tags.add(Component.translatableWithFallback("glazedmenu.mods.tag.favorite", "FAVORITE"));
+            if (ModMarks.isHidden(mod.id())) tags.add(Component.translatableWithFallback("glazedmenu.mods.tag.hidden", "HIDDEN"));
             int tagX = textX;
             for (Component tag : tags) {
                 if (tagX + font.width(tag) + 8 > x + width - PADDING) break;
@@ -1324,6 +1416,7 @@ public final class GlazedModsScreen extends StyledScreen {
             // A newer version: its box under the banner, above the actions.
             this.updateLink = null;
             this.updateHeader = null;
+            this.updateIgnore = null;
             java.util.Optional<ModUpdates.Update> newer = ModUpdates.of(mod.id());
             if (newer.isPresent()) this.updateBox(graphics, mod, newer.get(), x + PADDING, this.getY() + HERO_HEIGHT + 4, width - PADDING * 2, mouseX, mouseY);
 
@@ -1472,12 +1565,23 @@ public final class GlazedModsScreen extends StyledScreen {
                 this.updateLink = new int[]{x + 20, openY - 1, openWidth, 10};
                 this.updateUrl = update.url();
             }
+            // Ignore: says nothing more of this version; the next one is told of again.
+            Component ignore = Component.translatableWithFallback("glazedmenu.mods.update.ignore", "Ignore this version");
+            int ignoreX = x + width - 8 - font.width(ignore);
+            int ignoreY = y + UPDATE_LINE + 11;
+            boolean overIgnore = mouseX >= ignoreX && mouseX < ignoreX + font.width(ignore) && mouseY >= ignoreY && mouseY < ignoreY + 9;
+            graphics.text(font, overIgnore ? ignore.copy().withStyle(ChatFormatting.UNDERLINE) : ignore, ignoreX, ignoreY,
+                    overIgnore ? 0xFFFFFFFF : ConfigStyle.colors().textMuted(), false);
+            this.updateIgnore = new int[]{ignoreX, ignoreY - 1, font.width(ignore), 10};
+            this.updateIgnored = update.version();
         }
 
         // Where the update box's first line and its link are drawn (x, y, width, height), for clicks.
         private int @Nullable [] updateHeader;
         private int @Nullable [] updateLink;
         private @Nullable String updateUrl;
+        private int @Nullable [] updateIgnore;
+        private @Nullable String updateIgnored;
 
         @Override
         public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
@@ -1486,6 +1590,16 @@ public final class GlazedModsScreen extends StyledScreen {
             if (header != null && event.x() >= header[0] && event.x() < header[0] + header[2] && event.y() >= header[1] && event.y() < header[1] + header[3]) {
                 updateOpen = !updateOpen;
                 GlazedModsScreen.this.minecraft.getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F));
+                GlazedModsScreen.this.layoutActions();
+                return true;
+            }
+            int[] ignore = this.updateIgnore;
+            ModEntry chosen = GlazedModsScreen.this.selected;
+            if (ignore != null && chosen != null && this.updateIgnored != null
+                    && event.x() >= ignore[0] && event.x() < ignore[0] + ignore[2] && event.y() >= ignore[1] && event.y() < ignore[1] + ignore[3]) {
+                ModMarks.ignoreUpdate(chosen.id(), this.updateIgnored);
+                GlazedClient.toast(Component.literal(chosen.name()), Component.translatableWithFallback("glazedmenu.mods.update.ignored",
+                        "Version %s ignored; you'll be told of the next one", this.updateIgnored));
                 GlazedModsScreen.this.layoutActions();
                 return true;
             }

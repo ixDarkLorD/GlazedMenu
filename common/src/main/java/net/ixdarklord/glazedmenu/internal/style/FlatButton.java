@@ -78,9 +78,21 @@ public class FlatButton extends Button.Plain {
         int foreground;
         switch (this.style) {
             case PRIMARY -> {
-                int fill = !this.active ? ConfigStyle.colors().buttonDisabled() : hovered ? ConfigStyle.mix(accent, 0xFFFFFFFF, 0.18F) : accent;
-                ConfigStyle.rect(graphics, x, y, width, height, fill);
-                foreground = this.active ? ConfigStyle.readableOn(fill) : ConfigStyle.colors().textMuted();
+                if (this.active && ConfigStyle.isGlazed()) {
+                    // On Glazed Menu's own look, the main action is in the flowing gradient the mod list's marks are in
+                    // (deepened, for white text to read at every point of it; less so under the mouse), on a deep base
+                    // and with an outline in a deeper shade still: with the outline come the rim of light, the shade
+                    // and the shadow that make a button a piece of glass.
+                    ConfigStyle.rect(graphics, x, y, width, height, ConfigStyle.mix(accent, 0xFF140C3A, 0.5F));
+                    GlazedBrand.fill(graphics, x + 1, y + 1, width - 2, height - 2, 0xFF, hovered ? 0.06F : 0.24F);
+                    ConfigStyle.outline(graphics, x, y, width, height, ConfigStyle.mix(GlazedBrand.now(0.5F), 0xFF000000, hovered ? 0.3F : 0.48F));
+                    foreground = 0xFFFFFFFF;
+                } else {
+                    int fill = !this.active ? ConfigStyle.colors().buttonDisabled() : hovered ? ConfigStyle.mix(accent, 0xFFFFFFFF, 0.18F) : accent;
+                    ConfigStyle.rect(graphics, x, y, width, height, fill);
+                    ConfigStyle.outline(graphics, x, y, width, height, this.active ? ConfigStyle.mix(fill, 0xFF000000, 0.38F) : ConfigStyle.colors().panelBorder());
+                    foreground = this.active ? ConfigStyle.readableOn(fill) : ConfigStyle.colors().textMuted();
+                }
             }
             case DANGER -> {
                 ConfigStyle.rect(graphics, x, y, width, height, hovered ? ConfigStyle.withAlpha(ConfigStyle.colors().error(), 0x40) : ConfigStyle.colors().button());
