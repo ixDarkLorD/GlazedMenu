@@ -79,6 +79,8 @@ public class CompatEditBox extends EditBox {
         return super.keyPressed(event.key(), event.scancode(), event.modifiers());
     }
 
-    /** 1.21.1 has no mouse cursor shapes. */
-    protected void handleCursor(GuiGraphicsExtractor graphics) {}
+    /** The text cursor over it, as Minecraft 26.1's text fields ask for. */
+    protected void handleCursor(GuiGraphicsExtractor graphics) {
+        if (this.isHovered()) graphics.requestCursor(CursorTypes.IBEAM);
+    }
 }

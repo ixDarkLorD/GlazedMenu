@@ -9,6 +9,10 @@ import net.minecraft.network.chat.Component;
 public abstract class CompatScreen extends Screen {
     protected CompatScreen(Component title) {
         super(title);
+        // Minecraft 26.1's screens know the game and its font from the start; 1.21.1's only once they're laid out, which
+        // is after they're told they were opened.
+        this.minecraft = Minecraft.getInstance();
+        this.font = this.minecraft.font;
     }
 
     // --- Drawing: 26.1 draws the background and the rest in separate calls; 1.21.1's render does both ---
@@ -18,8 +22,13 @@ public abstract class CompatScreen extends Screen {
     @Override
     public final void render(GuiGraphics graphics, int mouseX, int mouseY, float a) {
         GuiGraphicsExtractor extractor = GuiGraphicsExtractor.of(graphics);
-        this.extractBackground(extractor, mouseX, mouseY, a);
-        this.extractRenderState(extractor, mouseX, mouseY, a);
+        Cursors.begin();
+        try {
+            this.extractBackground(extractor, mouseX, mouseY, a);
+            this.extractRenderState(extractor, mouseX, mouseY, a);
+        } finally {
+            Cursors.end();
+        }
     }
 
     /** Draws the widgets (not the background). */
@@ -78,5 +87,23 @@ public abstract class CompatScreen extends Screen {
 
     public boolean keyPressed(KeyEvent event) {
         return super.keyPressed(event.key(), event.scancode(), event.modifiers());
+    }
+
+    @Override
+    public final boolean keyReleased(int key, int scancode, int modifiers) {
+        return this.keyReleased(new KeyEvent(key, scancode, modifiers));
+    }
+
+    public boolean keyReleased(KeyEvent event) {
+        return super.keyReleased(event.key(), event.scancode(), event.modifiers());
+    }
+
+    @Override
+    public final boolean mouseReleased(double mouseX, double mouseY, int button) {
+        return this.mouseReleased(CompatInput.release(mouseX, mouseY, button));
+    }
+
+    public boolean mouseReleased(MouseButtonEvent event) {
+        return super.mouseReleased(event.x(), event.y(), event.button());
     }
 }

@@ -108,6 +108,92 @@ final class NeoForgeGlazedPlatform implements GlazedPlatform {
     }
 
     @Override
+    public String loaderName() {
+        return "neoforge";
+    }
+
+    // --- NeoForge's own part of the title screen, asked of NeoForge as its own title screen asks ---
+
+    @Override
+    public List<String> titleBranding() {
+        List<String> lines = new ArrayList<>();
+        try {
+            net.neoforged.neoforge.internal.BrandingControl.forEachLine(false, false, (index, line) -> lines.add(line));
+        } catch (RuntimeException | LinkageError e) {
+            GlazedMenu.LOGGER.debug("Couldn't read NeoForge's lines for the title screen", e);
+        }
+        return lines;
+    }
+
+    @Override
+    public List<String> titleNotices() {
+        List<String> lines = new ArrayList<>();
+        try {
+            net.neoforged.neoforge.internal.BrandingControl.forEachAboveCopyrightLine((index, line) -> lines.add(line));
+        } catch (RuntimeException | LinkageError e) {
+            GlazedMenu.LOGGER.debug("Couldn't read NeoForge's notices for the title screen", e);
+        }
+        return lines;
+    }
+
+    @Override
+    public void renderTitle(net.minecraft.client.gui.screens.TitleScreen screen, net.minecraft.client.gui.GuiGraphics graphics, int alpha) {
+        try {
+            net.neoforged.neoforge.client.ClientHooks.renderMainMenu(screen, graphics, net.minecraft.client.Minecraft.getInstance().font, screen.width, screen.height, alpha);
+        } catch (RuntimeException | LinkageError e) {
+            GlazedMenu.LOGGER.debug("NeoForge's part of the title screen couldn't be drawn", e);
+        }
+    }
+
+    // As NeoForge's own Mods button draws it.
+    private static final net.minecraft.resources.ResourceLocation VERSION_CHECK_ICONS =
+            net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("neoforge", "textures/gui/version_check_icons.png");
+    private net.neoforged.fml.VersionChecker.@Nullable Status updateStatus;
+    private boolean checkedForUpdates;
+
+    // What the loader's own update check found, asked once.
+    private net.neoforged.fml.VersionChecker.@Nullable Status updateStatus() {
+        if (!this.checkedForUpdates) {
+            this.checkedForUpdates = true;
+            try {
+                this.updateStatus = net.neoforged.neoforge.client.loading.ClientModLoader.checkForUpdates();
+            } catch (RuntimeException | LinkageError e) {
+                this.updateStatus = null;
+            }
+        }
+        return this.updateStatus;
+    }
+
+    @Override
+    public boolean hasUpdateMark() {
+        try {
+            net.neoforged.fml.VersionChecker.Status status = this.updateStatus();
+            return status != null && status.shouldDraw() && net.neoforged.fml.loading.FMLConfig.getBoolConfigValue(net.neoforged.fml.loading.FMLConfig.ConfigValue.VERSION_CHECK);
+        } catch (RuntimeException | LinkageError e) {
+            return false;
+        }
+    }
+
+    @Override
+    public void renderUpdateMark(net.minecraft.client.gui.GuiGraphics graphics, int x, int y) {
+        if (!this.hasUpdateMark()) return;
+        net.neoforged.fml.VersionChecker.Status status = this.updateStatus();
+        graphics.blit(VERSION_CHECK_ICONS, x, y, status.getSheetOffset() * 8,
+                status.isAnimated() && (System.currentTimeMillis() / 800L & 1L) == 1L ? 8.0F : 0.0F, 8, 8, 64, 16);
+    }
+
+    // A mod inside another's jar has a path in that jar, not on disk.
+    @Override
+    public Optional<Path> modFile(String modId) {
+        IModFileInfo file = ModList.get().getModFileById(modId);
+        if (file == null) return Optional.empty();
+        Path path = file.getFile().getFilePath();
+        boolean onDisk = path.getFileSystem() == java.nio.file.FileSystems.getDefault() && java.nio.file.Files.isRegularFile(path)
+                && path.getFileName().toString().endsWith(".jar");
+        return onDisk ? Optional.of(path) : Optional.empty();
+    }
+
+    @Override
     public Path configDir() {
         return FMLPaths.CONFIGDIR.get();
     }
@@ -128,6 +214,23 @@ final class NeoForgeGlazedPlatform implements GlazedPlatform {
             String url = result.url() != null ? result.url() : container.getModInfo().getModURL().map(Object::toString).orElse("");
             return Optional.of(new net.ixdarklord.glazedmenu.internal.modlist.ModUpdates.Update(result.target().toString(), url));
         });
+    }
+
+    // NeoForge's key binds can need Ctrl, Shift or Alt held.
+    @Override
+    public boolean isKeyModifier(com.mojang.blaze3d.platform.InputConstants.Key key) {
+        return net.neoforged.neoforge.client.settings.KeyModifier.isKeyCodeModifier(key);
+    }
+
+    @Override
+    public void bindKey(net.minecraft.client.KeyMapping mapping, com.mojang.blaze3d.platform.InputConstants.Key modifier,
+                        com.mojang.blaze3d.platform.InputConstants.Key key) {
+        mapping.setKeyModifierAndCode(net.neoforged.neoforge.client.settings.KeyModifier.getKeyModifier(modifier), key);
+    }
+
+    @Override
+    public void resetKey(net.minecraft.client.KeyMapping mapping) {
+        mapping.setToDefault();
     }
 
     // "A, B and C" or "A & B", as people write them in mods.toml.

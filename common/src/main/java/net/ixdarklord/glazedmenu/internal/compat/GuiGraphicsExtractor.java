@@ -11,10 +11,14 @@ import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipPositione
 import net.minecraft.client.gui.screens.inventory.tooltip.DefaultTooltipPositioner;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.HoverEvent;
+import net.minecraft.network.chat.Style;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.FormattedCharSequence;
+import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4f;
+import org.lwjgl.opengl.GL11;
 import org.joml.Vector3f;
 
 import java.util.List;
@@ -100,6 +104,86 @@ public final class GuiGraphicsExtractor {
         return (color & 0xFC000000) != 0;
     }
 
+    /** A collector that draws the lines handed to it, with the hover of what's under the mouse. */
+    public ActiveTextCollector textRenderer() {
+        return this.textRenderer(HoveredTextEffects.TOOLTIP_ONLY);
+    }
+
+    public ActiveTextCollector textRenderer(HoveredTextEffects effects) {
+        return new RenderingTextCollector(effects);
+    }
+
+    /** What text shows of the part under the mouse (1.21.1 has no mouse cursor shapes, so only its tooltip). */
+    public enum HoveredTextEffects {
+        NONE(false),
+        TOOLTIP_ONLY(true),
+        TOOLTIP_AND_CURSOR(true);
+
+        public final boolean allowTooltip;
+
+        HoveredTextEffects(boolean allowTooltip) {
+            this.allowTooltip = allowTooltip;
+        }
+    }
+
+    private final class RenderingTextCollector implements ActiveTextCollector {
+        private static final Parameters INITIAL = new Parameters(1);
+        private final HoveredTextEffects effects;
+
+        RenderingTextCollector(HoveredTextEffects effects) {
+            this.effects = effects;
+        }
+
+        @Override
+        public Parameters defaultParameters() {
+            return INITIAL;
+        }
+
+        @Override
+        public void accept(TextAlignment alignment, int anchorX, int y, Parameters parameters, FormattedCharSequence text) {
+            Minecraft minecraft = Minecraft.getInstance();
+            Font font = minecraft.font;
+            int left = alignment.calculateLeft(anchorX, font, text);
+            GuiGraphicsExtractor.this.text(font, text, left, y, Math.round(0xFF * Math.clamp(parameters.opacity(), 0, 1)) << 24 | 0xFFFFFF, true);
+            if (!this.effects.allowTooltip || minecraft.screen == null) return;
+            // The mouse, through the current transform: the text may be drawn moved.
+            double mouseX = minecraft.mouseHandler.xpos() * minecraft.getWindow().getGuiScaledWidth() / minecraft.getWindow().getScreenWidth();
+            double mouseY = minecraft.mouseHandler.ypos() * minecraft.getWindow().getGuiScaledHeight() / minecraft.getWindow().getScreenHeight();
+            Vector3f local = new Matrix4f(GuiGraphicsExtractor.this.raw.pose().last().pose()).invert().transformPosition(new Vector3f((float) mouseX, (float) mouseY, 0));
+            Style style = ActiveTextCollector.styleAt(font, text, left, y, (int) local.x, (int) local.y);
+            if (style != null && style.getHoverEvent() != null) {
+                List<FormattedCharSequence> lines = hoverLines(font, style);
+                if (lines != null) GuiGraphicsExtractor.this.setTooltipForNextFrame(font, lines, (int) mouseX, (int) mouseY);
+            }
+        }
+    }
+
+    // A hover event's text, as the game's own tooltip of it has it (an entity's, or plain text); an item's is its own tooltip.
+    private static @Nullable List<FormattedCharSequence> hoverLines(Font font, Style style) {
+        HoverEvent hover = style.getHoverEvent();
+        if (hover == null) return null;
+        Minecraft minecraft = Minecraft.getInstance();
+        HoverEvent.ItemStackInfo item = hover.getValue(HoverEvent.Action.SHOW_ITEM);
+        if (item != null) return Screen.getTooltipFromItem(minecraft, item.getItemStack()).stream().map(Component::getVisualOrderText).toList();
+        HoverEvent.EntityTooltipInfo entity = hover.getValue(HoverEvent.Action.SHOW_ENTITY);
+        if (entity != null) {
+            return minecraft.options.advancedItemTooltips ? entity.getTooltipLines().stream().map(Component::getVisualOrderText).toList() : null;
+        }
+        Component text = hover.getValue(HoverEvent.Action.SHOW_TEXT);
+        return text == null ? null : font.split(text, Math.max(minecraft.getWindow().getGuiScaledWidth() / 2, 200));
+    }
+
+    // --- Items ---
+
+    /** An item as an icon, without what a stack in a slot shows over it. */
+    public void fakeItem(ItemStack stack, int x, int y) {
+        this.raw.renderFakeItem(stack, x, y);
+        // 1.21.1 draws an item in depth, well in front of the screen: the depth is cleared, so what's drawn after goes
+        // over it, as it does on 26.1.
+        this.raw.flush();
+        RenderSystem.clear(GL11.GL_DEPTH_BUFFER_BIT, Minecraft.ON_OSX);
+    }
+
     // --- Textures (the pipeline is 26.1's; 1.21.1 blends them all alike) ---
 
     public void blit(Object pipeline, ResourceLocation texture, int x, int y, float u, float v, int width, int height,
@@ -173,8 +257,10 @@ public final class GuiGraphicsExtractor {
         minecraft.getMainRenderTarget().bindWrite(false);
     }
 
-    /** 1.21.1 has no mouse cursor shapes. */
-    public void requestCursor(CursorTypes cursor) {}
+    /** Asks for a mouse cursor shape for this frame (1.21.1 has none of its own: Cursors sets it on the window). */
+    public void requestCursor(CursorTypes cursor) {
+        Cursors.request(cursor);
+    }
 
     // --- Tooltips, drawn by the screen after everything else ---
 

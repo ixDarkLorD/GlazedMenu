@@ -44,7 +44,8 @@ public final class ToggleSwitch extends FlatButton {
         ConfigStyle.outline(graphics, x, y, TRACK_WIDTH, TRACK_HEIGHT, border);
         if (this.isFocused()) ConfigStyle.outline(graphics, x - 1, y - 1, TRACK_WIDTH + 2, TRACK_HEIGHT + 2, ConfigStyle.withAlpha(ConfigStyle.accent(), 0xA0));
         int knobX = x + 1 + Math.round((TRACK_WIDTH - TRACK_HEIGHT) * this.progress);
-        ConfigStyle.rect(graphics, knobX, y + 1, TRACK_HEIGHT - 2, TRACK_HEIGHT - 2, this.active ? ConfigStyle.colors().knob() : ConfigStyle.colors().textMuted());
+        // The knob, raised off the track: outlined, lit along its top and left, with a shadow.
+        ConfigStyle.iconFrame(graphics, knobX, y + 1, TRACK_HEIGHT - 2, TRACK_HEIGHT - 2, this.active ? ConfigStyle.colors().knob() : ConfigStyle.colors().textMuted());
 
         Component label = on ? CommonComponents.OPTION_ON : CommonComponents.OPTION_OFF;
         int color = !this.active ? ConfigStyle.colors().textMuted() : on ? ConfigStyle.colors().text() : ConfigStyle.colors().textDim();

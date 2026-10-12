@@ -110,8 +110,111 @@ final class ForgeGlazedPlatform implements GlazedPlatform {
     }
 
     @Override
+    public String loaderName() {
+        return "forge";
+    }
+
+    // --- Forge's own part of the title screen, asked of Forge as its own title screen asks ---
+
+    @Override
+    public List<String> titleBranding() {
+        List<String> lines = new ArrayList<>();
+        try {
+            net.minecraftforge.internal.BrandingControl.forEachLine(false, false, (line, index) -> lines.add(line));
+        } catch (RuntimeException | LinkageError e) {
+            GlazedMenu.LOGGER.debug("Couldn't read Forge's lines for the title screen", e);
+        }
+        return lines;
+    }
+
+    @Override
+    public List<String> titleNotices() {
+        List<String> lines = new ArrayList<>();
+        try {
+            net.minecraftforge.internal.BrandingControl.forEachAboveCopyrightLine((line, index) -> lines.add(line));
+        } catch (RuntimeException | LinkageError e) {
+            GlazedMenu.LOGGER.debug("Couldn't read Forge's notices for the title screen", e);
+        }
+        return lines;
+    }
+
+    @Override
+    public void renderTitle(net.minecraft.client.gui.screens.TitleScreen screen, net.minecraft.client.gui.GuiGraphics graphics, int alpha) {
+        try {
+            net.minecraftforge.client.ForgeHooksClient.renderMainMenu(screen, graphics, Minecraft.getInstance().font, screen.width, screen.height, alpha);
+        } catch (RuntimeException | LinkageError e) {
+            GlazedMenu.LOGGER.debug("Forge's part of the title screen couldn't be drawn", e);
+        }
+    }
+
+    // As Forge's own title screen draws it on its Mods button.
+    private static final net.minecraft.resources.ResourceLocation VERSION_CHECK_ICONS =
+            net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("forge", "textures/gui/version_check_icons.png");
+    private VersionChecker.@Nullable Status updateStatus;
+    private boolean checkedForUpdates;
+
+    // What the loader's own update check found, asked once.
+    private VersionChecker.@Nullable Status updateStatus() {
+        if (!this.checkedForUpdates) {
+            this.checkedForUpdates = true;
+            try {
+                this.updateStatus = net.minecraftforge.client.loading.ClientModLoader.checkForUpdates();
+            } catch (RuntimeException | LinkageError e) {
+                this.updateStatus = null;
+            }
+        }
+        return this.updateStatus;
+    }
+
+    @Override
+    public boolean hasUpdateMark() {
+        try {
+            VersionChecker.Status status = this.updateStatus();
+            return status != null && status.shouldDraw() && net.minecraftforge.fml.loading.FMLConfig.getBoolConfigValue(net.minecraftforge.fml.loading.FMLConfig.ConfigValue.VERSION_CHECK);
+        } catch (RuntimeException | LinkageError e) {
+            return false;
+        }
+    }
+
+    @Override
+    public void renderUpdateMark(net.minecraft.client.gui.GuiGraphics graphics, int x, int y) {
+        if (!this.hasUpdateMark()) return;
+        VersionChecker.Status status = this.updateStatus();
+        graphics.blit(VERSION_CHECK_ICONS, x, y, status.getSheetOffset() * 8,
+                status.isAnimated() && (System.currentTimeMillis() / 800L & 1L) == 1L ? 8.0F : 0.0F, 8, 8, 64, 16);
+    }
+
+    // A mod inside another's jar has a path in that jar, not on disk.
+    @Override
+    public Optional<Path> modFile(String modId) {
+        IModFileInfo file = ModList.get().getModFileById(modId);
+        if (file == null) return Optional.empty();
+        Path path = file.getFile().getFilePath();
+        boolean onDisk = path.getFileSystem() == java.nio.file.FileSystems.getDefault() && Files.isRegularFile(path)
+                && path.getFileName().toString().endsWith(".jar");
+        return onDisk ? Optional.of(path) : Optional.empty();
+    }
+
+    @Override
     public Path configDir() {
         return FMLPaths.CONFIGDIR.get();
+    }
+
+    // Forge's key binds can need Ctrl, Shift or Alt held.
+    @Override
+    public boolean isKeyModifier(com.mojang.blaze3d.platform.InputConstants.Key key) {
+        return net.minecraftforge.client.settings.KeyModifier.isKeyCodeModifier(key);
+    }
+
+    @Override
+    public void bindKey(net.minecraft.client.KeyMapping mapping, com.mojang.blaze3d.platform.InputConstants.Key modifier,
+                        com.mojang.blaze3d.platform.InputConstants.Key key) {
+        mapping.setKeyModifierAndCode(net.minecraftforge.client.settings.KeyModifier.getModifier(modifier), key);
+    }
+
+    @Override
+    public void resetKey(net.minecraft.client.KeyMapping mapping) {
+        mapping.setToDefault();
     }
 
     // Forge's own configs (ForgeConfigSpec) are read by ForgeConfigSource; NeoForge's classes aren't here.

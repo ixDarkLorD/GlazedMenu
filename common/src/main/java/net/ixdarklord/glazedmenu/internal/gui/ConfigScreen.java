@@ -32,6 +32,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 
 /**
@@ -65,6 +66,10 @@ public final class ConfigScreen extends StyledScreen {
     private @Nullable FlatButton redoButton;
     private @Nullable FlatButton resetButton;
     private int statusRight;
+    // A button before the search opening a screen that goes with this config (the key binds, from the game's controls).
+    private @Nullable Component linkName;
+    private @Nullable UnaryOperator<Screen> link;
+    private @Nullable FlatButton linkButton;
 
     private ConfigScreen(@Nullable Screen parent, ConfigEditSession session) {
         super(session.config().title(), ThemeResources.resolve(session.config().modId(), session.config().theme()));
@@ -91,6 +96,21 @@ public final class ConfigScreen extends StyledScreen {
         return screen;
     }
 
+    /**
+     * Opens the config at one of its categories (a top-level group's key), with (unless both are null) a button in the
+     * top bar opening a screen that goes with it; the first category is kept when the config has none of that key.
+     */
+    public static ConfigScreen createAt(@Nullable Screen parent, Config config, String category, @Nullable Component linkName,
+                                        @Nullable UnaryOperator<Screen> link) {
+        ConfigScreen screen = new ConfigScreen(parent, new ConfigEditSession(config));
+        for (int i = 0; i < screen.tabs.size(); i++) {
+            if (!screen.tabs.get(i).rootOnly && screen.tabs.get(i).group.key().equals(category)) screen.selectedTab = i;
+        }
+        screen.linkName = linkName;
+        screen.link = link;
+        return screen;
+    }
+
     private record Tab(Component name, ConfigGroup group, boolean rootOnly) {}
 
     // --- Layout ---
@@ -114,6 +134,14 @@ public final class ConfigScreen extends StyledScreen {
             this.rebuildEntries();
         });
         this.addModeToggleAtEnd(6).setY(this.search.getY() - 1);
+        this.linkButton = null;
+        if (this.link != null && this.linkName != null) {
+            UnaryOperator<Screen> open = this.link;
+            int linkWidth = this.font.width(this.linkName) + 26;
+            this.linkButton = this.addRenderableWidget(FlatButton.of(this.linkName, linkWidth, button -> this.leave(open.apply(this))).withIcon(ConfigIcons.CHEVRON));
+            this.linkButton.setHeight(18);
+            this.linkButton.setPosition(this.search.getX() - 22 - linkWidth, this.search.getY());
+        }
 
         if (this.sidebar) {
             TabList tabList = this.addRenderableWidget(new TabList(this.minecraft, this.sidebarWidth - 8, bodyHeight - 8, bodyTop + 4));
@@ -203,7 +231,7 @@ public final class ConfigScreen extends StyledScreen {
         ConfigStyle.panel(graphics, this.contentX(), bodyTop, this.frameLeft() + this.frameWidth() - this.contentX(), bodyHeight);
 
         // Title and badges, as far as the search box allows.
-        int searchLeft = this.search != null ? this.search.getX() - 18 : this.width;
+        int searchLeft = this.linkButton != null ? this.linkButton.getX() - 4 : this.search != null ? this.search.getX() - 18 : this.width;
         ConfigIcons.Icon scopeIcon = ConfigIcons.forScope(this.session.config().scope());
         int textEnd = this.extractTitle(graphics, this.title, Math.max(40, searchLeft - this.frameLeft() - 120), (g, x, y, size) -> {
             scopeIcon.draw(g, x, y, size, ConfigStyle.accent());
@@ -312,7 +340,7 @@ public final class ConfigScreen extends StyledScreen {
         if (!query.isEmpty()) {
             config.root().values().map(value -> (ConfigValue<?>) value)
                     .filter(this.session::isVisible)
-                    .filter(value -> matches(value, query))
+                    .filter(value -> ConfigEntryList.matches(value, query))
                     .forEach(value -> entries.add(new ConfigEntryList.ValueEntry<>(this.session, value, ConfigEntryList.breadcrumb(config.root(), value), editorWidth)));
         } else if (this.sidebar) {
             Tab tab = this.tabs.get(Math.min(this.selectedTab, this.tabs.size() - 1));
@@ -341,12 +369,6 @@ public final class ConfigScreen extends StyledScreen {
         }
     }
 
-    private static boolean matches(ConfigValue<?> value, String query) {
-        return value.displayName().getString().toLowerCase(Locale.ROOT).contains(query)
-                || value.path().toLowerCase(Locale.ROOT).contains(query)
-                || value.comment().stream().anyMatch(line -> line.toLowerCase(Locale.ROOT).contains(query));
-    }
-
     // The values the page shows: the chosen category, or the search results.
     private List<ConfigValue<?>> shownValues() {
         String query = this.query.trim().toLowerCase(Locale.ROOT);
@@ -361,7 +383,7 @@ public final class ConfigScreen extends StyledScreen {
         }
         return root.values()
                 .filter(this.session::isVisible)
-                .filter(value -> query.isEmpty() || matches(value, query))
+                .filter(value -> query.isEmpty() || ConfigEntryList.matches(value, query))
                 .toList();
     }
 

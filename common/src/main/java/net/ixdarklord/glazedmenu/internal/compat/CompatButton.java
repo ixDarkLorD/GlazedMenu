@@ -13,6 +13,7 @@ public class CompatButton extends Button {
 
     protected void extractWidgetRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float a) {
         this.extractContents(graphics, mouseX, mouseY, a);
+        this.handleCursor(graphics);
     }
 
     /** Vanilla's button by default. */
@@ -90,6 +91,8 @@ public class CompatButton extends Button {
         return super.keyPressed(event.key(), event.scancode(), event.modifiers());
     }
 
-    /** 1.21.1 has no mouse cursor shapes. */
-    protected void handleCursor(GuiGraphicsExtractor graphics) {}
+    /** The pointing hand over it (the "no" sign while it's off), as Minecraft 26.1's buttons ask for. */
+    protected void handleCursor(GuiGraphicsExtractor graphics) {
+        if (this.isHovered()) graphics.requestCursor(this.isActive() ? CursorTypes.POINTING_HAND : CursorTypes.NOT_ALLOWED);
+    }
 }

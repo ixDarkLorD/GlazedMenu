@@ -1,6 +1,9 @@
 package net.ixdarklord.glazedmenu.internal.compat;
 
+import com.mojang.blaze3d.platform.InputConstants;
+import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.components.Renderable;
 import net.minecraft.client.gui.screens.Screen;
 
@@ -25,5 +28,20 @@ public final class Compat {
 
     public static void resize(Screen screen, int width, int height) {
         screen.resize(Minecraft.getInstance(), width, height);
+    }
+
+    /** A click handed to a widget or screen. */
+    public static boolean mouseClicked(GuiEventListener listener, MouseButtonEvent event, boolean doubleClick) {
+        return listener.mouseClicked(event.x(), event.y(), event.button());
+    }
+
+    /** The key a key press is of. */
+    public static InputConstants.Key getKey(KeyEvent event) {
+        return InputConstants.getKey(event.key(), event.scancode());
+    }
+
+    /** Whether a key press is of a key bind's key. */
+    public static boolean matches(KeyMapping mapping, KeyEvent event) {
+        return mapping.matches(event.key(), event.scancode());
     }
 }

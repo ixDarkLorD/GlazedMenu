@@ -1,7 +1,7 @@
 {
     "projects": {
-        "fabric": 2,
-        "neoforge": 2,
-        "forge": 2
+        "fabric": 4,
+        "neoforge": 4,
+        "forge": 4
     }
 }
