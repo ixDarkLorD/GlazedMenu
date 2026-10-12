@@ -110,6 +110,22 @@ final class ForgeGlazedPlatform implements GlazedPlatform {
     }
 
     @Override
+    public String loaderName() {
+        return "forge";
+    }
+
+    // A mod inside another's jar has a path in that jar, not on disk.
+    @Override
+    public Optional<Path> modFile(String modId) {
+        IModFileInfo file = ModList.get().getModFileById(modId);
+        if (file == null) return Optional.empty();
+        Path path = file.getFile().getFilePath();
+        boolean onDisk = path.getFileSystem() == java.nio.file.FileSystems.getDefault() && Files.isRegularFile(path)
+                && path.getFileName().toString().endsWith(".jar");
+        return onDisk ? Optional.of(path) : Optional.empty();
+    }
+
+    @Override
     public Path configDir() {
         return FMLPaths.CONFIGDIR.get();
     }
@@ -129,6 +145,88 @@ final class ForgeGlazedPlatform implements GlazedPlatform {
             String url = result.url() != null ? result.url() : container.getModInfo().getModURL().map(Object::toString).orElse("");
             return Optional.of(new ModUpdates.Update(result.target().toString(), url));
         });
+    }
+
+    // Forge's own words for the title screen, from Forge itself: the lines its title screen draws at the bottom left
+    // (its branding), of which the first is Forge with its version.
+    private static List<String> branding() {
+        List<String> lines = new ArrayList<>();
+        net.minecraftforge.internal.BrandingControl.forEachLine(true, false, (index, line) -> lines.add(line));
+        return lines;
+    }
+
+    @Override
+    public String loaderLabel() {
+        List<String> lines = branding();
+        return lines.isEmpty() ? "" : lines.get(0);
+    }
+
+    // The rest of the branding, without what the frame says already: the game's version and how many mods are loaded
+    // (told apart as Forge itself writes them). And what Forge draws over the copyright (a newer Forge), once its hook
+    // has worked that out: Forge keeps the first answer, so it isn't asked before.
+    @Override
+    public List<String> titleExtras() {
+        List<String> lines = branding();
+        List<String> extras = new ArrayList<>(lines.subList(Math.min(1, lines.size()), lines.size()));
+        extras.remove("Minecraft " + net.minecraftforge.versions.mcp.MCPVersion.getMCVersion());
+        extras.remove(net.minecraftforge.common.ForgeI18n.parseMessage("fml.menu.loadingmods", ModList.get().size()));
+        if (this.titleHooked) net.minecraftforge.internal.BrandingControl.forEachAboveCopyrightLine((index, line) -> extras.add(line));
+        return extras;
+    }
+
+    private boolean titleHooked;
+
+    // Forge's hook into its title screen: it works out whether there's a newer Forge, and draws its own warning on a
+    // build that isn't a release.
+    @Override
+    public void extractTitle(net.minecraft.client.gui.screens.TitleScreen title, net.ixdarklord.glazedmenu.internal.compat.GuiGraphicsExtractor graphics, float fade) {
+        net.minecraftforge.client.ForgeHooksClient.renderMainMenu(title, graphics.raw(), Minecraft.getInstance().font, title.width, title.height, net.minecraft.util.Mth.ceil(fade * 255.0F));
+        this.titleHooked = true;
+    }
+
+    // Whether Forge would draw its mark: as its own class for it decides.
+    @Override
+    public boolean hasUpdateMark() {
+        if (this.updateStatus == null) this.updateStatus = Optional.ofNullable(net.minecraftforge.client.loading.ClientModLoader.checkForUpdates());
+        return this.updateStatus.map(VersionChecker.Status::shouldDraw).orElse(false)
+                && net.minecraftforge.fml.loading.FMLConfig.getBoolConfigValue(net.minecraftforge.fml.loading.FMLConfig.ConfigValue.VERSION_CHECK);
+    }
+
+    private @Nullable Optional<VersionChecker.Status> updateStatus;
+
+    // Forge's own mark, drawn by Forge's own class for it: it draws on the button it's given, so it's given one that
+    // puts the mark where it's wanted.
+    private final net.minecraft.client.gui.components.Button markAnchor = net.minecraft.client.gui.components.Button.builder(
+            net.minecraft.network.chat.Component.empty(), button -> {}).bounds(0, 0, 20, 20).build();
+    private net.minecraftforge.client.gui.@Nullable TitleScreenModUpdateIndicator updateMark;
+
+    @Override
+    public void extractUpdateMark(net.ixdarklord.glazedmenu.internal.compat.GuiGraphicsExtractor graphics, int x, int y) {
+        if (this.updateMark == null) {
+            this.updateMark = new net.minecraftforge.client.gui.TitleScreenModUpdateIndicator(this.markAnchor);
+            this.updateMark.init();
+        }
+        // Forge draws it six pixels into a button of this size, from its left and its top.
+        this.markAnchor.setPosition(x - 6, y - 6);
+        this.updateMark.render(graphics.raw(), 0, 0, 0);
+    }
+
+    // Forge's key binds can need Ctrl, Shift or Alt held.
+    @Override
+    public boolean isKeyModifier(com.mojang.blaze3d.platform.InputConstants.Key key) {
+        return net.minecraftforge.client.settings.KeyModifier.isKeyCodeModifier(key);
+    }
+
+    @Override
+    public void bindKey(net.minecraft.client.KeyMapping mapping, com.mojang.blaze3d.platform.InputConstants.Key modifier,
+                        com.mojang.blaze3d.platform.InputConstants.Key key) {
+        net.minecraftforge.client.settings.KeyModifier held = net.minecraftforge.client.settings.KeyModifier.getModifier(modifier);
+        mapping.setKeyModifierAndCode(held != null ? held : net.minecraftforge.client.settings.KeyModifier.NONE, key);
+    }
+
+    @Override
+    public void resetKey(net.minecraft.client.KeyMapping mapping) {
+        mapping.setToDefault();
     }
 
     // "A, B and C" or "A & B", as people write them in mods.toml.

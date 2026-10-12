@@ -19,6 +19,9 @@
 
   "environment": "${mod_environment}",
   "entrypoints": {
+    "main": [
+      "net.ixdarklord.glazedmenu.internal.core.fabric.GlazedFabricCommon"
+    ],
     "client": [
       "net.ixdarklord.glazedmenu.internal.core.fabric.GlazedFabric"
     ],

@@ -3,6 +3,7 @@ package net.ixdarklord.glazedmenu.internal.style;
 import net.minecraft.util.Mth;
 import net.ixdarklord.glazedmenu.internal.compat.GuiGraphicsExtractor;
 import net.ixdarklord.glazedmenu.internal.compat.RenderPipelines;
+import net.ixdarklord.glazedmenu.internal.core.GlazedSettings;
 import net.ixdarklord.glazedmenu.api.config.ConfigTheme;
 import net.ixdarklord.glazedmenu.api.theme.ConfigEffect;
 import net.ixdarklord.glazedmenu.internal.core.GlazedMenu;
@@ -85,7 +86,7 @@ final class StarfallEffect implements ConfigEffect {
         // Fainter near the top so they appear softly, and a slow flicker.
         float fadeIn = Math.min(1, (y + 4) / (height * 0.15F));
         float flicker = 0.6F + 0.4F * (float) Math.sin(time * star.twinkle + star.phase);
-        float alpha = (0.35F + 0.5F * star.depth) * flicker * Math.max(0, fadeIn) * strength;
+        float alpha = (0.35F + 0.5F * star.depth) * flicker * Math.max(0, fadeIn) * strength * GlazedSettings.starOpacity() / 100F;
         if (alpha <= 0.01F) return;
         float size = star.depth >= 1 ? 2 : 1;
         float centerX = x + size / 2;

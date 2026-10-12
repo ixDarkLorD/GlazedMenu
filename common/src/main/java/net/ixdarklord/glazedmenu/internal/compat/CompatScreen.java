@@ -95,6 +95,33 @@ public abstract class CompatScreen extends Screen {
     }
 
     @Override
+    public final boolean keyReleased(int key, int scancode, int modifiers) {
+        return this.keyReleased(new KeyEvent(key, scancode, modifiers));
+    }
+
+    public boolean keyReleased(KeyEvent event) {
+        return super.keyReleased(event.key(), event.scancode(), event.modifiers());
+    }
+
+    @Override
+    public final boolean mouseReleased(double mouseX, double mouseY, int button) {
+        return this.mouseReleased(CompatInput.release(mouseX, mouseY, button));
+    }
+
+    public boolean mouseReleased(MouseButtonEvent event) {
+        return super.mouseReleased(event.x(), event.y(), event.button());
+    }
+
+    @Override
+    public final boolean mouseDragged(double mouseX, double mouseY, int button, double dragX, double dragY) {
+        return this.mouseDragged(CompatInput.release(mouseX, mouseY, button), dragX, dragY);
+    }
+
+    public boolean mouseDragged(MouseButtonEvent event, double dragX, double dragY) {
+        return super.mouseDragged(event.x(), event.y(), event.button(), dragX, dragY);
+    }
+
+    @Override
     public final boolean mouseScrolled(double mouseX, double mouseY, double delta) {
         return this.mouseScrolled(mouseX, mouseY, 0, delta);
     }

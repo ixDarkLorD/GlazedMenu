@@ -149,6 +149,17 @@ public final class GuiGraphicsExtractor {
         RenderSystem.disableBlend();
     }
 
+    // --- Items ---
+
+    /** An item as an icon: without its count, and unmoved by the player holding one. */
+    public void fakeItem(net.minecraft.world.item.ItemStack stack, int x, int y) {
+        this.raw.renderFakeItem(stack, x, y);
+    }
+
+    public void item(net.minecraft.world.item.ItemStack stack, int x, int y) {
+        this.raw.renderItem(stack, x, y);
+    }
+
     // --- Clipping and layers ---
 
     /** Clips to a box given in the current transform (1.20.1's scissor ignores the transform, 26.1's doesn't). */
@@ -163,9 +174,10 @@ public final class GuiGraphicsExtractor {
         this.raw.disableScissor();
     }
 
-    /** What's drawn next goes over what came before. */
+    /** What's drawn next goes over what came before: text and items stand off the screen on 1.20.1, so their depth is forgotten too. */
     public void nextStratum() {
         this.raw.flush();
+        RenderSystem.clear(org.lwjgl.opengl.GL11.GL_DEPTH_BUFFER_BIT, Minecraft.ON_OSX);
     }
 
     /** 1.20.1 has no menu blur. */

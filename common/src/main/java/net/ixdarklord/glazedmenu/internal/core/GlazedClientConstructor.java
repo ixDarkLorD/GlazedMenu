@@ -30,6 +30,8 @@ public final class GlazedClientConstructor {
         net.ixdarklord.glazedmenu.api.config.ConfigTheme.setForMod(GlazedMenu.MOD_ID, net.ixdarklord.glazedmenu.internal.style.GlazedBrand.THEME);
         ThemeEffects.init();
         ConfigSources.register(GlazedSettings.SOURCE);
+        ConfigSources.register(net.ixdarklord.glazedmenu.internal.source.game.GameOptionsSource.INSTANCE);
+        ConfigSources.register(net.ixdarklord.glazedmenu.internal.game.GameRulesSource.INSTANCE);
         // (No CoolCatLib integration on 1.21: its own config screens are there.)
         if (platform.hasForgeConfigs()) ConfigSources.register(ModConfigSource.INSTANCE);
         if (platform.isModLoaded("cloth-config") || platform.isModLoaded("cloth_config")) ConfigSources.register(ClothSource.INSTANCE);

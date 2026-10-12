@@ -6,10 +6,12 @@ import net.ixdarklord.glazedmenu.internal.compat.GuiGraphicsExtractor;
 import net.ixdarklord.glazedmenu.internal.compat.KeyEvent;
 import net.ixdarklord.glazedmenu.internal.compat.MouseButtonEvent;
 import net.ixdarklord.glazedmenu.internal.compat.RenderPipelines;
+import net.ixdarklord.glazedmenu.internal.config.ConfigProfiles;
+import net.ixdarklord.glazedmenu.internal.core.GlazedClient;
 import net.ixdarklord.glazedmenu.internal.core.Names;
 import net.ixdarklord.glazedmenu.internal.source.Access;
-import net.ixdarklord.glazedmenu.api.config.ConfigNode;
 import net.ixdarklord.glazedmenu.api.config.ConfigTheme;
+import net.ixdarklord.glazedmenu.api.config.RestartRequirement;
 import net.ixdarklord.glazedmenu.api.theme.ConfigEffect;
 import net.ixdarklord.glazedmenu.api.config.ConfigGroup;
 import net.ixdarklord.glazedmenu.api.config.Config;
@@ -17,6 +19,7 @@ import net.ixdarklord.glazedmenu.internal.source.ConfigSources;
 import net.ixdarklord.glazedmenu.api.config.ConfigValue;
 import net.ixdarklord.glazedmenu.internal.style.ConfigIcons;
 import net.ixdarklord.glazedmenu.internal.style.ConfigStyle;
+import net.ixdarklord.glazedmenu.internal.style.ConfirmPopup;
 import net.ixdarklord.glazedmenu.internal.style.FlatButton;
 import net.ixdarklord.glazedmenu.internal.gui.style.ModIcons;
 import net.ixdarklord.glazedmenu.internal.style.GlazedBrand;
@@ -31,6 +34,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.components.ContainerObjectSelectionList;
+import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.narration.NarratableEntry;
 import net.minecraft.client.gui.screens.Screen;
@@ -48,14 +52,26 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.function.UnaryOperator;
+import java.util.stream.Collectors;
 
 /**
  * The main config screen: one mod's configs, or every mod's, as cards grouped by mod. Its search bar is the only one
- * that searches across configs: results are listed by config, each config a category of its matching settings, and
- * opening one shows that config filtered to it. (A config's own search only searches that config.)
+ * that searches across configs: results are listed by config, each config a heading over its matching settings, which
+ * are edited right there (Save or Done applies them, to every config at once); a heading opens its config filtered the
+ * same way. (A config's own search only searches that config.)
+ * <p>
+ * Changed lists, the same way, every setting that isn't at its default (the search narrowing it): what the player has
+ * changed, across every mod. Copy puts that list on the clipboard as text, and Reset sets the settings shown back to
+ * their defaults.
+ * <p>
+ * Profiles (on the list of every mod's) are named sets of settings across mods: one is saved from the settings the list
+ * shows, and using one puts its settings in as unsaved changes, listed to look over and save.
+ * <p>
+ * Keys: Ctrl+F searches, Ctrl+S saves.
  */
 public final class ConfigSelectScreen extends StyledScreen {
     private static final int KEY_F = 70;
+    private static final int KEY_S = 83;
     // A taller header than the other screens, so the mod's icon is large enough to recognize.
     private static final int HEADER_HEIGHT = 46;
     private static final int HEADER_ICON = 32;
@@ -84,12 +100,31 @@ public final class ConfigSelectScreen extends StyledScreen {
     private static final int CARD_GAP = 8;
     private static final int CARD_HEADER = 28;
     private static final int CARD_LINE = 18;
+    // Search results: no wider than reads well, and no more rows than a search needs (each has an editor to build).
+    private static final int RESULTS_MAX_WIDTH = 560;
+    private static final int MAX_RESULTS = 150;
 
     private final @Nullable Screen parent;
     private final @Nullable String modId;
+    // The cards, and the search results in their place while there's a search.
     private @Nullable Rows rows;
+    private @Nullable ConfigEntryList results;
     private @Nullable StyledEditBox search;
+    private @Nullable FlatButton doneButton;
+    private @Nullable FlatButton saveButton;
+    // The edits made in the search results, by config; they outlast the search that found them.
+    private final Map<ResourceLocation, ConfigEditSession> sessions = new LinkedHashMap<>();
     private String query = "";
+    private boolean focusSearch;
+    // Listing only the settings that aren't at their defaults.
+    private boolean changedOnly;
+    private @Nullable FlatButton changedButton;
+    private @Nullable FlatButton profilesButton;
+    private @Nullable FlatButton copyButton;
+    private @Nullable FlatButton resetButton;
+    // The settings the list shows now, by the session editing them, for Copy and Reset.
+    private final Map<ConfigEditSession, List<ConfigValue<?>>> listed = new LinkedHashMap<>();
+    private double restoreScroll = -1;
     private int resultCount;
     private int resultConfigs;
 
@@ -103,9 +138,33 @@ public final class ConfigSelectScreen extends StyledScreen {
         this.modId = modId;
     }
 
+    /** Every mod's configs with the search bar ready, searched for {@code query} when it isn't empty. */
+    public static ConfigSelectScreen search(@Nullable Screen parent, String query) {
+        ConfigSelectScreen screen = new ConfigSelectScreen(parent, null);
+        screen.query = query;
+        screen.focusSearch = true;
+        return screen;
+    }
+
+    /** One mod's configs with the search bar ready, searched for {@code query} when it isn't empty. */
+    public static ConfigSelectScreen search(@Nullable Screen parent, String modId, String query) {
+        ConfigSelectScreen screen = new ConfigSelectScreen(parent, modId);
+        screen.query = query;
+        screen.focusSearch = true;
+        return screen;
+    }
+
+    /** Every mod's configs, showing the settings that aren't at their defaults. */
+    public static ConfigSelectScreen changed(@Nullable Screen parent) {
+        ConfigSelectScreen screen = new ConfigSelectScreen(parent, null);
+        screen.changedOnly = true;
+        return screen;
+    }
+
     @Override
     protected void init() {
-        int searchWidth = Mth.clamp(this.width / 3, 100, 200);
+        // Narrower on small windows, where the title, Profiles and Changed need the room.
+        int searchWidth = Mth.clamp(this.width / 4, 90, 200);
         this.search = this.addRenderableWidget(new StyledEditBox(this.font, searchWidth, 18,
                 Component.translatableWithFallback("glazedmenu.search.all", "Search all configs")));
         // The search bar at the right, and the light/dark switch after it.
@@ -117,14 +176,60 @@ public final class ConfigSelectScreen extends StyledScreen {
             this.rebuildRows();
         });
         this.addModeToggleAtEnd(8).setY(this.search.getY() - 1);
+        // Changed, before the search: what isn't at its default.
+        Component changed = Component.translatableWithFallback("glazedmenu.changed", "Changed");
+        int changedWidth = this.font.width(changed) + 14;
+        this.changedButton = this.addRenderableWidget(FlatButton.of(changed, changedWidth, button -> {
+            this.changedOnly = !this.changedOnly;
+            this.rebuildRows();
+            this.updateButtons();
+        }).tooltip(Component.translatableWithFallback("glazedmenu.changed.tooltip", "Lists every setting that isn't at its default")));
+        this.changedButton.setHeight(18);
+        this.changedButton.setPosition(this.search.getX() - 22 - changedWidth, this.search.getY());
+        // Profiles span mods, so only the list of every mod's has them.
+        this.profilesButton = null;
+        if (this.modId == null) {
+            Component profiles = Component.translatableWithFallback("glazedmenu.profiles.title", "Profiles");
+            int profilesWidth = this.font.width(profiles) + 14;
+            this.profilesButton = this.addRenderableWidget(FlatButton.of(profiles, profilesWidth, button -> this.minecraft.setScreen(
+                    new ProfilesPopup(this, this.theme, this.listed.values().stream().flatMap(List::stream).toList(), this::useProfile)))
+                    .tooltip(Component.translatableWithFallback("glazedmenu.profiles.tooltip", "Named sets of settings across mods, to save and switch between")));
+            this.profilesButton.setHeight(18);
+            this.profilesButton.setPosition(this.changedButton.getX() - 4 - profilesWidth, this.search.getY());
+        }
 
         int bodyTop = this.bodyTop();
         int bodyHeight = this.bodyBottom() - bodyTop;
-        this.rows = this.addRenderableWidget(new Rows(this.minecraft, this.frameWidth() - 8, bodyHeight - 8, bodyTop + 4));
+        this.rows = new Rows(this.minecraft, this.frameWidth() - 8, bodyHeight - 8, bodyTop + 4);
         this.rows.updateSizeAndPosition(this.frameWidth() - 8, bodyHeight - 8, this.frameLeft() + 4, bodyTop + 4);
-        FlatButton done = this.addRenderableWidget(FlatButton.of(CommonComponents.GUI_DONE, 80, button -> this.onClose()).style(FlatButton.Style.PRIMARY));
-        done.setPosition(this.frameLeft() + this.frameWidth() - 84, this.barWidgetY(this.bottomBarY()));
+        int resultsWidth = Math.min(this.frameWidth() - 8, RESULTS_MAX_WIDTH);
+        this.results = new ConfigEntryList(this.minecraft, resultsWidth, bodyHeight - 8, bodyTop + 4);
+        this.results.updateSizeAndPosition(resultsWidth, bodyHeight - 8, this.frameLeft() + (this.frameWidth() - resultsWidth) / 2, bodyTop + 4);
+        // Done saves what the search results changed and closes; Save (shown once something changed) saves and stays.
+        this.doneButton = this.addRenderableWidget(FlatButton.of(CommonComponents.GUI_DONE, 80, button -> this.done()).style(FlatButton.Style.PRIMARY));
+        this.doneButton.setPosition(this.frameLeft() + this.frameWidth() - 84, this.barWidgetY(this.bottomBarY()));
+        this.saveButton = this.addRenderableWidget(FlatButton.of(Component.translatableWithFallback("glazedmenu.button.save_short", "Save"), 64,
+                button -> this.saveHere()));
+        this.saveButton.setPosition(this.doneButton.getX() - 4 - 64, this.doneButton.getY());
+        // With Changed on: the list as text for the clipboard, and the settings shown back to their defaults.
+        this.resetButton = this.addRenderableWidget(FlatButton.icon(ConfigIcons.RESET, Component.translatableWithFallback("glazedmenu.button.reset.tooltip",
+                "Sets the values shown here to their defaults"), button -> {
+            this.listed.forEach(ConfigEditSession::resetToDefaults);
+            if (this.results != null) this.results.refreshValues();
+            this.updateButtons();
+        }).style(FlatButton.Style.NORMAL));
+        this.resetButton.setPosition(this.saveButton.getX() - 4 - 20, this.doneButton.getY());
+        Component copy = Component.translatableWithFallback("glazedmenu.changed.copy", "Copy");
+        int copyWidth = this.font.width(copy) + 14;
+        this.copyButton = this.addRenderableWidget(FlatButton.of(copy, copyWidth, button -> this.copyListed())
+                .tooltip(Component.translatableWithFallback("glazedmenu.changed.copy.tooltip", "Copies the settings shown here as text, to share")));
+        this.copyButton.setPosition(this.resetButton.getX() - 4 - copyWidth, this.doneButton.getY());
         this.rebuildRows();
+        if (this.restoreScroll >= 0) {
+            if (!this.query.isBlank() || this.changedOnly) this.results.setScrollAmount(this.restoreScroll);
+            this.restoreScroll = -1;
+        }
+        this.updateButtons();
     }
 
     @Override
@@ -139,7 +244,7 @@ public final class ConfigSelectScreen extends StyledScreen {
 
     @Override
     protected void setInitialFocus() {
-        if (this.search != null && !this.query.isEmpty()) this.setInitialFocus(this.search);
+        if (this.search != null && (this.focusSearch || !this.query.isEmpty())) this.setInitialFocus(this.search);
         else super.setInitialFocus();
     }
 
@@ -148,12 +253,18 @@ public final class ConfigSelectScreen extends StyledScreen {
     }
 
     private void rebuildRows() {
-        if (this.rows == null) return;
+        if (this.rows == null || this.results == null) return;
         List<Row> entries = new ArrayList<>();
         String query = this.query.trim().toLowerCase(Locale.ROOT);
         this.resultCount = 0;
         this.resultConfigs = 0;
-        if (query.isEmpty()) {
+        this.listed.clear();
+        this.showResults(!query.isEmpty() || this.changedOnly);
+        if (!query.isEmpty() || this.changedOnly) {
+            this.results.setEntries(this.findSettings(query));
+            return;
+        }
+        {
             // Each mod's configs as tiles, a few to a row; the list of every mod heads each mod's tiles with its name.
             Map<String, List<Config>> byMod = new LinkedHashMap<>();
             for (Config config : this.configs()) byMod.computeIfAbsent(config.modId(), id -> new ArrayList<>()).add(config);
@@ -171,14 +282,12 @@ public final class ConfigSelectScreen extends StyledScreen {
             int width = cardWidth;
             int height = cardHeight;
             if (this.modId == null) {
-                this.rows.wide = true;
                 this.buildModCards(byMod, entries);
                 this.rows.setRows(entries);
                 return;
             }
             // One mod's configs: cards as large as the panel allows, in the arrangement (columns x rows) that fits them
             // biggest, so a mod with one or two configs doesn't leave the panel mostly empty.
-            this.rows.wide = true;
             List<Tile> tiles = byMod.values().stream().flatMap(List::stream).map(Tile::new).toList();
             int[] size = this.fitCards(tiles.size());
             int fitColumns = size[2];
@@ -197,25 +306,62 @@ public final class ConfigSelectScreen extends StyledScreen {
             int used = entries.stream().mapToInt(Row::height).sum();
             int free = this.rows.getHeight() - used - 8;
             if (free > 1) entries.add(0, new Spacer(free / 2));
-        } else {
-            this.rows.wide = false;
-            // Each config with matches is a category: its header, then its matching settings.
-            for (Config config : this.configs()) {
-                ConfigEditSession session = new ConfigEditSession(config);
-                if (session.access() == Access.UNAVAILABLE) continue;
-                List<Row> results = new ArrayList<>();
-                for (ConfigValue<?> value : config.values().toList()) {
-                    if (session.isVisible(value) && matches(config, value, query)) results.add(new Result(config, value));
-                }
-                if (results.isEmpty()) continue;
-                entries.add(new CategoryHeader(config, results.size()));
-                entries.addAll(results);
-                this.resultCount += results.size();
-                this.resultConfigs++;
-            }
-            if (entries.isEmpty()) entries.add(new NoResults());
         }
         this.rows.setRows(entries);
+    }
+
+    // The cards and the search results share the body; only the one in use is on the screen.
+    private void showResults(boolean searching) {
+        if (this.rows == null || this.results == null) return;
+        this.removeWidget(searching ? this.rows : this.results);
+        if (searching) {
+            if (!this.children().contains(this.results)) this.addRenderableWidget(this.results);
+        } else if (!this.children().contains(this.rows)) {
+            this.addRenderableWidget(this.rows);
+        }
+    }
+
+    // Each config with matches is a heading (opening it filtered the same way), then its matching settings, edited in
+    // place; with Changed on, only the settings that aren't at their defaults (or were just edited here). Configs keep the edits made here while the search changes; one nothing was changed in is read afresh.
+    private List<ConfigEntryList.Entry> findSettings(String query) {
+        this.sessions.values().forEach(ConfigEditSession::onConfigChanged);
+        this.sessions.values().removeIf(session -> session.modifiedCount() == 0 && !session.hasErrors());
+        List<ConfigEntryList.Entry> entries = new ArrayList<>();
+        int editorWidth = Mth.clamp(this.results.getRowWidth() * 2 / 5, 90, 170);
+        int shown = 0;
+        for (Config listed : this.configs()) {
+            ConfigEditSession session = this.sessions.containsKey(listed.id()) ? this.sessions.get(listed.id()) : new ConfigEditSession(listed);
+            if (session.access() == Access.UNAVAILABLE) continue;
+            Config config = session.config();
+            List<ConfigValue<?>> found = config.values().filter(value -> session.isVisible(value)
+                    && (query.isEmpty() || ConfigEntryList.matches(value, query))
+                    && (!this.changedOnly || !session.isDefault(value) || session.isModified(value))).toList();
+            if (found.isEmpty()) continue;
+            this.resultCount += found.size();
+            this.resultConfigs++;
+            if (shown >= MAX_RESULTS) continue;
+            this.sessions.put(config.id(), session);
+            MutableComponent title = config.title().copy().withStyle(ChatFormatting.BOLD);
+            if (this.modId == null) title = Component.literal(modName(config.modId()) + " › ").withStyle(ChatFormatting.GRAY).append(title);
+            entries.add(new ConfigEntryList.LinkEntry(ConfigIcons.forScope(config.scope()), title,
+                    Component.translatableWithFallback("glazedmenu.search.count", "%s found", found.size()), themeOf(config),
+                    () -> this.leave(ConfigScreen.create(this, config, this.query.trim()))));
+            List<ConfigValue<?>> rows = found.subList(0, Math.min(found.size(), MAX_RESULTS - shown));
+            this.listed.put(session, rows);
+            for (ConfigValue<?> value : rows) {
+                entries.add(new ConfigEntryList.ValueEntry<>(session, value, ConfigEntryList.breadcrumb(config.root(), value), editorWidth));
+                shown++;
+            }
+        }
+        if (entries.isEmpty()) {
+            entries.add(new ConfigEntryList.InfoEntry(this.changedOnly && query.isEmpty()
+                    ? Component.translatableWithFallback("glazedmenu.changed.none", "Every setting is at its default")
+                    : Component.translatableWithFallback("glazedmenu.no_results", "No settings match"), ConfigStyle.colors().textDim(), ConfigIcons.SEARCH));
+        } else if (shown < this.resultCount) {
+            entries.add(new ConfigEntryList.InfoEntry(Component.translatableWithFallback("glazedmenu.search.more",
+                    "Showing the first %s of %s; type more to narrow it down", shown, this.resultCount), ConfigStyle.colors().textDim(), ConfigIcons.SEARCH));
+        }
+        return entries;
     }
 
     // The biggest card size (width, height, columns) for this many cards in the panel: every arrangement of columns is
@@ -250,30 +396,180 @@ public final class ConfigSelectScreen extends StyledScreen {
         entries.add(new CardRow(cards, columns));
     }
 
-    // Anything a player might type: the name, the key or path, the comment, a group's name, or the value itself.
-    private static boolean matches(Config config, ConfigValue<?> value, String query) {
-        if (value.displayName().getString().toLowerCase(Locale.ROOT).contains(query)) return true;
-        if (value.path().toLowerCase(Locale.ROOT).contains(query)) return true;
-        if (value.comment().stream().anyMatch(line -> line.toLowerCase(Locale.ROOT).contains(query))) return true;
-        for (ConfigNode group = value.parent(); group != null && group.parent() != null; group = group.parent()) {
-            if (group.displayName().getString().toLowerCase(Locale.ROOT).contains(query)) return true;
-        }
-        return format(value).toLowerCase(Locale.ROOT).contains(query);
+    @Override
+    protected void repositionElements() {
+        if (this.results != null) this.restoreScroll = this.results.scrollAmount();
+        this.rebuildWidgets();
     }
 
-    private static <T> String format(ConfigValue<T> value) {
-        return value.type().format(value.getStored());
+    // --- Saving what the search results changed ---
+
+    private int modifiedCount() {
+        return this.sessions.values().stream().mapToInt(ConfigEditSession::modifiedCount).sum();
+    }
+
+    private List<Component> errors() {
+        return this.sessions.values().stream().flatMap(session -> session.errors().stream()).toList();
     }
 
     @Override
-    protected void repositionElements() {
-        this.rebuildWidgets();
+    public void tick() {
+        super.tick();
+        this.updateButtons();
+    }
+
+    // A profile's settings become unsaved changes here, and Changed lists them (among what else isn't at its default)
+    // to look over before saving.
+    private void useProfile(String name) {
+        int set = 0;
+        for (Map.Entry<Config, Map<ConfigValue<?>, Object>> entry : ConfigProfiles.resolve(name).entrySet()) {
+            ResourceLocation id = entry.getKey().id();
+            ConfigEditSession session = this.sessions.containsKey(id) ? this.sessions.get(id) : new ConfigEditSession(entry.getKey());
+            set += putIn(session, entry.getValue());
+            if (session.modifiedCount() > 0) this.sessions.put(id, session);
+        }
+        this.changedOnly = true;
+        this.rebuildRows();
+        this.updateButtons();
+        GlazedClient.toast(Component.literal(name), set > 0
+                ? Component.translatableWithFallback("glazedmenu.profiles.used", "%s settings set; save to apply them", set)
+                : Component.translatableWithFallback("glazedmenu.profiles.same", "Your settings already match it"));
+    }
+
+    // Sets a profile's values for one config as that session's pending changes; returns how many differ from now.
+    private static int putIn(ConfigEditSession session, Map<ConfigValue<?>, Object> values) {
+        Map<ConfigValue<?>, Object> editable = new LinkedHashMap<>();
+        values.forEach((value, wanted) -> {
+            // The session may hold another reading of the same config: its own value at that path is the one to set.
+            ConfigValue<?> own = value.config() == session.config() ? value : session.config().find(value.path()).orElse(null);
+            if (own != null && session.isVisible(own) && session.isEditable(own)) editable.put(own, wanted);
+        });
+        session.setAll(editable);
+        return (int) editable.keySet().stream().filter(session::isModified).count();
+    }
+
+    /**
+     * Uses a profile at once, without a screen: sets its settings and saves them, then tells the player.
+     *
+     * @return how many settings changed, or -1 when there's no profile of that name
+     */
+    public static int useProfileNow(String name) {
+        if (!ConfigProfiles.names().contains(name)) return -1;
+        int set = 0;
+        RestartRequirement restart = RestartRequirement.NONE;
+        for (Map.Entry<Config, Map<ConfigValue<?>, Object>> entry : ConfigProfiles.resolve(name).entrySet()) {
+            ConfigEditSession session = new ConfigEditSession(entry.getKey());
+            if (session.access() == Access.UNAVAILABLE) continue;
+            set += putIn(session, entry.getValue());
+            if (session.modifiedCount() > 0 && !session.hasErrors()) restart = restart.max(session.save());
+        }
+        GlazedClient.toast(Component.literal(name), switch (restart) {
+            case GAME -> Component.translatableWithFallback("glazedmenu.toast.restart_game",
+                    "Restart the game to apply every change").withStyle(ChatFormatting.GOLD);
+            case WORLD -> Component.translatableWithFallback("glazedmenu.toast.restart_world",
+                    "Rejoin the world to apply every change").withStyle(ChatFormatting.GOLD);
+            case NONE -> set > 0 ? Component.translatableWithFallback("glazedmenu.profiles.applied", "%s settings set", set)
+                    : Component.translatableWithFallback("glazedmenu.profiles.same", "Your settings already match it");
+        });
+        return set;
+    }
+
+    // The settings shown, as lines of text: where each is, its value, and the default it was changed from.
+    private void copyListed() {
+        StringBuilder text = new StringBuilder();
+        int count = 0;
+        for (Map.Entry<ConfigEditSession, List<ConfigValue<?>>> entry : this.listed.entrySet()) {
+            for (ConfigValue<?> value : entry.getValue()) {
+                text.append(describe(value)).append('\n');
+                count++;
+            }
+        }
+        this.minecraft.keyboardHandler.setClipboard(text.toString());
+        GlazedClient.toast(this.title, Component.translatableWithFallback("glazedmenu.changed.copied", "%s settings copied", count));
+    }
+
+    private static <T> String describe(ConfigValue<T> value) {
+        return value.config().id() + " > " + value.path() + " = " + value.type().format(value.getStored())
+                + "  (default: " + value.type().format(value.getDefault()) + ")";
+    }
+
+    private void updateButtons() {
+        if (this.changedButton != null) this.changedButton.style(this.changedOnly ? FlatButton.Style.PRIMARY : FlatButton.Style.NORMAL);
+        if (this.copyButton != null && this.resetButton != null) {
+            this.copyButton.visible = this.changedOnly;
+            this.resetButton.visible = this.changedOnly;
+            boolean any = this.listed.values().stream().anyMatch(values -> !values.isEmpty());
+            this.copyButton.active = any;
+            this.resetButton.active = any;
+        }
+        if (this.doneButton == null || this.saveButton == null) return;
+        int modified = this.modifiedCount();
+        List<Component> errors = this.errors();
+        this.saveButton.visible = modified > 0 || !errors.isEmpty();
+        this.saveButton.active = modified > 0 && errors.isEmpty();
+        this.doneButton.active = errors.isEmpty();
+        if (!errors.isEmpty()) {
+            Tooltip fix = Tooltip.create(Component.translatableWithFallback("glazedmenu.button.save.errors", "Fix the invalid values first:")
+                    .append("\n").append(errors.stream().map(Component::getString).collect(Collectors.joining("\n"))));
+            this.doneButton.setTooltip(fix);
+            this.saveButton.setTooltip(fix);
+        } else {
+            this.doneButton.setTooltip(modified > 0
+                    ? Tooltip.create(Component.translatableWithFallback("glazedmenu.button.done.tooltip", "Save and close")) : null);
+            this.saveButton.setTooltip(Tooltip.create(Component.translatableWithFallback("glazedmenu.button.save.tooltip", "Save (Ctrl+S)")));
+        }
+    }
+
+    // Applies every config's pending values. One config tells of itself; several share one toast, with the strictest
+    // restart any of them needs.
+    private void saveAll() {
+        List<ConfigEditSession> changed = this.sessions.values().stream().filter(session -> session.modifiedCount() > 0).toList();
+        if (changed.size() == 1) {
+            changed.get(0).saveAndNotify();
+            return;
+        }
+        if (changed.isEmpty()) return;
+        RestartRequirement restart = RestartRequirement.NONE;
+        for (ConfigEditSession session : changed) restart = restart.max(session.save());
+        GlazedClient.toast(this.title, switch (restart) {
+            case GAME -> Component.translatableWithFallback("glazedmenu.toast.restart_game",
+                    "Restart the game to apply every change").withStyle(ChatFormatting.GOLD);
+            case WORLD -> Component.translatableWithFallback("glazedmenu.toast.restart_world",
+                    "Rejoin the world to apply every change").withStyle(ChatFormatting.GOLD);
+            case NONE -> Component.translatableWithFallback("glazedmenu.toast.saved_many", "%s configs saved", changed.size());
+        });
+    }
+
+    // Saves the changes and stays on the screen.
+    private void saveHere() {
+        if (!this.errors().isEmpty() || this.modifiedCount() == 0) return;
+        this.saveAll();
+        if (this.results != null) this.results.refreshValues();
+        this.updateButtons();
+    }
+
+    private void done() {
+        if (!this.errors().isEmpty()) return;
+        this.leave(this.parent);
+        this.saveAll();
+    }
+
+    /** The server's values changed while the screen was open. */
+    public void onConfigSynced(Config config) {
+        ConfigEditSession session = this.sessions.get(config.id());
+        if (session == null || session.config() != config) return;
+        session.onConfigChanged();
+        if (this.results != null) this.results.refreshValues();
     }
 
     @Override
     public boolean keyPressed(KeyEvent event) {
         if (event.hasControlDownWithQuirk() && event.key() == KEY_F && this.search != null) {
             this.setFocused(this.search);
+            return true;
+        }
+        if (event.hasControlDownWithQuirk() && event.key() == KEY_S) {
+            this.saveHere();
             return true;
         }
         return super.keyPressed(event);
@@ -283,23 +579,31 @@ public final class ConfigSelectScreen extends StyledScreen {
     protected void extractPanels(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float a) {
         super.extractPanels(graphics, mouseX, mouseY, a);
         ConfigStyle.panel(graphics, this.frameLeft(), this.bodyTop(), this.frameWidth(), this.bodyBottom() - this.bodyTop());
-        // Behind every mod's cards the panel is dimmed, so the cards (in their mods' colors) stand out from it.
-        if (this.modId == null) {
+        // Behind every mod's cards the panel is dimmed, so the cards (in their mods' colors) stand out from it; search
+        // results are read on the plain panel, like a config's page.
+        if (this.modId == null && this.query.isBlank() && !this.changedOnly) {
             ConfigStyle.rect(graphics, this.frameLeft() + 1, this.bodyTop() + 1, this.frameWidth() - 2, this.bodyBottom() - this.bodyTop() - 2,
                     ConfigStyle.withAlpha(ConfigStyle.mode() == ConfigTheme.Mode.LIGHT ? 0xFF505868 : 0xFF000000, ConfigStyle.mode() == ConfigTheme.Mode.LIGHT ? 0x26 : 0x70));
         }
         // Glazed Menu's flowing gradient along the list's top edge, as on its mod list.
         if (this.modId == null) GlazedBrand.fill(graphics, this.frameLeft() + 1, this.bodyTop(), this.frameWidth() - 2, 2, 0xD0);
-        int searchLeft = this.search != null ? this.search.getX() - 18 : this.width;
+        int searchLeft = this.profilesButton != null ? this.profilesButton.getX() : this.changedButton != null ? this.changedButton.getX()
+                : this.search != null ? this.search.getX() - 18 : this.width;
         this.extractHeader(graphics, searchLeft - 8);
         if (this.search != null) {
             ConfigIcons.SEARCH.draw(graphics, this.search.getX() - 14, this.search.getY() + 4, this.search.isFocused() ? ConfigStyle.accent() : ConfigStyle.colors().textDim());
         }
-        Component status = this.query.isBlank()
-                ? Component.translatableWithFallback("glazedmenu.select.hint", "Choose a config to edit")
+        // What's unsaved or invalid in the search results comes before what the search found.
+        int errors = this.errors().size();
+        int modified = this.modifiedCount();
+        Component status = errors > 0 ? Component.translatableWithFallback("glazedmenu.status.errors", "%s invalid", errors)
+                : modified > 0 ? Component.translatableWithFallback("glazedmenu.status.modified", "%s unsaved", modified)
+                : this.changedOnly ? Component.translatableWithFallback("glazedmenu.changed.results", "%s changed settings in %s configs", this.resultCount, this.resultConfigs)
+                : this.query.isBlank() ? Component.translatableWithFallback("glazedmenu.select.hint", "Choose a config to edit")
                 : Component.translatableWithFallback("glazedmenu.search.results", "%s results in %s configs", this.resultCount, this.resultConfigs);
-        ConfigStyle.text(graphics, this.font, status, this.frameLeft() + 10, this.bottomBarY() + (BAR_HEIGHT - 8) / 2, this.frameWidth() - 110,
-                ConfigStyle.colors().textMuted());
+        ConfigStyle.text(graphics, this.font, status, this.frameLeft() + 10, this.bottomBarY() + (BAR_HEIGHT - 8) / 2,
+                (this.changedOnly && this.copyButton != null ? this.copyButton.getX() - this.frameLeft() - 18 : this.frameWidth() - 110) - (errors > 0 || modified > 0 ? 68 : 0),
+                errors > 0 ? ConfigStyle.colors().error() : modified > 0 ? ConfigStyle.colors().modified() : ConfigStyle.colors().textMuted());
     }
 
     // The mod's icon at the left, on its own, then its title over a line saying what's here.
@@ -352,7 +656,16 @@ public final class ConfigSelectScreen extends StyledScreen {
 
     @Override
     public void onClose() {
-        this.leave(this.parent);
+        int modified = this.modifiedCount();
+        if (modified == 0 && this.errors().isEmpty()) {
+            this.leave(this.parent);
+            return;
+        }
+        this.minecraft.setScreen(new ConfirmPopup(this, this.theme,
+                Component.translatableWithFallback("glazedmenu.discard.title", "Discard changes?"),
+                Component.translatableWithFallback("glazedmenu.discard.message", "%s unsaved changes will be lost.", modified),
+                Component.translatableWithFallback("glazedmenu.discard.yes", "Discard"), true,
+                discard -> this.minecraft.setScreen(discard ? this.parent : this)));
     }
 
     private static String modName(String modId) {
@@ -364,16 +677,13 @@ public final class ConfigSelectScreen extends StyledScreen {
     }
 
     private final class Rows extends CompatList<Row> {
-        // The cards of every mod use the whole width; tiles and search results stay narrower, easier to read.
-        boolean wide;
-
         Rows(Minecraft minecraft, int width, int height, int y) {
             super(minecraft, width, height, y, 36);
         }
 
         @Override
         public int getRowWidth() {
-            return this.wide ? this.width - 14 : Math.min(this.width - 14, 460);
+            return this.width - 14;
         }
 
         void setRows(List<Row> rows) {
@@ -856,118 +1166,5 @@ public final class ConfigSelectScreen extends StyledScreen {
             result |= Math.round(a + (b - a) * t) << shift;
         }
         return result;
-    }
-
-    // A config as a search category: its icon, title, mod and how many settings matched.
-    private final class CategoryHeader extends Row {
-        private final Config config;
-        private final ConfigTheme theme;
-        private final int count;
-
-        CategoryHeader(Config config, int count) {
-            this.config = config;
-            this.theme = themeOf(config);
-            this.count = count;
-        }
-
-        @Override
-        int height() {
-            return 26;
-        }
-
-        @Override
-        public void extractContent(GuiGraphicsExtractor graphics, int mouseX, int mouseY, boolean hovered, float a) {
-            Font font = ConfigSelectScreen.this.font;
-            int x = this.getX();
-            int y = this.getY() + this.getHeight() - 16;
-            int accent = ConfigStyle.accentOf(this.theme);
-            ConfigIcons.forScope(this.config.scope()).draw(graphics, x + 2, y - 1, 12, accent);
-            MutableComponent title = this.config.title().copy().withStyle(ChatFormatting.BOLD);
-            if (ConfigSelectScreen.this.modId == null) {
-                title = Component.literal(modName(this.config.modId()) + " › ").withStyle(ChatFormatting.GRAY).append(this.config.title().copy().withStyle(ChatFormatting.BOLD));
-            }
-            Component count = Component.translatableWithFallback("glazedmenu.search.count", "%s found", this.count);
-            int countWidth = font.width(count);
-            ConfigStyle.text(graphics, font, title, x + 18, y + 1, this.getWidth() - countWidth - 30, accent);
-            graphics.text(font, count, x + this.getWidth() - countWidth - 4, y + 1, ConfigStyle.colors().textMuted(), false);
-            graphics.fill(x + 2, y + 13, x + this.getWidth() - 2, y + 14, ConfigStyle.withAlpha(accent, 0x50));
-        }
-    }
-
-    // A matching setting: its name, where it sits, and its value; opening it shows its config filtered to it.
-    private final class Result extends Row {
-        private final Config config;
-        private final ConfigValue<?> value;
-        private final ConfigTheme theme;
-        private final Component location;
-
-        Result(Config config, ConfigValue<?> value) {
-            this.config = config;
-            this.value = value;
-            this.theme = themeOf(config);
-            MutableComponent location = Component.empty();
-            List<Component> groups = new ArrayList<>();
-            for (ConfigNode group = value.parent(); group != null && group.parent() != null; group = group.parent()) groups.add(0, group.displayName());
-            for (int i = 0; i < groups.size(); i++) {
-                if (i > 0) location.append(" › ");
-                location.append(groups.get(i));
-            }
-            if (groups.isEmpty()) {
-                location.append(value.comment().isEmpty()
-                        ? Component.translatableWithFallback("glazedmenu.tab.general", "General")
-                        : Component.literal(value.comment().get(0)));
-            }
-            this.location = location;
-        }
-
-        @Override
-        int height() {
-            return 30;
-        }
-
-        @Override
-        public void extractContent(GuiGraphicsExtractor graphics, int mouseX, int mouseY, boolean hovered, float a) {
-            Font font = ConfigSelectScreen.this.font;
-            int x = this.getX() + 8;
-            int y = this.getY() + 1;
-            int width = this.getWidth() - 8;
-            int height = this.getHeight() - 2;
-            int accent = ConfigStyle.accentOf(this.theme);
-            if (hovered) {
-                ConfigStyle.rect(graphics, x, y, width, height, ConfigStyle.colors().rowHover());
-                ConfigStyle.rect(graphics, x, y + 4, 2, height - 8, accent);
-            }
-            Component value = Component.literal(format(this.value));
-            int valueWidth = Math.min(font.width(value), width / 3);
-            int textWidth = width - valueWidth - 40;
-            ConfigStyle.text(graphics, font, this.value.displayName(), x + 10, y + 5, textWidth, ConfigStyle.colors().text());
-            ConfigStyle.text(graphics, font, this.location, x + 10, y + 17, textWidth, ConfigStyle.colors().textDim());
-            ConfigStyle.text(graphics, font, value, x + width - valueWidth - 22, y + (height - 8) / 2, valueWidth, hovered ? accent : ConfigStyle.colors().textDim());
-            ConfigIcons.CHEVRON.draw(graphics, x + width - 14, y + (height - ConfigIcons.SIZE) / 2, hovered ? accent : ConfigStyle.colors().textMuted());
-        }
-
-        @Override
-        public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
-            ConfigSelectScreen.this.leave(ConfigScreen.create(ConfigSelectScreen.this, this.config, this.value.path()));
-            return true;
-        }
-    }
-
-    private final class NoResults extends Row {
-        @Override
-        int height() {
-            return 30;
-        }
-
-        @Override
-        public void extractContent(GuiGraphicsExtractor graphics, int mouseX, int mouseY, boolean hovered, float a) {
-            Font font = ConfigSelectScreen.this.font;
-            int y = this.getY() + (this.getHeight() - 8) / 2;
-            Component text = Component.translatableWithFallback("glazedmenu.no_results", "No settings match");
-            int textWidth = font.width(text) + 14;
-            int x = this.getX() + (this.getWidth() - textWidth) / 2;
-            ConfigIcons.SEARCH.draw(graphics, x, y - 1, ConfigStyle.colors().textMuted());
-            graphics.text(font, text, x + 14, y, ConfigStyle.colors().textMuted(), false);
-        }
     }
 }

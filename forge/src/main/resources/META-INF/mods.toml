@@ -12,7 +12,7 @@ authors = "${mod_author}"
 logoFile = "mod_logo.png"
 displayURL = "${mod_page_url}"
 updateJSONURL = "${mod_forge_update_url}"
-# Client-only: servers neither need nor check it.
+# Needed on neither side: a game or a server without it is joined all the same, so nothing is checked.
 displayTest = "${mod_forge_display_test}"
 
 # Not needed, but when Configured is installed Glazed Menu sets its screens up after it, so mods' buttons open Glazed

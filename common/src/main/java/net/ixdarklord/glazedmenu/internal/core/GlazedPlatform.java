@@ -49,6 +49,56 @@ public interface GlazedPlatform {
         return Optional.empty();
     }
 
+    /** The loader's name as Modrinth lists it ("fabric", "neoforge"), or empty when it isn't known. */
+    default String loaderName() {
+        return "";
+    }
+
+    /** The loader as it names itself with its version ("Forge 47.4.10"), for the title screen's frame; empty where only its name is known. */
+    default String loaderLabel() {
+        return "";
+    }
+
+    /**
+     * What else the loader says on its own title screen that the frame doesn't already (not the game's version, the
+     * loader's or how many mods there are): on Forge the rest of its branding, and a newer Forge once it knows of one.
+     */
+    default List<String> titleExtras() {
+        return List.of();
+    }
+
+    /** Called as the title screen is drawn, for what the loader works out or draws there itself (Forge's own hook). */
+    default void extractTitle(net.minecraft.client.gui.screens.TitleScreen title, net.ixdarklord.glazedmenu.internal.compat.GuiGraphicsExtractor graphics, float fade) {}
+
+    /** Whether the loader has a mark of mods with updates to show now. */
+    default boolean hasUpdateMark() {
+        return false;
+    }
+
+    /** Draws the loader's own mark of mods with updates (Forge's), its top left at a point; nothing where there's none to show. */
+    default void extractUpdateMark(net.ixdarklord.glazedmenu.internal.compat.GuiGraphicsExtractor graphics, int x, int y) {}
+
+    /** The mod's own jar on disk: none for a mod inside another's jar, or one run from folders in development. */
+    default Optional<Path> modFile(String modId) {
+        return Optional.empty();
+    }
+
+    /** Whether a key only modifies others here (Ctrl, Shift, Alt on NeoForge, where a key bind may need one held). */
+    default boolean isKeyModifier(com.mojang.blaze3d.platform.InputConstants.Key key) {
+        return false;
+    }
+
+    /** Binds a key, with the modifier key held with it ({@code InputConstants.UNKNOWN} for none) where the loader has those. */
+    default void bindKey(net.minecraft.client.KeyMapping mapping, com.mojang.blaze3d.platform.InputConstants.Key modifier,
+                         com.mojang.blaze3d.platform.InputConstants.Key key) {
+        mapping.setKey(key);
+    }
+
+    /** Sets a key bind back to its default. */
+    default void resetKey(net.minecraft.client.KeyMapping mapping) {
+        mapping.setKey(mapping.getDefaultKey());
+    }
+
     static GlazedPlatform get() {
         if (Holder.platform == null) throw new IllegalStateException("Glazed Menu's loader module hasn't started");
         return Holder.platform;

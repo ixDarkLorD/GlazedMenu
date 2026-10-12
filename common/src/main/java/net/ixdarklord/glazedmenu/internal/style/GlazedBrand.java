@@ -31,26 +31,82 @@ public final class GlazedBrand {
         SLATE(0xFF9AA3B5, 0xFF7C8597, 0xFFC4CBD8, 0xFFA8B0C0);
 
         final int[] stops;
-        private final ConfigColorScheme dark;
+        private ConfigColorScheme dark;
         private final ConfigColorScheme light;
 
         Scheme(int... stops) {
             this.stops = stops;
-            // Deep, nearly opaque panels with a touch of the scheme's color, so the screens read rich, not washed out
-            // over a bright panorama.
+            // Deep panels with a good measure of the scheme's color, and see-through enough for the colors behind them
+            // to show: rich over a bright panorama, not washed out and not a slab.
             int accent = stops[0];
             this.dark = ConfigColorScheme.tinted(accent).toBuilder()
-                    .panel(ConfigStyle.withAlpha(ConfigStyle.mix(0xFF0B0D14, accent, 0.16F), 0xD2))
-                    .bar(ConfigStyle.withAlpha(ConfigStyle.mix(0xFF080A10, accent, 0.18F), 0xDC))
+                    .panel(ConfigStyle.withAlpha(ConfigStyle.mix(0xFF0B0D14, accent, 0.24F), 0x9C))
+                    .bar(ConfigStyle.withAlpha(ConfigStyle.mix(0xFF080A10, accent, 0.26F), 0xA8))
                     .popup(ConfigStyle.withAlpha(ConfigStyle.mix(0xFF0B0D14, accent, 0.14F), 0xF7))
-                    .panelBorder(ConfigStyle.mix(0xFF2A313F, accent, 0.4F))
+                    .panelBorder(ConfigStyle.mix(0xFF2A313F, accent, 0.5F))
                     .build();
-            this.light = ConfigColorScheme.tintedLight(stops[0]);
+            // The lesser text, brighter than a grey: the panels are in color now, and a grey sinks into it. And the
+            // groups inside the panels (cards, rows, buttons) a little see-through, so the panel's color and its waves
+            // run through them too.
+            this.dark = this.dark.toBuilder()
+                    .text(0xFFFAF9FF).textDim(0xFFE3E0F7).textMuted(0xFFC8C5E6)
+                    .button(ConfigStyle.withAlpha(ConfigStyle.mix(this.dark.button(), 0xFF0A0818, 0.35F), 0xA6))
+                    .buttonHover(ConfigStyle.withAlpha(this.dark.buttonHover(), 0xC0))
+                    .buttonDisabled(ConfigStyle.withAlpha(this.dark.buttonDisabled(), 0x90))
+                    .build();
+            ConfigColorScheme light = ConfigColorScheme.tintedLight(stops[0]);
+            this.light = light.toBuilder()
+                    .panel(ConfigStyle.withAlpha(light.panel(), 0xA4))
+                    .bar(ConfigStyle.withAlpha(light.bar(), 0xB0))
+                    .text(0xFF0E0A24).textDim(0xFF2C2750).textMuted(0xFF464170)
+                    .button(ConfigStyle.withAlpha(light.button(), 0xB4))
+                    .buttonHover(ConfigStyle.withAlpha(light.buttonHover(), 0xCC))
+                    .buttonDisabled(ConfigStyle.withAlpha(light.buttonDisabled(), 0xA0))
+                    .build();
         }
 
         ConfigColorScheme colors(ConfigTheme.Mode mode) {
             return mode == ConfigTheme.Mode.LIGHT ? this.light : this.dark;
         }
+    }
+
+    /**
+     * A color that tells one thing from another (a category, a card, a kind of screen), turned toward the chosen color
+     * scheme: its hue is drawn most of the way to the scheme's accent, so the things stay apart from one another but in
+     * the scheme's family, and it's as vivid as the scheme is. Glazed Menu's own scheme keeps them as they were made;
+     * grays stay gray. Colors that mean something (danger, success, a favorite) aren't passed through here.
+     */
+    public static int identity(int color) {
+        Scheme scheme = GlazedSettings.colorScheme();
+        if (scheme == Scheme.GLAZED) return color;
+        float[] own = hsv(color);
+        if (own[1] < 0.2F) return color;
+        float[] accent = hsv(scheme.stops[0]);
+        float apart = own[0] - accent[0];
+        if (apart > 0.5F) apart -= 1;
+        if (apart < -0.5F) apart += 1;
+        float hue = accent[0] + apart * 0.22F;
+        hue -= (float) Math.floor(hue);
+        float vivid = own[1] * net.minecraft.util.Mth.clamp(accent[1] / 0.5F, 0.25F, 1);
+        return color & 0xFF000000 | net.minecraft.util.Mth.hsvToRgb(hue, vivid, own[2]) & 0xFFFFFF;
+    }
+
+    // A color's hue, how vivid it is and how bright, each 0 to 1.
+    private static float[] hsv(int color) {
+        float red = (color >> 16 & 0xFF) / 255F;
+        float green = (color >> 8 & 0xFF) / 255F;
+        float blue = (color & 0xFF) / 255F;
+        float most = Math.max(red, Math.max(green, blue));
+        float spread = most - Math.min(red, Math.min(green, blue));
+        float hue = 0;
+        if (spread > 0) {
+            if (most == red) hue = (green - blue) / spread % 6;
+            else if (most == green) hue = (blue - red) / spread + 2;
+            else hue = (red - green) / spread + 4;
+            hue /= 6;
+            if (hue < 0) hue += 1;
+        }
+        return new float[]{hue, most == 0 ? 0 : spread / most, most};
     }
 
     /** The chosen scheme's accent. */

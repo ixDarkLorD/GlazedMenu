@@ -56,7 +56,12 @@ public abstract class StyledScreen extends CompatScreen {
     }
 
     protected int bodyBottom() {
-        return this.bottomBarY() - GAP;
+        return this.hasBottomBar() ? this.bottomBarY() - GAP : this.height - MARGIN;
+    }
+
+    /** Whether the screen has a bar of actions along its bottom; without one the body runs down to the margin. */
+    protected boolean hasBottomBar() {
+        return true;
     }
 
     protected int frameLeft() {
@@ -173,7 +178,7 @@ public abstract class StyledScreen extends CompatScreen {
     /** Draws the bars, panels and fixed text under the widgets. */
     protected void extractPanels(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float a) {
         ConfigStyle.bar(graphics, this.frameLeft(), this.topBarY(), this.frameWidth(), this.topBarHeight());
-        ConfigStyle.bar(graphics, this.frameLeft(), this.bottomBarY(), this.frameWidth(), BAR_HEIGHT);
+        if (this.hasBottomBar()) ConfigStyle.bar(graphics, this.frameLeft(), this.bottomBarY(), this.frameWidth(), BAR_HEIGHT);
         if (this.dividedToggle != null && this.dividedToggle.visible) {
             int x = this.dividedToggle.getX() - TOGGLE_DIVIDER;
             int top = this.dividedToggle.getY() + 1;
@@ -200,14 +205,19 @@ public abstract class StyledScreen extends CompatScreen {
 
     /** The sun/moon button switching every config screen between dark and light, at the given spot in the top bar. */
     protected FlatButton addModeToggle(int x) {
-        FlatButton toggle = this.addRenderableWidget(FlatButton.icon(modeIcon(), modeTooltip(), button -> {
+        FlatButton toggle = this.addRenderableWidget(modeToggle());
+        toggle.setPosition(x, this.topBarWidgetY(20));
+        return toggle;
+    }
+
+    /** The sun/moon button itself, for a screen that places its own. */
+    public static FlatButton modeToggle() {
+        return FlatButton.icon(modeIcon(), modeTooltip(), button -> {
             GlazedSettings.toggleThemeMode();
             FlatButton self = (FlatButton) button;
             self.withIcon(modeIcon());
             self.tooltip(modeTooltip());
-        }));
-        toggle.setPosition(x, this.topBarWidgetY(20));
-        return toggle;
+        });
     }
 
     // The icon shows the mode a click switches to.

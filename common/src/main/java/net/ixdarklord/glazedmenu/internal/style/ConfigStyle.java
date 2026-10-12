@@ -74,11 +74,24 @@ public final class ConfigStyle {
         return luminance > 150 ? 0xFF0B0E14 : 0xFFFFFFFF;
     }
 
-    // --- Shapes: rectangles with their corner pixels cut, which reads as slightly rounded at GUI scale ---
+    // --- Shapes: rectangles with their corners rounded off, a pixel or (on anything large enough to show it) two ---
+
+    // Whether a box is large enough for the rounder corner.
+    private static boolean round(int width, int height) {
+        return width >= 12 && height >= 12;
+    }
 
     public static void rect(GuiGraphicsExtractor graphics, int x, int y, int width, int height, int color) {
         if (width <= 2 || height <= 2) {
             graphics.fill(x, y, x + width, y + height, color);
+            return;
+        }
+        if (round(width, height)) {
+            graphics.fill(x + 2, y, x + width - 2, y + height, color);
+            graphics.fill(x + 1, y + 1, x + 2, y + height - 1, color);
+            graphics.fill(x + width - 2, y + 1, x + width - 1, y + height - 1, color);
+            graphics.fill(x, y + 2, x + 1, y + height - 2, color);
+            graphics.fill(x + width - 1, y + 2, x + width, y + height - 2, color);
             return;
         }
         graphics.fill(x + 1, y, x + width - 1, y + height, color);
@@ -86,11 +99,98 @@ public final class ConfigStyle {
         graphics.fill(x + width - 1, y + 1, x + width, y + height - 1, color);
     }
 
+    /**
+     * A box's border. On Glazed Menu's own look, a box of a button's size or more is also given what makes it a piece
+     * of glass standing off the surface under it: a rim of light inside its top edge and a soft reflection under that,
+     * a shade inside its bottom edge, and a shadow dropped below it.
+     */
     public static void outline(GuiGraphicsExtractor graphics, int x, int y, int width, int height, int color) {
+        border(graphics, x, y, width, height, color);
+        if (glazedmenu() && width >= 14 && height >= 12) {
+            boolean light = mode() == ConfigTheme.Mode.LIGHT;
+            int white = 0xFFFFFFFF;
+            graphics.fillGradient(x + 1, y + 2, x + width - 1, y + 2 + Math.min(height / 2, 9), withAlpha(white, light ? 0x26 : 0x16), withAlpha(white, 0));
+            graphics.fill(x + 2, y + 1, x + width - 2, y + 2, withAlpha(white, light ? 0x70 : 0x3C));
+            graphics.fill(x + 2, y + height - 2, x + width - 2, y + height - 1, withAlpha(0xFF000000, light ? 0x14 : 0x30));
+            shadow(graphics, x, y, width, height, 0.75F);
+        }
+    }
+
+    // The border alone.
+    private static void border(GuiGraphicsExtractor graphics, int x, int y, int width, int height, int color) {
+        if (round(width, height)) {
+            graphics.fill(x + 2, y, x + width - 2, y + 1, color);
+            graphics.fill(x + 2, y + height - 1, x + width - 2, y + height, color);
+            graphics.fill(x, y + 2, x + 1, y + height - 2, color);
+            graphics.fill(x + width - 1, y + 2, x + width, y + height - 2, color);
+            graphics.fill(x + 1, y + 1, x + 2, y + 2, color);
+            graphics.fill(x + width - 2, y + 1, x + width - 1, y + 2, color);
+            graphics.fill(x + 1, y + height - 2, x + 2, y + height - 1, color);
+            graphics.fill(x + width - 2, y + height - 2, x + width - 1, y + height - 1, color);
+            return;
+        }
         graphics.fill(x + 1, y, x + width - 1, y + 1, color);
         graphics.fill(x + 1, y + height - 1, x + width - 1, y + height, color);
         graphics.fill(x, y + 1, x + 1, y + height - 1, color);
         graphics.fill(x + width - 1, y + 1, x + width, y + height - 1, color);
+    }
+
+    // A shadow dropped below a box and a little to its right, fading out over a few pixels. Only outside the box, so
+    // it never darkens what the box holds (the boxes are see-through), whichever of them is drawn first.
+    private static void shadow(GuiGraphicsExtractor graphics, int x, int y, int width, int height, float strength) {
+        int black = 0xFF000000;
+        boolean light = mode() == ConfigTheme.Mode.LIGHT;
+        float weight = strength * (light ? 0.55F : 1);
+        graphics.fill(x + 2, y + height, x + width - 1, y + height + 1, withAlpha(black, Math.round(0x58 * weight)));
+        graphics.fill(x + 3, y + height + 1, x + width - 1, y + height + 2, withAlpha(black, Math.round(0x2C * weight)));
+        graphics.fill(x + width, y + 3, x + width + 1, y + height - 1, withAlpha(black, Math.round(0x30 * weight)));
+        // Round the bottom right corner too: the pixels the box's rounded corner leaves empty, and the one past them
+        // where the shadow's two sides meet.
+        int corner = withAlpha(black, Math.round(0x44 * weight));
+        if (round(width, height)) {
+            graphics.fill(x + width - 2, y + height - 1, x + width, y + height, corner);
+            graphics.fill(x + width - 1, y + height - 2, x + width, y + height - 1, corner);
+        } else {
+            graphics.fill(x + width - 1, y + height - 1, x + width, y + height, corner);
+        }
+        graphics.fill(x + width - 1, y + height, x + width, y + height + 1, withAlpha(black, Math.round(0x2C * weight)));
+        if (strength >= 1) {
+            graphics.fill(x + 4, y + height + 2, x + width - 1, y + height + 3, withAlpha(black, Math.round(0x14 * weight)));
+            graphics.fill(x + width + 1, y + 4, x + width + 2, y + height - 1, withAlpha(black, Math.round(0x14 * weight)));
+        }
+    }
+
+    /**
+     * The box behind an icon, in a color of its own: filled, with an outline in a deeper shade of the color, a light
+     * edge inside its top and left and a shade inside its bottom and right (so it reads as raised), and a small shadow
+     * under it.
+     */
+    public static void iconFrame(GuiGraphicsExtractor graphics, int x, int y, int width, int height, int color) {
+        int black = 0xFF000000;
+        int white = 0xFFFFFFFF;
+        graphics.fill(x + 1, y + height, x + width, y + height + 1, withAlpha(black, 0x50));
+        graphics.fill(x + width, y + 1, x + width + 1, y + height, withAlpha(black, 0x30));
+        rect(graphics, x, y, width, height, color);
+        border(graphics, x, y, width, height, withAlpha(mix(color, black, 0.45F), 0xFF));
+        if (width < 8 || height < 8) return;
+        graphics.fill(x + 2, y + 1, x + width - 2, y + 2, withAlpha(white, 0x6A));
+        graphics.fill(x + 1, y + 2, x + 2, y + height - 2, withAlpha(white, 0x40));
+        graphics.fill(x + 2, y + height - 2, x + width - 2, y + height - 1, withAlpha(black, 0x38));
+        graphics.fill(x + width - 2, y + 2, x + width - 1, y + height - 2, withAlpha(black, 0x24));
+    }
+
+    /** The same frame over a picture already drawn in the box (a world's, a server's): the outline, the edges and the shadow. */
+    public static void pictureFrame(GuiGraphicsExtractor graphics, int x, int y, int width, int height) {
+        int black = 0xFF000000;
+        int white = 0xFFFFFFFF;
+        graphics.fill(x + 1, y + height, x + width, y + height + 1, withAlpha(black, 0x50));
+        graphics.fill(x + width, y + 1, x + width + 1, y + height, withAlpha(black, 0x30));
+        graphics.fill(x, y, x + width, y + 1, withAlpha(black, 0xA0));
+        graphics.fill(x, y + height - 1, x + width, y + height, withAlpha(black, 0xA0));
+        graphics.fill(x, y + 1, x + 1, y + height - 1, withAlpha(black, 0xA0));
+        graphics.fill(x + width - 1, y + 1, x + width, y + height - 1, withAlpha(black, 0xA0));
+        graphics.fill(x + 1, y + 1, x + width - 1, y + 2, withAlpha(white, 0x50));
+        graphics.fill(x + 1, y + 2, x + 2, y + height - 1, withAlpha(white, 0x30));
     }
 
     /** A translucent panel with a hairline border and a faint accent sheen along its top. */
@@ -100,34 +200,41 @@ public final class ConfigStyle {
 
     /** As {@link #panel(GuiGraphicsExtractor, int, int, int, int)}; {@code rays} false leaves out the sun rays. */
     public static void panel(GuiGraphicsExtractor graphics, int x, int y, int width, int height, boolean rays) {
+        if (glazedmenu()) shadow(graphics, x, y, width, height, 1);
         rect(graphics, x, y, width, height, translucent(colors().panel()));
         glaze(graphics, x, y, width, height);
+        if (glazedmenu()) waves(graphics, x, y, width, height);
         glass(graphics, x, y, width, height, rays);
-        outline(graphics, x, y, width, height, colors().panelBorder());
-        graphics.fillGradient(x + 1, y + 1, x + width - 1, y + Math.min(10, height - 1), withAlpha(accent(), 0x14), withAlpha(accent(), 0));
+        border(graphics, x, y, width, height, colors().panelBorder());
+        graphics.fillGradient(x + 2, y + 1, x + width - 2, y + Math.min(10, height - 1), withAlpha(accent(), 0x14), withAlpha(accent(), 0));
     }
 
     public static void bar(GuiGraphicsExtractor graphics, int x, int y, int width, int height) {
+        if (glazedmenu()) shadow(graphics, x, y, width, height, 1);
         rect(graphics, x, y, width, height, translucent(colors().bar()));
         glaze(graphics, x, y, width, height);
+        if (glazedmenu()) waves(graphics, x, y, width, height);
         glass(graphics, x, y, width, height, true);
-        outline(graphics, x, y, width, height, colors().panelBorder());
+        border(graphics, x, y, width, height, colors().panelBorder());
     }
 
     // --- Glass ---
 
-    // A panel as a slab of frosted glass: a soft reflection down from its top, a bright edge along its top and left and a
-    // darker one along its bottom, and two faint diagonal streaks of light, placed by the screen so they run on from
-    // panel to panel as across one sheet.
+    // A panel as a slab of liquid glass: a soft reflection down from its top and a fainter glow up from its bottom, a
+    // bright rim of light along its top and its left (and a faint one down its right), a darker one along its bottom,
+    // and faint diagonal beams of light, placed by the screen so they run on from panel to panel as across one sheet.
     private static void glass(GuiGraphicsExtractor graphics, int x, int y, int width, int height, boolean rays) {
         if (width <= 4 || height <= 4) return;
         boolean light = mode() == ConfigTheme.Mode.LIGHT;
         int white = 0xFFFFFFFF;
         int sheen = Math.max(12, Math.min(height * 2 / 5, 40));
-        graphics.fillGradient(x + 1, y + 1, x + width - 1, y + 1 + sheen, withAlpha(white, light ? 0x30 : 0x16), withAlpha(white, 0));
-        graphics.fill(x + 2, y + 1, x + width - 2, y + 2, withAlpha(white, light ? 0x70 : 0x3A));
-        graphics.fill(x + 1, y + 2, x + 2, y + height - 2, withAlpha(white, light ? 0x40 : 0x1A));
-        graphics.fill(x + 2, y + height - 2, x + width - 2, y + height - 1, withAlpha(0xFF000000, light ? 0x18 : 0x48));
+        graphics.fillGradient(x + 1, y + 1, x + width - 1, y + 1 + sheen, withAlpha(white, light ? 0x3A : 0x24), withAlpha(white, 0));
+        int glow = Math.min(height / 3, 14);
+        graphics.fillGradient(x + 1, y + height - 1 - glow, x + width - 1, y + height - 1, withAlpha(white, 0), withAlpha(white, light ? 0x1C : 0x10));
+        graphics.fill(x + 2, y + 1, x + width - 2, y + 2, withAlpha(white, light ? 0x90 : 0x62));
+        graphics.fill(x + 1, y + 2, x + 2, y + height - 2, withAlpha(white, light ? 0x50 : 0x30));
+        graphics.fill(x + width - 2, y + 2, x + width - 1, y + height - 2, withAlpha(white, light ? 0x28 : 0x14));
+        graphics.fill(x + 2, y + height - 2, x + width - 2, y + height - 1, withAlpha(0xFF000000, light ? 0x18 : 0x40));
         if (rays) streaks(graphics, x, y, width, height, light);
     }
 
@@ -147,7 +254,8 @@ public final class ConfigStyle {
         boolean animate = GlazedSettings.transitions();
         double time = animate ? System.currentTimeMillis() : 0;
         float sway = animate ? (float) Math.sin(time / SWAY_MILLIS * Math.PI * 2) * 0.05F : 0;
-        int peak = light ? 0x18 : 0x0E;
+        // Faint: a hint of light in the glass, behind what the panels hold.
+        int peak = light ? 0x0A : 0x06;
 
         graphics.enableScissor(x + 1, y + 1, x + width - 1, y + height - 1);
         var pose = graphics.pose();
@@ -207,13 +315,19 @@ public final class ConfigStyle {
 
     // --- Text ---
 
+    // On Glazed Menu's dark look the panels are see-through glass over whatever is behind them, so text has a shadow
+    // under it there: it reads over a bright panorama or world as it does over a dark one.
+    private static boolean shadowed() {
+        return glazedmenu() && mode() != ConfigTheme.Mode.LIGHT;
+    }
+
     public static void text(GuiGraphicsExtractor graphics, Font font, Component text, int x, int y, int maxWidth, int color) {
-        graphics.text(font, ellipsize(font, text, maxWidth), x, y, color, false);
+        graphics.text(font, ellipsize(font, text, maxWidth), x, y, color, shadowed());
     }
 
     public static void centeredText(GuiGraphicsExtractor graphics, Font font, Component text, int centerX, int y, int maxWidth, int color) {
         FormattedCharSequence line = ellipsize(font, text, maxWidth);
-        graphics.text(font, line, centerX - font.width(line) / 2, y, color, false);
+        graphics.text(font, line, centerX - font.width(line) / 2, y, color, shadowed());
     }
 
     public static FormattedCharSequence ellipsize(Font font, Component text, int width) {
@@ -244,50 +358,180 @@ public final class ConfigStyle {
         if (textured && textureOpacity > 0) {
             texture(graphics, texture, current, width, height, withAlpha(0xFFFFFFFF, Math.round(255 * textureOpacity)));
         }
+        // Glazed Menu's own look has no backdrop color of the theme's: newer versions blur the panorama or the world
+        // behind it. 1.20.1 has no blur, so a shade stands in for it: nothing behind reads through the glass.
+        boolean glazed = !textured && glazedmenu();
+        if (glazed) shade(graphics, width, height, 1);
         float backgroundOpacity = GlazedSettings.backgroundOpacity(current.backgroundOpacity());
-        if (backgroundOpacity > 0) graphics.fill(0, 0, width, height, withAlpha(colors.backdrop(), Math.round(255 * backgroundOpacity)));
-        if (!textured) graphics.fillGradient(0, 0, width, height / 3, withAlpha(colors.accent(), 0x18), withAlpha(colors.accent(), 0));
+        if (!glazed && backgroundOpacity > 0) graphics.fill(0, 0, width, height, withAlpha(colors.backdrop(), Math.round(255 * backgroundOpacity)));
+        if (!glazed && !textured) {
+            graphics.fillGradient(0, 0, width, height / 3, withAlpha(colors.accent(), 0x18), withAlpha(colors.accent(), 0));
+        }
     }
 
-    // Glazed Menu's own look: a coat over its panels and bars, one gradient of its logo's colors from the top of the screen to
-    // the bottom (drifting slowly through the rest), each box showing its slice of it, so they read as one glazed surface.
+    /**
+     * The shade drawn where newer versions blur what's behind a screen (1.20.1 has no blur). On the dark look it's in
+     * the family of the panels themselves (their own tone in the chosen color scheme, a little deeper so they still
+     * stand off it), a touch lighter and more of the scheme's color toward the top, and see-through enough that the
+     * panorama or the world is still sensed behind it as soft shapes, while the game's HUD doesn't read through the
+     * panels' glass. On the light look it's the scheme's own pale backdrop. {@code strength} (0 to 1) is how much of
+     * it there is, for a screen that comes on or fades, or one that keeps what's behind it plain to see.
+     */
+    public static void shade(GuiGraphicsExtractor graphics, int width, int height, float strength) {
+        ConfigColorScheme colors = theme.colors(mode());
+        float much = Mth.clamp(strength, 0, 1);
+        if (mode() == ConfigTheme.Mode.LIGHT) {
+            int alpha = Math.round(0xF4 * much);
+            if (alpha > 0) graphics.fill(0, 0, width, height, withAlpha(mix(colors.backdrop(), colors.accent(), 0.12F), alpha));
+            return;
+        }
+        // The panels' tone (as the scheme makes it), deepened.
+        int deep = mix(mix(0xFF0B0D14, colors.accent(), 0.24F), 0xFF04050A, 0.3F);
+        int top = withAlpha(mix(deep, colors.accent(), 0.1F), Math.round(SHADE_TOP * much));
+        int bottom = withAlpha(deep, Math.round(SHADE_BOTTOM * much));
+        if (bottom >>> 24 > 0) graphics.fillGradient(0, 0, width, height, top, bottom);
+    }
+
+    // How opaque the shade is at the top of the screen and at its bottom: the lightest at which the HUD's hearts and
+    // hotbar no longer read through a panel or a bar laid over it.
+    private static final int SHADE_TOP = 0xC4;
+    private static final int SHADE_BOTTOM = 0xD2;
+
+    // Waves in the panels and bars of Glazed Menu's own look, part of their backgrounds: placed by the screen (one above
+    // the next from the middle of the screen down), so they run on from panel to panel as across one sheet, each box
+    // showing the part of them that crosses it. Each is a long swell with shorter ones riding it, drifting sideways at
+    // its own pace (every other one the other way) and rising and sinking a little, in the scheme's colors, each a step
+    // further round them, and each swelling brighter and fainter on a beat of its own.
+    // <p>
+    // They're drawn as a liquid, with no hard edge anywhere: the surface comes in softly, a sheen of lighter color lies
+    // just under it and melts into the body, and the body thins out with depth. And they're drawn in the window's own
+    // pixels, not the GUI's (which are two, three or four of them wide): a GUI pixel is too coarse for a curve, and
+    // shows as steps along it.
+    private static final int WAVES = 6;
+    private static final float WAVE_MILLIS = 26000;
+    // Drawn in columns this many of the window's pixels wide: the surface slopes too gently, and is too soft, for
+    // steps that small to show.
+    private static final int WAVE_STEP = 3;
+    // The surface's soft edge above it, and the sheen's reach below it, in GUI pixels.
+    private static final float WAVE_EDGE = 5;
+    private static final float WAVE_SHEEN = 8;
+
+    private static void waves(GuiGraphicsExtractor graphics, int x, int y, int width, int height) {
+        if (width <= 2 || height <= 2) return;
+        var window = Minecraft.getInstance().getWindow();
+        // From here on, everything is in the window's pixels.
+        float scale = Math.max(1, (float) window.getGuiScale());
+        int screenWidth = Math.max(1, Math.round(window.getGuiScaledWidth() * scale));
+        int screenHeight = Math.max(1, Math.round(window.getGuiScaledHeight() * scale));
+        boolean light = mode() == ConfigTheme.Mode.LIGHT;
+        boolean animate = GlazedSettings.transitions();
+        double time = animate ? System.currentTimeMillis() : 0;
+        float phase = GlazedBrand.phase();
+        int body = GlazedSettings.panelAlpha(light ? 0x34 : 0x30);
+        int sheen = GlazedSettings.panelAlpha(light ? 0x54 : 0x4C);
+        float depth = screenHeight * 0.30F;
+        float edge = WAVE_EDGE * scale;
+        float sheenReach = WAVE_SHEEN * scale;
+        int left = Math.round((x + 1) * scale);
+        int right = Math.round((x + width - 1) * scale);
+        int top = Math.round((y + 1) * scale);
+        int bottom = Math.round((y + height - 1) * scale);
+        // The rows a column is drawn between, as distances under the surface: the soft edge, the sheen, and the body
+        // in two parts (it thins out along a curve, not a line).
+        float[] stops = {-edge, 0, sheenReach, sheenReach + (depth - sheenReach) * 0.4F, depth};
+        var pose = graphics.pose();
+        pose.pushMatrix();
+        pose.scale(1 / scale, 1 / scale);
+        for (int i = 0; i < WAVES; i++) {
+            float spread = i / (float) (WAVES - 1);
+            float swell = screenHeight * (0.032F + 0.011F * (i % 3));
+            // Rising and sinking a little, slowly.
+            float bob = animate ? swell * 0.35F * (float) Math.sin(time / (5200 + i * 700) + i * 2.1) : 0;
+            float base = screenHeight * (0.30F + 0.56F * spread) + bob;
+            // Where the wave can be at all: outside the box, it's left out.
+            if (base - swell * 1.7F - edge >= bottom || base + swell * 1.7F + depth <= top) continue;
+            // Whole turns of the drift over each wave's own loop, so it comes round to where it began.
+            float loop = WAVE_MILLIS * (0.7F + 0.16F * i);
+            float drift = (float) (time / loop % 1 * Math.PI * 2) * (i % 2 == 0 ? 1 : -1);
+            float turns = 1.5F + 0.4F * i;
+            // The beat: brighter for a while, then fainter, each wave on its own.
+            float beat = animate ? 0.74F + 0.26F * (float) Math.sin(time / (3000 + i * 470) + i * 1.7) : 0.87F;
+            for (int column = left; column < right; column += WAVE_STEP) {
+                int end = Math.min(right, column + WAVE_STEP);
+                float along = (column + WAVE_STEP / 2F) / screenWidth;
+                float surface = base + swell * (float) Math.sin(along * Math.PI * turns + drift + i * 1.3F)
+                        + swell * 0.38F * (float) Math.sin(along * Math.PI * (turns * 2.1F) - drift * 2 + i * 0.7F)
+                        + swell * 0.16F * (float) Math.sin(along * Math.PI * (turns * 3.7F) + drift * 3 + i * 2.9F);
+                if (surface - edge >= bottom || surface + depth <= top) continue;
+                int color = GlazedBrand.color(phase + i * 0.16F + along * 0.45F);
+                int bright = GlazedBrand.lift(color, 0.45F);
+                int row = (int) Math.floor(surface);
+                for (int stop = 0; stop < stops.length - 1; stop++) {
+                    int from = Math.max(top, row + Math.round(stops[stop]));
+                    int to = Math.min(bottom, row + Math.round(stops[stop + 1]));
+                    if (to <= from) continue;
+                    graphics.fillGradient(column, from, end, to, liquid(from - surface, depth, edge, sheenReach, color, bright, body, sheen, beat),
+                            liquid(to - surface, depth, edge, sheenReach, color, bright, body, sheen, beat));
+                }
+            }
+        }
+        pose.popMatrix();
+    }
+
+    // The liquid's color at a distance under its surface (negative above it): nothing above the soft edge, rising
+    // smoothly to the sheen at the surface, the sheen melting into the body's color under it, and the body thinning
+    // out to nothing at its depth, slowly at first.
+    private static int liquid(float under, float depth, float edge, float sheenReach, int color, int bright, int body, int sheen, float beat) {
+        if (under <= -edge || under >= depth) return withAlpha(color, 0);
+        if (under < 0) {
+            float t = 1 + under / edge;
+            return withAlpha(bright, Math.round(sheen * beat * t * t * (3 - 2 * t)));
+        }
+        if (under < sheenReach) {
+            float t = under / sheenReach;
+            float eased = t * t * (3 - 2 * t);
+            return withAlpha(mix(bright, color, eased), Math.round(beat * (sheen + (body - sheen) * eased)));
+        }
+        float t = (under - sheenReach) / Math.max(1, depth - sheenReach);
+        float remaining = 1 - t;
+        return withAlpha(color, Math.round(body * beat * remaining * remaining * (3 - 2 * remaining)));
+    }
+
+    // Glazed Menu's own look: a coat over its panels and bars in the gradient its mod list is drawn with, running left to
+    // right across the whole screen and flowing along it, each box showing its slice of it, so they read as one surface
+    // of moving color.
     private static boolean glazedmenu() {
         return theme == ConfigTheme.DEFAULT || theme == GlazedBrand.THEME;
     }
 
-    private static void glaze(GuiGraphicsExtractor graphics, int x, int y, int width, int height) {
-        if (!glazedmenu() || width <= 2 || height <= 2) return;
-        int screenHeight = Math.max(1, Minecraft.getInstance().getWindow().getGuiScaledHeight());
-        float phase = GlazedBrand.phase();
-        boolean light = mode() == ConfigTheme.Mode.LIGHT;
-        int shade = light ? 0xFFFFFFFF : 0xFF000000;
-        // Deep shades of the scheme's colors, so the coat enriches the panels rather than washing them out.
-        int upper = mix(GlazedBrand.color(phase), shade, light ? 0.15F : 0.4F);
-        int lower = mix(mix(GlazedBrand.color(phase + 0.35F), shade, light ? 0.15F : 0.4F), 0xFF000000, 0.2F);
-        // In bands, each a short gradient, so the strong ends and the faint middle show inside tall boxes too.
-        int bottom = y + height - 1;
-        for (int top = y + 1; top < bottom; top += GLAZE_BAND) {
-            int end = Math.min(bottom, top + GLAZE_BAND);
-            graphics.fillGradient(x + 1, top, x + width - 1, end, glazeAt(top, screenHeight, upper, lower, light), glazeAt(end, screenHeight, upper, lower, light));
-        }
+    /** Whether what's being drawn is in Glazed Menu's own look (and not a mod's theme of its own). */
+    public static boolean isGlazed() {
+        return glazedmenu();
     }
 
-    private static final int GLAZE_BAND = 4;
+    // Drawn in columns this wide: the gradient changes too slowly across them for the steps to show.
+    private static final int GLAZE_BAND = 6;
+
+    private static void glaze(GuiGraphicsExtractor graphics, int x, int y, int width, int height) {
+        if (!glazedmenu() || width <= 2 || height <= 2) return;
+        int screenWidth = Math.max(1, Minecraft.getInstance().getWindow().getGuiScaledWidth());
+        float phase = GlazedBrand.phase();
+        boolean light = mode() == ConfigTheme.Mode.LIGHT;
+        // A shade deeper than the gradient itself on the dark look (lighter on the light one), so text reads on it.
+        int shade = light ? 0xFFFFFFFF : 0xFF0A0818;
+        float shaded = light ? 0.48F : 0.46F;
+        int alpha = GlazedSettings.panelAlpha(light ? 0x66 : 0x80);
+        int right = x + width - 1;
+        for (int left = x + 1; left < right; left += GLAZE_BAND) {
+            int end = Math.min(right, left + GLAZE_BAND);
+            int color = mix(GlazedBrand.color(phase + (left + GLAZE_BAND / 2F) / screenWidth * 0.9F), shade, shaded);
+            graphics.fill(left, y + 1, end, y + height - 1, withAlpha(color, alpha));
+        }
+    }
 
     // A panel's or bar's color at the player's panel opacity.
     private static int translucent(int color) {
         return withAlpha(color, GlazedSettings.panelAlpha(color >>> 24));
-    }
-
-    // The glaze at a height: one color strong at the top of the screen, the other strong at the bottom, and between
-    // them a soft blend of the two, faint through the middle.
-    private static int glazeAt(int y, int screenHeight, int upper, int lower, boolean light) {
-        float t = Mth.clamp(y / (float) screenHeight, 0, 1);
-        float blend = t * t * (3 - 2 * t);
-        float edge = (float) Math.pow(Math.abs(2 * t - 1), 1.6);
-        int faint = light ? 0x0C : 0x10;
-        int strong = light ? 0x48 : 0x5A;
-        return withAlpha(mix(upper, lower, blend), GlazedSettings.panelAlpha(Math.round(faint + (strong - faint) * edge)));
     }
 
     private static void texture(GuiGraphicsExtractor graphics, ResourceLocation texture, ConfigTheme current, int width, int height, int color) {
