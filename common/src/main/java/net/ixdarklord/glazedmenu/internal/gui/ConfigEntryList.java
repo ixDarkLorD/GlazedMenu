@@ -3,6 +3,7 @@ package net.ixdarklord.glazedmenu.internal.gui;
 import net.ixdarklord.glazedmenu.internal.source.Values;
 import net.ixdarklord.glazedmenu.api.config.ConfigDependency;
 import net.ixdarklord.glazedmenu.api.config.ConfigNode;
+import net.ixdarklord.glazedmenu.api.config.ConfigTheme;
 import net.ixdarklord.glazedmenu.api.config.RestartRequirement;
 import net.ixdarklord.glazedmenu.api.editor.ConfigEditors;
 import net.ixdarklord.glazedmenu.api.editor.ValueEditor;
@@ -20,14 +21,18 @@ import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.ContainerObjectSelectionList;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.narration.NarratableEntry;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.locale.Language;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.FormattedCharSequence;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 
 // The rows of a config page: settings (name, description, editor, reset), section headers and notices. The list
@@ -275,6 +280,65 @@ public final class ConfigEntryList extends ContainerObjectSelectionList<ConfigEn
         }
     }
 
+    /**
+     * A heading that opens what it names (a config, above its settings a search found): an icon and a title in the
+     * theme's accent, a note at the right, and a rule below. It lights up under the mouse.
+     */
+    public static final class LinkEntry extends Entry {
+        private final ConfigIcons.Icon icon;
+        private final Component title;
+        private final Component note;
+        private final ConfigTheme theme;
+        private final Runnable open;
+
+        public LinkEntry(ConfigIcons.Icon icon, Component title, Component note, ConfigTheme theme, Runnable open) {
+            this.icon = icon;
+            this.title = title;
+            this.note = note;
+            this.theme = theme;
+            this.open = open;
+        }
+
+        @Override
+        int preferredHeight() {
+            return 26;
+        }
+
+        @Override
+        public void extractContent(GuiGraphicsExtractor graphics, int mouseX, int mouseY, boolean hovered, float a) {
+            Font font = Minecraft.getInstance().font;
+            int x = this.getX();
+            int y = this.getY() + this.getHeight() - 16;
+            int width = this.getWidth();
+            int accent = ConfigStyle.accentOf(this.theme);
+            if (hovered) ConfigStyle.rect(graphics, x, y - 4, width, 17, ConfigStyle.colors().rowHover());
+            this.icon.draw(graphics, x + 2, y - 1, 12, accent);
+            int noteWidth = font.width(this.note);
+            int noteX = x + width - noteWidth - 18;
+            ConfigStyle.text(graphics, font, this.title, x + 18, y + 1, noteX - 8 - (x + 18), accent);
+            graphics.text(font, this.note, noteX, y + 1, ConfigStyle.colors().textMuted(), false);
+            ConfigIcons.CHEVRON.draw(graphics, x + width - 14, y - 1, hovered ? accent : ConfigStyle.colors().textMuted());
+            graphics.fill(x + 2, y + 13, x + width - 2, y + 14, ConfigStyle.withAlpha(accent, 0x50));
+        }
+
+        @Override
+        public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+            Minecraft.getInstance().getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F));
+            this.open.run();
+            return true;
+        }
+
+        @Override
+        public List<? extends GuiEventListener> children() {
+            return List.of();
+        }
+
+        @Override
+        public List<? extends NarratableEntry> narratables() {
+            return List.of();
+        }
+    }
+
     /** A notice card: where edits go, why nothing is shown... */
     public static final class InfoEntry extends Entry {
         private final Component text;
@@ -322,6 +386,21 @@ public final class ConfigEntryList extends ContainerObjectSelectionList<ConfigEn
         public List<? extends NarratableEntry> narratables() {
             return List.of();
         }
+    }
+
+    /** Whether a search finds a setting: by its name, its key or path, its comment, a group it's in, or its value. */
+    public static boolean matches(ConfigValue<?> value, String query) {
+        if (value.displayName().getString().toLowerCase(Locale.ROOT).contains(query)) return true;
+        if (value.path().toLowerCase(Locale.ROOT).contains(query)) return true;
+        if (value.comment().stream().anyMatch(line -> line.toLowerCase(Locale.ROOT).contains(query))) return true;
+        for (ConfigNode group = value.parent(); group != null && group.parent() != null; group = group.parent()) {
+            if (group.displayName().getString().toLowerCase(Locale.ROOT).contains(query)) return true;
+        }
+        return format(value).toLowerCase(Locale.ROOT).contains(query);
+    }
+
+    private static <T> String format(ConfigValue<T> value) {
+        return value.type().format(value.getStored());
     }
 
     /** Where a node sits below a group: {@code Rendering › Particles}. */

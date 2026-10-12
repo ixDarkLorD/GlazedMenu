@@ -63,24 +63,52 @@ public final class SliderEditor<N extends Number & Comparable<N>> implements Val
             return SliderEditor.this.type.fromDouble(raw);
         }
 
-        // A slim track filled in the accent up to a round-ish knob, with the value written above it.
+        // A track sunk into the surface (outlined, shaded inside its top edge, with a line of light under it), filled in
+        // the accent up to a knob raised off it (outlined, lit along its top and left, with a shadow), and the value
+        // written above it.
         @Override
         public void extractWidgetRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float a) {
             boolean hovered = this.active && this.isHoveredOrFocused();
             int x = this.getX();
             int y = this.getY();
             int width = this.getWidth();
-            int trackY = y + this.getHeight() - 7;
+            int trackY = y + this.getHeight() - 8;
             int knobX = x + (int) Math.round(this.value * (width - 8));
             int accent = this.active ? ConfigStyle.accent() : ConfigStyle.colors().textMuted();
-            ConfigStyle.rect(graphics, x, trackY, width, 4, ConfigStyle.colors().field());
-            ConfigStyle.rect(graphics, x, trackY, knobX - x + 4, 4, ConfigStyle.withAlpha(accent, hovered ? 0xFF : 0xC0));
-            ConfigStyle.rect(graphics, knobX, trackY - 3, 8, 10, hovered ? ConfigStyle.colors().knob() : ConfigStyle.mix(ConfigStyle.colors().knob(), ConfigStyle.colors().textDim(), 0.2F));
-            if (this.isFocused()) ConfigStyle.outline(graphics, knobX - 1, trackY - 4, 10, 12, accent);
+            // The track: a capsule, its ends rounded, outlined and shaded inside its top edge.
+            int edge = ConfigStyle.mix(ConfigStyle.colors().panelBorder(), 0xFF000000, 0.35F);
+            capsule(graphics, x, trackY, width, 6, edge);
+            capsule(graphics, x + 1, trackY + 1, width - 2, 4, ConfigStyle.colors().field());
+            graphics.fill(x + 2, trackY + 1, x + width - 2, trackY + 2, 0x50000000);
+            graphics.fill(x + 2, trackY + 6, x + width - 2, trackY + 7, 0x30FFFFFF);
+            // The filled part, rounded at its start, with a line of light along its top.
+            int filled = knobX + 4;
+            if (filled > x + 3) {
+                int fill = ConfigStyle.withAlpha(accent, hovered ? 0xFF : 0xD8);
+                graphics.fill(x + 2, trackY + 1, filled, trackY + 5, fill);
+                graphics.fill(x + 1, trackY + 2, x + 2, trackY + 4, fill);
+                graphics.fill(x + 2, trackY + 1, filled, trackY + 2, 0x60FFFFFF);
+                graphics.fill(x + 2, trackY + 4, filled, trackY + 5, 0x30000000);
+            }
+            // The knob, raised off the track: outlined, lit along its top and left, with a shadow.
+            ConfigStyle.iconFrame(graphics, knobX, trackY - 3, 8, 11,
+                    hovered ? ConfigStyle.colors().knob() : ConfigStyle.mix(ConfigStyle.colors().knob(), ConfigStyle.colors().textDim(), 0.2F));
+            if (this.isFocused()) ConfigStyle.outline(graphics, knobX - 1, trackY - 4, 10, 13, accent);
             Font font = Minecraft.getInstance().font;
             ConfigStyle.text(graphics, font, this.getMessage(), x, y + 1, width, this.active ? ConfigStyle.colors().text() : ConfigStyle.colors().textMuted());
             ThemeEffects.widget(graphics, ConfigEffect.WidgetKind.SLIDER, this);
             this.handleCursor(graphics);
+        }
+
+        // A box with its ends rounded off: two pixels cut from each corner, then one.
+        private static void capsule(GuiGraphicsExtractor graphics, int x, int y, int width, int height, int color) {
+            if (width < 6 || height < 4) {
+                graphics.fill(x, y, x + width, y + height, color);
+                return;
+            }
+            graphics.fill(x + 2, y, x + width - 2, y + height, color);
+            graphics.fill(x + 1, y + 1, x + width - 1, y + height - 1, color);
+            graphics.fill(x, y + 2, x + width, y + height - 2, color);
         }
 
         @Override

@@ -1,5 +1,6 @@
 package net.ixdarklord.glazedmenu.internal.core;
 
+import net.ixdarklord.glazedmenu.internal.gui.WelcomePopup;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.toasts.SystemToast;
 import net.minecraft.client.gui.components.toasts.ToastManager;
@@ -28,6 +29,7 @@ public final class GlazedClient {
             pendingScreen = null;
             if (screen != null) minecraft.gui.setScreen(screen);
         }
+        WelcomePopup.tick(minecraft);
     }
 
     /**
