@@ -35,8 +35,10 @@ public final class GlazedClientConstructor {
         ConfigSources.register(GlazedSettings.SOURCE);
         ConfigSources.register(net.ixdarklord.glazedmenu.internal.source.game.GameOptionsSource.INSTANCE);
         ConfigSources.register(net.ixdarklord.glazedmenu.internal.game.GameRulesSource.INSTANCE);
-        if (platform.isModLoaded("coolcatcore")) CoolCatIntegration.init();
-        if (platform.isModLoaded("coolcatcanvas")) CanvasEffects.init();
+        // CoolCatLib, or the two mods it was before its version 5 (Core and Canvas).
+        boolean coolCatLib = platform.isModLoaded("coolcatlib");
+        if (coolCatLib || platform.isModLoaded("coolcatcore")) CoolCatIntegration.init();
+        if (coolCatLib || platform.isModLoaded("coolcatcanvas")) CanvasEffects.init();
         if (platform.hasNeoForgeConfigs()) ConfigSources.register(ModConfigSource.INSTANCE);
         if (platform.isModLoaded("cloth-config") || platform.isModLoaded("cloth_config")) ConfigSources.register(ClothSource.INSTANCE);
         if (platform.isModLoaded("yet_another_config_lib_v3")) ConfigSources.register(YaclSource.INSTANCE);
