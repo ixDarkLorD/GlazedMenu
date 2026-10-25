@@ -1,6 +1,10 @@
 # Changelog
 This file is for listing all the changes to this project
 
+## v1.2.1 Release | Unreleased
+### 🔧 Changes
+- New version numbers: `<version>+<minecraft>`, this one `1.2.1+1.20.1`, the same for every Minecraft version and loader. They follow on from 1.2; the part before the `+` is what launchers and loaders compare, the Minecraft version after it is only a label.
+
 ## v1.2 Release | 2026-10-12
 
 ### ✨ New Features
