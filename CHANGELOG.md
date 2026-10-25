@@ -1,6 +1,13 @@
 # Changelog
 This file is for listing all the changes to this project
 
+## v1.2.1 Release | Unreleased
+### 🐛 Bug Fixes
+- The CoolCatLib integrations (its configs in the editor, and its config screen effects) work with CoolCatLib from version 5 on, now one mod. CoolCatLib: Core and Canvas, the two mods it was before, still work.
+
+### 🔧 Changes
+- New version numbers: `<version>+<minecraft>`, this one `1.2.1+26.3`, the same for every Minecraft version and loader. They follow on from 1.2; the part before the `+` is what launchers and loaders compare, the Minecraft version after it is only a label.
+
 ## v1.2 Release | 2026-10-12
 
 ### ✨ New Features

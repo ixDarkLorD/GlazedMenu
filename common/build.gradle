@@ -18,9 +18,8 @@ repositories {
 }
 
 dependencies {
-    // CoolCatLib: Core and Canvas, for the optional integrations (internal.integration.coolcat and .canvas).
-    compileOnly "net.ixdarklord.coolcatlib:coolcatlib-core-common:${coolcatlib_version}"
-    compileOnly "net.ixdarklord.coolcatlib:coolcatlib-canvas-common:${coolcatlib_version}"
+    // CoolCatLib, for the optional integrations (internal.integration.coolcat and .canvas).
+    compileOnly "net.ixdarklord.coolcatlib:coolcatlib-common:${coolcatlib_version}"
     compileOnly(libs.forgeconfigapiport.common) { transitive = false }
     compileOnly(libs.forgeconfigapiport.fabric) { transitive = false }
     compileOnly "com.electronwill.night-config:core:3.8.3"
