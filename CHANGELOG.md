@@ -2,11 +2,27 @@
 This file is for listing all the changes to this project
 
 ## v1.2.1 Release | Unreleased
+### ✨ New Features
+- **Setup**, in place of the welcome popup, the first time the game runs with Glazed Menu: pick which of the game's screens Glazed Menu redraws, each with a photo of both looks.
+  - Start screen by screen, with every screen, or with the game's own.
+  - Colors: the color scheme, dark or light, and moving or still waves.
+  - A page for each screen seen all the time, with the title and pause screens' layouts.
+  - Last, every screen as a small photo with its switch.
+  - `/glazedmenu setup` opens it again; a modpack can ship it turned off (General, Setup at Start).
+- **Advancements map**: a Map view beside the list, the tab as a tree of nodes to drag and zoom, with the paths to the ones done in green.
+- **Still waves**: the background waves can stand still (Look, Animated Waves).
+
 ### 🐛 Bug Fixes
-- The CoolCatLib integrations (its configs in the editor, and its config screen effects) work with CoolCatLib from version 5 on, now one mod. CoolCatLib: Core and Canvas, the two mods it was before, still work.
+- The CoolCatLib integrations work with CoolCatLib 5 and later, now one mod; CoolCatLib: Core and Canvas still work.
+- The multiplayer list no longer crashes on a server that hasn't answered yet.
+- The game's Max Framerate slider reaches Unlimited again, and the game's sliders move in its own steps with its own labels.
 
 ### 🔧 Changes
-- New version numbers: `<version>+<minecraft>`, this one `1.2.1+26.3`, the same for every Minecraft version and loader. They follow on from 1.2; the part before the `+` is what launchers and loaders compare, the Minecraft version after it is only a label.
+- New version numbers: `<version>+<minecraft>`, this one `1.2.1+26.3`, the same for every Minecraft version and loader.
+- Much faster screens, the pause and advancements screens most of all.
+- Advancements list: tree lines join each advancement to the one before it, green where done. The button to the game's own screen is gone.
+- Titles have a crisp drop shadow on the dark look, the mod list's header sits on a glass bar, and the light look's text is a step lighter.
+- Changing the game's options no longer shows a "Config saved" toast.
 
 ## v1.2 Release | 2026-10-12
 

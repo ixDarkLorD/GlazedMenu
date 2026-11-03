@@ -7,6 +7,7 @@ import net.ixdarklord.glazedmenu.internal.core.GlazedSettings;
 import net.ixdarklord.glazedmenu.internal.gui.style.ThemeResources;
 import net.ixdarklord.glazedmenu.internal.style.ConfigIcons;
 import net.ixdarklord.glazedmenu.internal.style.ConfigStyle;
+import net.ixdarklord.glazedmenu.internal.style.FillBatch;
 import net.ixdarklord.glazedmenu.internal.style.GlazedBrand;
 import net.ixdarklord.glazedmenu.internal.style.GuiFade;
 import net.minecraft.ChatFormatting;
@@ -212,15 +213,31 @@ public final class WorkingLook {
         int reach = (int) Math.ceil(middle + half + edge) + 1;
         float originX = centerX * scale + (shadow ? 0.75F * scale : 0);
         float originY = centerY * scale + (shadow ? 1.5F * scale : 0);
+        // Only the pixels near the ring can be in it: each row is walked only across the ring's band (a pixel's margin
+        // either side), and the hole inside it is passed over without working anything out.
+        float band = half + edge + 0.5F;
+        float outer = middle + band + 1;
+        float inner = Math.max(0, middle - band - 1);
+        float outerSquared = outer * outer;
+        float innerSquared = inner * inner;
+        // Thousands of runs, one element for the GUI (FillBatch).
+        FillBatch runs = FillBatch.start(graphics);
         for (int row = -reach; row <= reach; row++) {
-            int runStart = 0;
+            float rowY = row + 0.5F;
+            float across = outerSquared - rowY * rowY;
+            if (across <= 0) continue;
+            int widest = (int) Math.ceil(Math.sqrt(across)) + 1;
+            int first = Math.max(-reach, -widest - 1);
+            int last = Math.min(reach, widest);
+            int runStart = first;
             int runColor = 0;
-            for (int column = -reach; column <= reach + 1; column++) {
+            for (int column = first; column <= last + 1; column++) {
                 int pixel = 0;
-                if (column <= reach) {
-                    float dx = column + 0.5F;
-                    float dy = row + 0.5F;
-                    float distance = (float) Math.sqrt(dx * dx + dy * dy);
+                float dx = column + 0.5F;
+                float dy = rowY;
+                float squared = dx * dx + dy * dy;
+                if (column <= last && squared < outerSquared && squared > innerSquared) {
+                    float distance = (float) Math.sqrt(squared);
                     float away = Math.abs(distance - middle);
                     if (away < half + edge + 0.5F) {
                         // How far inside the piece's two ends the pixel is, along the ring (in pixels).
@@ -249,13 +266,14 @@ public final class WorkingLook {
                 }
                 if (pixel != runColor) {
                     if (runColor >>> 24 != 0) {
-                        graphics.fill(Math.round(originX) + runStart, Math.round(originY) + row, Math.round(originX) + column, Math.round(originY) + row + 1, runColor);
+                        runs.fill(Math.round(originX) + runStart, Math.round(originY) + row, Math.round(originX) + column, Math.round(originY) + row + 1, runColor);
                     }
                     runStart = column;
                     runColor = pixel;
                 }
             }
         }
+        runs.submit();
     }
 
     // A mark of the line of steps, plain: a shadow under it, its body, and a light along its top.

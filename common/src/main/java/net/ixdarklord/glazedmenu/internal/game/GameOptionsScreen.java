@@ -672,6 +672,13 @@ public final class GameOptionsScreen extends StyledScreen {
                 int x = this.cardX(i);
                 int y = this.getY() + this.top[i];
                 int height = card.height();
+                // A card scrolled out of the list's view isn't drawn; its editors still follow it, so they're never left
+                // where a click on what's shown would find them.
+                Cards list = screen.cards;
+                if (list != null && (y + height + 8 <= list.getY() || y - 8 >= list.getBottom())) {
+                    this.placeEditors(card, x, y, width);
+                    continue;
+                }
                 boolean over = hovered && mouseX >= x && mouseX < x + width && mouseY >= y && mouseY < y + height;
                 boolean link = card.lines.size() == 1 && card.lines.getFirst().link != null;
                 ConfigStyle.rect(graphics, x, y, width, height, ConfigStyle.mix(ConfigStyle.colors().button(), card.color, link && over ? 0.20F : 0.07F));
@@ -722,6 +729,20 @@ public final class GameOptionsScreen extends StyledScreen {
                     lineY += LINE_HEIGHT;
                 }
                 ThemeEffects.widget(graphics, ConfigEffect.WidgetKind.CARD, x, y, width, height, over, false, true);
+            }
+        }
+
+        // Where the card's editors are drawn, as extractContent places them.
+        private void placeEditors(Card card, int x, int y, int width) {
+            int lineY = y + CARD_PADDING + (card.title != null ? CARD_TITLE : 0);
+            for (Line line : card.lines) {
+                if (line.link != null) {
+                    lineY += LINK_HEIGHT;
+                    continue;
+                }
+                AbstractWidget widget = line.editor.widget();
+                widget.setPosition(x + width - CARD_PADDING - widget.getWidth(), lineY + (LINE_HEIGHT - widget.getHeight()) / 2);
+                lineY += LINE_HEIGHT;
             }
         }
 
