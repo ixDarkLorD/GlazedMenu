@@ -11,6 +11,11 @@ public final class GuiFade {
         alpha = Math.clamp(value, 0, 1);
     }
 
+    /** The fade now, for a part that fades further on its own (multiplied in, then put back). */
+    public static float get() {
+        return alpha;
+    }
+
     public static void reset() {
         alpha = 1;
     }

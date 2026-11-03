@@ -15,6 +15,7 @@
     "DeathScreenAccessor",
     "GameRendererMixin",
     "GenericMessageScreenMixin",
+    "GuiGraphicsExtractorMixin",
     "GuiFadeMixin",
     "GuiMixin",
     "LevelLoadingScreenMixin",

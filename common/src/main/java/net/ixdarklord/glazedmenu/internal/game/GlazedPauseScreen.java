@@ -117,6 +117,7 @@ public final class GlazedPauseScreen extends PauseScreen {
     private int quickHeadingY = -1;
     private int unsavedFor;
     private boolean askedStats;
+    private @Nullable String playingKey;
     private String notes = "";
     private int noteTicks;
     private int unsavedCount;
@@ -180,12 +181,23 @@ public final class GlazedPauseScreen extends PauseScreen {
 
     // The time played: this session, and in all (the world's own count of it, where that's more than Glazed Menu's).
     private @Nullable Component[] times() {
-        String key = LoadingLook.playingKey(this.minecraft);
+        String key = this.playingKey();
         if (key == null) return null;
-        if (this.minecraft.hasSingleplayerServer() && this.minecraft.player != null) {
+        return new Component[]{PlayTimes.format(PlayTimes.session()), PlayTimes.format(PlayTimes.total(key))};
+    }
+
+    // The world's own count of the time played, where it's more than Glazed Menu's; once a tick, not in every frame.
+    private void countPlayTime() {
+        String key = this.playingKey();
+        if (key != null && this.minecraft.hasSingleplayerServer() && this.minecraft.player != null) {
             PlayTimes.atLeast(key, this.minecraft.player.getStats().getValue(Stats.CUSTOM.get(Stats.PLAY_TIME)) * 50L);
         }
-        return new Component[]{PlayTimes.format(PlayTimes.session()), PlayTimes.format(PlayTimes.total(key))};
+    }
+
+    // The world or server being played, read once: it doesn't change while the pause is open.
+    private @Nullable String playingKey() {
+        if (this.playingKey == null) this.playingKey = LoadingLook.playingKey(this.minecraft);
+        return this.playingKey;
     }
 
     private List<Entry> entries() {
@@ -515,6 +527,7 @@ public final class GlazedPauseScreen extends PauseScreen {
     @Override
     public void tick() {
         super.tick();
+        this.countPlayTime();
         if (this.pendingLink != null) {
             URI link = this.pendingLink;
             this.pendingLink = null;
@@ -648,7 +661,7 @@ public final class GlazedPauseScreen extends PauseScreen {
         if (header == null) return;
         if (!this.headerTall) {
             ConfigIcons.PAUSE.draw(graphics, header.x + 8, header.y + (header.height - 12) / 2, 12, ConfigStyle.accent());
-            ConfigStyle.text(graphics, this.font, this.title.copy().withStyle(ChatFormatting.BOLD), header.x + 25, header.y + (header.height - 8) / 2,
+            ConfigStyle.titleText(graphics, this.font, this.title.copy().withStyle(ChatFormatting.BOLD), header.x + 25, header.y + (header.height - 8) / 2,
                     this.headerTextRight - header.x - 25, ConfigStyle.colors().text());
             return;
         }
@@ -906,7 +919,7 @@ public final class GlazedPauseScreen extends PauseScreen {
                 // A short tile: the icon and the name on one line, and after them a note that counts (the
                 // advancements made, the mods' updates); the line is drawn smaller where the tile is too narrow for it.
                 int noteWidth = font.width(this.entry.note);
-                boolean counted = this.entry.note.getString().matches(".*\\d.*");
+                boolean counted = this.entry.note.getString().chars().anyMatch(Character::isDigit);
                 int full = 14 + font.width(this.entry.label) + (counted ? 8 + noteWidth : 0);
                 float scale = Math.clamp((width - 12) / (float) full, 0.7F, 1);
                 int room = Math.round((width - 12) / scale);
