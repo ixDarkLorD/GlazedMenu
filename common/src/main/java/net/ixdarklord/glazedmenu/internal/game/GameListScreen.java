@@ -195,6 +195,14 @@ abstract class GameListScreen extends StyledScreen {
         return this.rows != null ? this.rows.getRowLeft() : 0;
     }
 
+    /** Shows or hides the list, for a screen that draws something else in its panel instead. */
+    protected void setListShown(boolean shown) {
+        if (this.rows == null) return;
+        // This version's lists can't be hidden in place: it leaves the screen, and comes back.
+        this.removeWidget(this.rows);
+        if (shown) this.addRenderableWidget(this.rows);
+    }
+
     /** The choice changed (or what it stands for did): the buttons follow. */
     protected abstract void onChosen();
 

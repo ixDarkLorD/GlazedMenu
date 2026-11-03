@@ -7,6 +7,7 @@ import net.ixdarklord.glazedmenu.api.ConfigScreens;
 import net.ixdarklord.glazedmenu.internal.config.ConfigProfiles;
 import net.ixdarklord.glazedmenu.internal.gui.CategoryPopup;
 import net.ixdarklord.glazedmenu.internal.gui.ConfigSelectScreen;
+import net.ixdarklord.glazedmenu.internal.gui.setup.SetupScreen;
 import net.ixdarklord.glazedmenu.internal.modlist.GlazedModsScreen;
 import net.ixdarklord.glazedmenu.internal.source.ConfigSources;
 import net.minecraft.commands.SharedSuggestionProvider;
@@ -17,7 +18,7 @@ import java.util.function.BiConsumer;
 // /glazedmenu: every mod's configs; /glazedmenu <mod>: one mod's; /glazedmenu <mod> <config>/<category>: one category in a
 // small window, e.g. "client/example_category"; /glazedmenu mods: the mod list; /glazedmenu search [words]: every mod's
 // settings matching the words, to edit in place; /glazedmenu changed: the settings that aren't at their defaults;
-// /glazedmenu profile <name>: sets and saves a profile's settings.
+// /glazedmenu profile <name>: sets and saves a profile's settings; /glazedmenu setup: the setup of the game's screens again.
 public final class GlazedCommand {
     private GlazedCommand() {}
 
@@ -42,6 +43,10 @@ public final class GlazedCommand {
                             }
                             return Math.max(1, ConfigSelectScreen.useProfileNow(name));
                         })))
+                .then(LiteralArgumentBuilder.<S>literal("setup").executes(command -> {
+                    GlazedClient.openLater(() -> new SetupScreen(null));
+                    return 1;
+                }))
                 .then(LiteralArgumentBuilder.<S>literal("changed").executes(command -> {
                     GlazedClient.openLater(() -> ConfigSelectScreen.changed(null));
                     return 1;

@@ -621,8 +621,8 @@ public final class ConfigSelectScreen extends StyledScreen {
         int width = Math.max(40, right - x);
         int textTop = this.topBarY() + (HEADER_HEIGHT - 21) / 2;
         if (this.modId == null) GlazedBrand.text(graphics, this.font, this.title.getString(), x, textTop);
-        else ConfigStyle.text(graphics, this.font, this.title.copy().withStyle(ChatFormatting.BOLD), x, textTop, width, ConfigStyle.colors().text());
-        ConfigStyle.text(graphics, this.font, this.subtitle(), x, textTop + 13, width, ConfigStyle.colors().textMuted());
+        else ConfigStyle.titleText(graphics, this.font, this.title.copy().withStyle(ChatFormatting.BOLD), x, textTop, width, ConfigStyle.colors().text());
+        ConfigStyle.text(graphics, this.font, this.cachedSubtitle(), x, textTop + 13, width, ConfigStyle.colors().textMuted());
     }
 
     // The mod's icon, or for a mod without one its name's first letter in a tile (as the mod list shows it).
@@ -641,6 +641,19 @@ public final class ConfigSelectScreen extends StyledScreen {
         pose.scale(scale, scale);
         graphics.text(this.font, mark, -this.font.width(mark) / 2, -4, accent, false);
         pose.popMatrix();
+    }
+
+    // The subtitle counts every source's configs: counted once a second, not in every frame.
+    private @Nullable Component subtitle;
+    private long subtitleAt;
+
+    private Component cachedSubtitle() {
+        long now = System.currentTimeMillis();
+        if (this.subtitle == null || now - this.subtitleAt >= 1000) {
+            this.subtitle = this.subtitle();
+            this.subtitleAt = now;
+        }
+        return this.subtitle;
     }
 
     private Component subtitle() {
@@ -862,7 +875,12 @@ public final class ConfigSelectScreen extends StyledScreen {
         @Override
         public void extractContent(GuiGraphicsExtractor graphics, int mouseX, int mouseY, boolean hovered, float a) {
             this.layout();
-            for (ModCard card : this.cards) card.extract(graphics, hovered ? mouseX : -1, hovered ? mouseY : -1);
+            Rows rows = ConfigSelectScreen.this.rows;
+            for (ModCard card : this.cards) {
+                // Only the cards in the list's view (and near enough for their shadows): the rest are scrolled out of it.
+                if (rows != null && (card.y + card.height() + 8 <= rows.getY() || card.y - 8 >= rows.getBottom())) continue;
+                card.extract(graphics, hovered ? mouseX : -1, hovered ? mouseY : -1);
+            }
         }
 
         @Override

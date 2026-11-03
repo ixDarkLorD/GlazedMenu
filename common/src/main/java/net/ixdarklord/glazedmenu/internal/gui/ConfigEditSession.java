@@ -11,6 +11,7 @@ import net.ixdarklord.glazedmenu.api.config.type.ConfigType;
 import net.ixdarklord.glazedmenu.api.config.type.ValidationResult;
 import net.ixdarklord.glazedmenu.api.config.Config;
 import net.ixdarklord.glazedmenu.internal.source.ConfigSources;
+import net.ixdarklord.glazedmenu.internal.source.game.GameOptionsSource;
 import net.ixdarklord.glazedmenu.internal.source.Values;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
@@ -231,10 +232,14 @@ public final class ConfigEditSession {
         return restart;
     }
 
-    /** Saves as {@link #save()} does, and tells the player: a toast for a local save, and what must restart. */
+    /**
+     * Saves as {@link #save()} does, and tells the player: a toast for a local save, and what must restart. The game's
+     * own options save quietly, as they do in the game's screens.
+     */
     public void saveAndNotify() {
         Access access = this.access;
         RestartRequirement restart = this.save();
+        if (ConfigSources.sourceOf(this.config) == GameOptionsSource.INSTANCE) return;
         // One toast, titled with the config's name: what must restart, or that it saved.
         Component message = switch (restart) {
             case GAME -> Component.translatableWithFallback("glazedmenu.toast.restart_game",

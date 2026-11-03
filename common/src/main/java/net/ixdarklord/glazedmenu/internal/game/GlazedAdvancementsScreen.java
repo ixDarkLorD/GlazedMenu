@@ -12,14 +12,18 @@ import net.minecraft.advancements.AdvancementProgress;
 import net.minecraft.advancements.DisplayInfo;
 import net.minecraft.client.Minecraft;
 import net.ixdarklord.glazedmenu.internal.compat.GuiGraphicsExtractor;
+import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.advancements.AdvancementsScreen;
 import net.ixdarklord.glazedmenu.internal.compat.KeyEvent;
+import net.ixdarklord.glazedmenu.internal.compat.MouseButtonEvent;
 import net.minecraft.client.multiplayer.ClientAdvancements;
 import net.minecraft.client.multiplayer.ClientPacketListener;
+import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ServerboundSeenAdvancementsPacket;
+import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
@@ -33,20 +37,22 @@ import java.util.Map;
 
 /**
  * The advancements, in place of the game's own screen: its tabs as a ribbon, each saying how many of its advancements
- * are done, and the chosen tab's advancements as a list, each set in under the one it comes after, with a bar where it
+ * are done, and the chosen tab's advancements as a list, each set in under the one it comes after (joined by the tree's
+ * lines), with a bar where it
  * takes several steps. Beside the list, the chosen advancement: what it asks for, its steps ticked off as they're done,
  * and what it comes after and leads to. The list can be narrowed to the advancements done or under way, and a search
- * looks through every tab. Tree View opens the game's own screen.
+ * looks through every tab. The Map view shows the tab as a tree of nodes instead, to drag around and zoom.
  * <p>
  * Only the advancements the server has told the client of are listed, as on the game's screen.
  */
-public final class GlazedAdvancementsScreen extends GameListScreen implements ClientAdvancements.Listener {
+public final class GlazedAdvancementsScreen extends GameListScreen implements ClientAdvancements.Listener, AdvancementMap.Owner {
     private static final Class<?> VANILLA = net.minecraft.client.gui.screens.advancements.AdvancementsScreen.class;
     private static final int PICTURE = 40;
-    private static final int INDENT = 10;
-    private static final int MAX_DEPTH = 5;
-    // What the list shows, kept while the game runs.
+    private static final int INDENT = 12;
+    private static final int MAX_DEPTH = 12;
+    // What the list shows, and how, kept while the game runs.
     private static Filter filter = Filter.ALL;
+    private static View view = View.LIST;
 
     private final ClientAdvancements advancements;
     // The tabs' roots, in the order the game tells of them.
@@ -61,6 +67,8 @@ public final class GlazedAdvancementsScreen extends GameListScreen implements Cl
     // The game told of a change: the tabs and the rows are worked out again on the next tick.
     private boolean dirty;
     private final List<FlatButton> filterButtons = new ArrayList<>();
+    private final List<FlatButton> viewButtons = new ArrayList<>();
+    private final AdvancementMap map;
 
     private enum Filter {
         ALL,
@@ -76,7 +84,19 @@ public final class GlazedAdvancementsScreen extends GameListScreen implements Cl
         }
     }
 
-    private record Listed(Advancement node, int depth) {}
+    /**
+     * An advancement in a tab's list, {@code depth} under its root: {@code last} where it's the last of the ones after its
+     * parent, and {@code through} a bit for each level above it whose line runs on past it (an ancestor with more after it);
+     * {@code litThrough} the same for the lines that lead on to one done, and {@code laterDone} whether one after it, of
+     * its parent's, is done (so the line past it leads to one).
+     */
+    private record Listed(Advancement node, int depth, boolean last, long through, long litThrough, boolean laterDone) {}
+
+    /** How the tab's advancements are shown: as a list, each under the one it comes after, or as a map of the tree. */
+    private enum View {
+        LIST,
+        MAP
+    }
 
     /**
      * How many advancements the player has made, and how many there are to make (the ones that are shown as
@@ -128,6 +148,7 @@ public final class GlazedAdvancementsScreen extends GameListScreen implements Cl
     private GlazedAdvancementsScreen(@Nullable Screen parent, ClientAdvancements advancements) {
         super(Component.translatable("gui.advancements"), parent, ConfigIcons.TROPHY);
         this.advancements = advancements;
+        this.map = new AdvancementMap(this);
     }
 
     /** The screen to open instead: this one for the game's own advancements screen, over the screen that opened it. */
@@ -243,21 +264,42 @@ public final class GlazedAdvancementsScreen extends GameListScreen implements Cl
     // A tab's advancements, each under the one it comes after.
     private List<Listed> listed(Advancement root) {
         List<Listed> listed = new ArrayList<>();
-        this.collect(root, 0, listed);
+        if (this.isShown(root)) {
+            listed.add(new Listed(root, 0, true, 0, 0, false));
+            this.collect(root, 1, 0, 0, listed);
+        } else {
+            List<Advancement> top = new ArrayList<>();
+            this.shownAfter(root, top);
+            for (int i = 0; i < top.size(); i++) {
+                listed.add(new Listed(top.get(i), 0, i == top.size() - 1, 0, 0, false));
+                this.collect(top.get(i), 1, 0, 0, listed);
+            }
+        }
         return listed;
     }
 
-    private void collect(Advancement node, int depth, List<Listed> into) {
-        boolean shown = this.isShown(node);
-        if (shown) into.add(new Listed(node, depth));
-        for (Advancement child : node.getChildren()) this.collect(child, shown ? depth + 1 : depth, into);
+    // The ones shown after a node: its children, or (past a hidden one) the children's own.
+    private void shownAfter(Advancement node, List<Advancement> into) {
+        for (Advancement child : node.getChildren()) {
+            if (this.isShown(child)) into.add(child);
+            else this.shownAfter(child, into);
+        }
     }
 
-    private ItemStack icon(Advancement node) {
-        return this.icons.computeIfAbsent(node, holder -> {
-            DisplayInfo display = this.display(node);
-            return display != null ? display.getIcon().copy() : ItemStack.EMPTY;
-        });
+    private void collect(Advancement node, int depth, long through, long litThrough, List<Listed> into) {
+        List<Advancement> after = new ArrayList<>();
+        this.shownAfter(node, after);
+        // Whether any after each one is done, from the last back.
+        boolean[] laterDone = new boolean[after.size()];
+        for (int i = after.size() - 2; i >= 0; i--) laterDone[i] = laterDone[i + 1] || this.isDone(after.get(i + 1));
+        for (int i = 0; i < after.size(); i++) {
+            boolean last = i == after.size() - 1;
+            into.add(new Listed(after.get(i), depth, last, through, litThrough, laterDone[i]));
+            // Under it, its own line runs on only where more come after it, lit where one of them is done.
+            boolean runs = !last && depth < 63;
+            this.collect(after.get(i), depth + 1, runs ? through | 1L << depth : through,
+                    runs && laterDone[i] ? litThrough | 1L << depth : litThrough, into);
+        }
     }
 
     // Each tab in a color of its own: the game's five in theirs, any other in one picked by its name.
@@ -334,6 +376,7 @@ public final class GlazedAdvancementsScreen extends GameListScreen implements Cl
 
     @Override
     protected List<Row> buildRows() {
+        this.map.layOut(this.chosenRoot != null ? this.roots.get(this.chosenRoot) : null);
         List<Row> rows = new ArrayList<>();
         String query = this.query.trim().toLowerCase(Locale.ROOT);
         if (!query.isEmpty()) {
@@ -342,14 +385,14 @@ public final class GlazedAdvancementsScreen extends GameListScreen implements Cl
                 List<Listed> found = this.listed(root).stream().filter(entry -> this.passes(entry.node) && this.matches(entry.node, query)).toList();
                 if (found.isEmpty()) continue;
                 rows.add(new Heading(this.display(root).getTitle()));
-                for (Listed entry : found) rows.add(new AdvancementRow(entry.node, 0));
+                for (Listed entry : found) rows.add(new AdvancementRow(entry, false));
             }
         } else {
             for (Advancement root : this.tabRoots) {
                 if (!root.equals(this.chosenRoot)) continue;
                 for (Listed entry : this.listed(root)) {
                     // Narrowed to some of them, they're no longer under one another.
-                    if (this.passes(entry.node)) rows.add(new AdvancementRow(entry.node, filter == Filter.ALL ? entry.depth : 0));
+                    if (this.passes(entry.node)) rows.add(new AdvancementRow(entry, filter == Filter.ALL));
                 }
             }
         }
@@ -423,28 +466,46 @@ public final class GlazedAdvancementsScreen extends GameListScreen implements Cl
         }
         this.updateFilterButtons();
 
-        // The bottom bar: the game's own screen, and the way back.
+        // The bottom bar: the list or the map, and the way back.
         int barY = this.barWidgetY(this.bottomBarY());
-        Component tree = Component.translatableWithFallback("glazedmenu.advancements.tree", "Tree View");
-        int treeWidth = this.font.width(tree) + 28;
-        // A class of its own here, so it isn't taken for the game's and replaced; 1.20.1's closes onto the game, so
-        // the way back to this screen is its own too.
-        FlatButton treeButton = this.addRenderableWidget(FlatButton.of(tree, treeWidth,
-                button -> this.leave(new AdvancementsScreen(this.advancements) {
-                    @Override
-                    public void onClose() {
-                        this.minecraft.setScreen(GlazedAdvancementsScreen.this);
-                    }
-                })).withIcon(ConfigIcons.LIST)
-                .tooltip(Component.translatableWithFallback("glazedmenu.advancements.tree.tooltip", "The game's own screen: the advancements as a tree")));
-        treeButton.setPosition(this.frameLeft() + 4, barY);
+        this.viewButtons.clear();
+        int x = this.frameLeft() + 4;
+        for (View value : View.values()) {
+            Component name = value == View.LIST ? Component.translatableWithFallback("glazedmenu.advancements.view.list", "List")
+                    : Component.translatableWithFallback("glazedmenu.advancements.view.map", "Map");
+            FlatButton button = this.addRenderableWidget(FlatButton.of(name, this.font.width(name) + 28, pressed -> this.setView(value))
+                    .withIcon(value == View.LIST ? ConfigIcons.LIST : ConfigIcons.GRID)
+                    .tooltip(value == View.LIST ? Component.translatableWithFallback("glazedmenu.advancements.view.list.tooltip", "The advancements as a list, each under the one it comes after")
+                            : Component.translatableWithFallback("glazedmenu.advancements.view.map.tooltip", "The advancements as a map of their tree: drag to move it, scroll to zoom")));
+            button.setPosition(x, barY);
+            x += button.getWidth() + 3;
+            this.viewButtons.add(button);
+        }
         FlatButton doneButton = this.addRenderableWidget(FlatButton.of(CommonComponents.GUI_DONE, 84, button -> this.onClose())
                 .style(FlatButton.Style.PRIMARY).withIcon(ConfigIcons.CHECK));
         doneButton.setPosition(this.frameLeft() + this.frameWidth() - 4 - 84, barY);
+        this.updateViewButtons();
     }
 
+    private void setView(View chosen) {
+        if (view == chosen) return;
+        view = chosen;
+        this.map.fitted = null;
+        this.updateViewButtons();
+    }
+
+    private void updateViewButtons() {
+        for (int i = 0; i < this.viewButtons.size(); i++) {
+            this.viewButtons.get(i).style(View.values()[i] == view ? FlatButton.Style.PRIMARY : FlatButton.Style.NORMAL);
+        }
+        this.setListShown(view == View.LIST);
+    }
+
+    // The map follows the choice made in the list, or by the arrow keys: the chosen one is brought into view.
     @Override
-    protected void onChosen() {}
+    protected void onChosen() {
+        this.map.reveal = true;
+    }
 
     // The advancements key closes the screen, as it does the game's own (but not while it's being typed in the search).
     @Override
@@ -458,6 +519,98 @@ public final class GlazedAdvancementsScreen extends GameListScreen implements Cl
         return super.keyPressed(event);
     }
 
+    // --- The map ---
+
+    @Override
+    public boolean shown(Advancement node) {
+        return this.isShown(node);
+    }
+
+    @Override
+    public boolean done(Advancement node) {
+        return this.isDone(node);
+    }
+
+    @Override
+    public float percent(Advancement node) {
+        AdvancementProgress progress = this.progress.get(node);
+        return progress != null ? progress.getPercent() : 0;
+    }
+
+    @Override
+    public boolean kept(Advancement node) {
+        String query = this.query.trim().toLowerCase(Locale.ROOT);
+        return this.passes(node) && (query.isEmpty() || this.matches(node, query));
+    }
+
+    @Override
+    public ItemStack icon(Advancement node) {
+        return this.icons.computeIfAbsent(node, holder -> {
+            DisplayInfo display = this.display(node);
+            return display != null ? display.getIcon() : ItemStack.EMPTY;
+        });
+    }
+
+    @Override
+    public @Nullable Advancement chosen() {
+        return this.chosen instanceof Advancement holder ? holder : null;
+    }
+
+    @Override
+    public void choose(Advancement holder) {
+        this.minecraft.getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F));
+        super.choose(holder);
+    }
+
+    @Override
+    public int typeColor(FrameType type) {
+        return typeColorOf(type);
+    }
+
+    @Override
+    public Font font() {
+        return this.font;
+    }
+
+    // In the map view, the map takes the list's place in its panel.
+    @Override
+    protected void extractOverList(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
+        if (view != View.MAP || this.chosenRoot == null) return;
+        int top = this.bodyTop();
+        this.map.extract(graphics, this.chosenRoot, this.frameLeft() + 3, top + 4, this.listWidth() - 6, this.bodyBottom() - top - 7, mouseX, mouseY);
+    }
+
+    @Override
+    public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+        // Nothing else sits over the map (the hidden list under it would take the click otherwise).
+        if (view == View.MAP && !this.isLeaving() && this.map.isOver(event.x(), event.y())) {
+            this.setDragging(true);
+            return this.map.mouseClicked(event.x(), event.y(), event.button());
+        }
+        return super.mouseClicked(event, doubleClick);
+    }
+
+    @Override
+    public boolean mouseDragged(MouseButtonEvent event, double dx, double dy) {
+        if (view == View.MAP && this.map.mouseDragged(dx, dy)) return true;
+        return super.mouseDragged(event, dx, dy);
+    }
+
+    @Override
+    public boolean mouseReleased(MouseButtonEvent event) {
+        if (view == View.MAP && this.map.mouseReleased()) {
+            this.setDragging(false);
+            return true;
+        }
+        return super.mouseReleased(event);
+    }
+
+    @Override
+    public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
+        if (view == View.MAP && this.map.mouseScrolled(mouseX, mouseY, scrollY)) return true;
+        return super.mouseScrolled(mouseX, mouseY, scrollX, scrollY);
+    }
+
     // --- Drawing ---
 
     @Override
@@ -466,7 +619,7 @@ public final class GlazedAdvancementsScreen extends GameListScreen implements Cl
         return Component.translatableWithFallback("glazedmenu.advancements.status", "%s of %s done · %s%%", this.done, this.total, this.done * 100 / this.total);
     }
 
-    private static int typeColor(FrameType type) {
+    private static int typeColorOf(FrameType type) {
         return switch (type) {
             case CHALLENGE -> 0xFFB07CF0;
             case GOAL -> 0xFFF2C94C;
@@ -502,7 +655,7 @@ public final class GlazedAdvancementsScreen extends GameListScreen implements Cl
         boolean done = this.isDone(node);
         boolean started = this.isStarted(node);
         // Its item, twice the size, on a box in its type's color (green once it's done).
-        int boxColor = done ? ConfigStyle.colors().success() : typeColor(display.getFrame());
+        int boxColor = done ? ConfigStyle.colors().success() : typeColorOf(display.getFrame());
         ConfigStyle.rect(graphics, x, y, PICTURE, PICTURE, ConfigStyle.mix(ConfigStyle.colors().button(), boxColor, 0.30F));
         ConfigStyle.outline(graphics, x, y, PICTURE, PICTURE, ConfigStyle.withAlpha(boxColor, 0xC0));
         graphics.pose().pushMatrix();
@@ -521,7 +674,7 @@ public final class GlazedAdvancementsScreen extends GameListScreen implements Cl
         }
         // Its type, and how far along it is, as tags.
         int tagY = y + PICTURE - 12;
-        int tagX = textX + ConfigStyle.badge(graphics, this.font, typeName(display.getFrame()), textX, tagY, typeColor(display.getFrame())) + 4;
+        int tagX = textX + ConfigStyle.badge(graphics, this.font, typeName(display.getFrame()), textX, tagY, typeColorOf(display.getFrame())) + 4;
         Component state = done ? Component.translatableWithFallback("glazedmenu.advancements.state.done", "Done")
                 : started ? Component.translatableWithFallback("glazedmenu.advancements.state.in_progress", "In progress")
                 : Component.translatableWithFallback("glazedmenu.advancements.state.not_started", "Not started");
@@ -596,11 +749,14 @@ public final class GlazedAdvancementsScreen extends GameListScreen implements Cl
     // several steps and some are done; at the right its type, or how many of its steps are done.
     private final class AdvancementRow extends EntryRow {
         private final Advancement node;
+        private final Listed listed;
         private final int depth;
 
-        AdvancementRow(Advancement node, int depth) {
-            this.node = node;
-            this.depth = Math.min(depth, MAX_DEPTH);
+        // {@code tree}: set in under the one it comes after, with the tree's lines; else flat, as a search finds it.
+        AdvancementRow(Listed listed, boolean tree) {
+            this.node = listed.node;
+            this.listed = listed;
+            this.depth = tree ? Math.min(listed.depth, MAX_DEPTH) : 0;
         }
 
         @Override
@@ -616,6 +772,7 @@ public final class GlazedAdvancementsScreen extends GameListScreen implements Cl
         @Override
         protected void extractEntry(GuiGraphicsExtractor graphics, int x, int y, int width, int height, boolean chosen, boolean hovered, int mouseX, int mouseY) {
             GlazedAdvancementsScreen screen = GlazedAdvancementsScreen.this;
+            if (this.depth > 0 && this.depth == this.listed.depth) this.extractLines(graphics, x - this.depth * INDENT, this.getY(), this.getHeight(), y + height / 2);
             DisplayInfo display = screen.display(this.node);
             if (display == null) return;
             AdvancementProgress progress = screen.progress.get(this.node);
@@ -623,7 +780,7 @@ public final class GlazedAdvancementsScreen extends GameListScreen implements Cl
             boolean started = screen.isStarted(this.node);
             int box = ROW_ICON;
             int boxY = y + (height - box) / 2;
-            int boxColor = done ? ConfigStyle.colors().success() : typeColor(display.getFrame());
+            int boxColor = done ? ConfigStyle.colors().success() : typeColorOf(display.getFrame());
             ConfigStyle.rect(graphics, x + 3, boxY, box, box, ConfigStyle.mix(ConfigStyle.colors().button(), boxColor, done ? 0.40F : 0.16F));
             ConfigStyle.outline(graphics, x + 3, boxY, box, box, ConfigStyle.withAlpha(boxColor, done ? 0xE0 : 0x70));
             graphics.fakeItem(screen.icon(this.node), x + 3 + (box - 16) / 2, boxY + (box - 16) / 2);
@@ -639,7 +796,7 @@ public final class GlazedAdvancementsScreen extends GameListScreen implements Cl
             } else if (width >= 190) {
                 Component type = typeName(display.getFrame());
                 right -= screen.font.width(type) + 8;
-                ConfigStyle.badge(graphics, screen.font, type, right, y + (height - 11) / 2, typeColor(display.getFrame()));
+                ConfigStyle.badge(graphics, screen.font, type, right, y + (height - 11) / 2, typeColorOf(display.getFrame()));
             }
             int textX = x + 3 + box + 6;
             int textWidth = right - 5 - textX;
@@ -652,6 +809,26 @@ public final class GlazedAdvancementsScreen extends GameListScreen implements Cl
             } else {
                 ConfigStyle.text(graphics, screen.font, display.getDescription(), textX, y + 16, textWidth, done ? ConfigStyle.colors().textDim() : ConfigStyle.colors().textMuted());
             }
+        }
+
+        // The tree's lines in the room it's set in by: down from each ancestor with more after it, and from its parent
+        // into its own box (an elbow, its line running on down where more come after it). Lit once it's done.
+        private void extractLines(GuiGraphicsExtractor graphics, int left, int top, int rowHeight, int middle) {
+            GlazedAdvancementsScreen screen = GlazedAdvancementsScreen.this;
+            int dim = ConfigStyle.mix(ConfigStyle.colors().panelBorder(), ConfigStyle.colors().text(), 0.55F);
+            int green = ConfigStyle.colors().success();
+            for (int level = 1; level < this.depth; level++) {
+                if ((this.listed.through & 1L << level) == 0) continue;
+                int lineX = left + (level - 1) * INDENT + INDENT / 2;
+                graphics.fill(lineX, top, lineX + 1, top + rowHeight, (this.listed.litThrough & 1L << level) != 0 ? green : dim);
+            }
+            // Its parent's line down to it is lit where it, or one after it, is done; on past it where one after it is;
+            // the elbow into its box where it is.
+            boolean done = screen.isDone(this.node);
+            int lineX = left + (this.depth - 1) * INDENT + INDENT / 2;
+            graphics.fill(lineX, top, lineX + 1, middle + 1, done || this.listed.laterDone ? green : dim);
+            if (!this.listed.last) graphics.fill(lineX, middle + 1, lineX + 1, top + rowHeight, this.listed.laterDone ? green : dim);
+            graphics.fill(lineX + 1, middle, left + this.depth * INDENT, middle + 1, done ? green : dim);
         }
     }
 }

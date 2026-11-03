@@ -43,8 +43,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.EnumMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.function.Predicate;
 
 /**
@@ -62,6 +64,8 @@ public final class GlazedModsScreen extends StyledScreen {
     private static final int KEY_DOWN = 264;
     private static final int KEY_UP = 265;
     private static final int HEADER = 24;
+    // How far the header's mark sits in from its bar's left edge.
+    private static final int PLATE_LEFT = 4;
     private static final int CHIPS = 16;
     private static final int TILE_WIDTH = 50;
     private static final int TILE_HEIGHT = 58;
@@ -367,7 +371,19 @@ public final class GlazedModsScreen extends StyledScreen {
     }
 
     private int count(Filter filter) {
-        return (int) ModCatalog.all().stream().filter(filter::lists).filter(this::matches).count();
+        return this.counts.computeIfAbsent(filter, chip -> (int) ModCatalog.all().stream().filter(chip::lists).filter(this::matches).count());
+    }
+
+    // The chips' counts, the mods loaded and the updates found: counting asks every mod (and With Settings every config
+    // source), so they're counted again as the list changes, and once a second for what changes without it, not in every frame.
+    private final Map<Filter, Integer> counts = new EnumMap<>(Filter.class);
+    private long loaded = -1;
+    private long updates = -1;
+
+    private void forgetCounts() {
+        this.counts.clear();
+        this.loaded = -1;
+        this.updates = -1;
     }
 
     // Under All and Libraries, a mod's bundled mods (Fabric API's modules) are a group under it: hidden until it's opened,
@@ -391,6 +407,7 @@ public final class GlazedModsScreen extends StyledScreen {
     }
 
     private void refilter(boolean keepScroll) {
+        this.forgetCounts();
         Comparator<ModEntry> byName = Comparator.comparing(mod -> mod.name().toLowerCase(Locale.ROOT));
         // The game first, then the favorites, then by name or by how recently each mod's file changed.
         Comparator<ModEntry> order = Comparator.<ModEntry, Boolean>comparing(mod -> !mod.id().equals("minecraft"))
@@ -438,11 +455,14 @@ public final class GlazedModsScreen extends StyledScreen {
 
     // Updates arrive in the background: the actions follow when they do.
     private int updatesSeen = -1;
+    private int ticks;
 
     @Override
     public void tick() {
         super.tick();
+        if (++this.ticks % 20 == 0) this.forgetCounts();
         if (this.updatesSeen != ModUpdates.generation()) {
+            this.forgetCounts();
             this.updatesSeen = ModUpdates.generation();
             this.layoutActions();
         }
@@ -615,32 +635,43 @@ public final class GlazedModsScreen extends StyledScreen {
     protected void extractPanels(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float a) {
         int left = this.frameLeft();
         int top = this.headerY();
-        // The title: a list mark and "Mods" in Glazed Menu's flowing gradient, and how many.
+        // The title: a list mark and "Mods" in Glazed Menu's flowing gradient, and how many, each over a drop shadow, on
+        // a glass bar like the dock's at the right (and with its gradient edge), which ends after them.
         int mark = HEADER;
         int markIcon = mark - 6;
-        ConfigIcons.LIST.draw(graphics, left + (mark - markIcon) / 2, top + (mark - markIcon) / 2, markIcon, GlazedBrand.lift(GlazedBrand.now(0), TITLE_LIFT));
+        if (this.loaded < 0) this.loaded = ModCatalog.all().stream().filter(mod -> !ModCatalog.isChild(mod)).count();
+        if (this.updates < 0) this.updates = ModUpdates.count();
+        Component count = Component.translatableWithFallback("glazedmenu.mods.count", "%s loaded", this.loaded);
+        int titleWidth = Math.round(this.font.width(this.title.copy().withStyle(ChatFormatting.BOLD)) * 1.5F);
+        int barWidth = PLATE_LEFT + mark + 3 + titleWidth + 6 + this.font.width(count) + 10;
+        if (this.updates > 0) barWidth += 6 + 13 + this.font.width(Long.toString(this.updates)) + 4;
+        if (this.search != null) barWidth = Math.min(barWidth, this.search.getX() - 20 - 6 - left);
+        ConfigStyle.bar(graphics, left, top, barWidth, mark);
+        GlazedBrand.fill(graphics, left + 1, top + mark - 1, barWidth - 2, 1, 0xB0);
+        int titleLeft = left + PLATE_LEFT;
+        int markX = titleLeft + (mark - markIcon) / 2;
+        int markY = top + (mark - markIcon) / 2;
+        int markColor = GlazedBrand.lift(GlazedBrand.now(0), TITLE_LIFT);
+        if (ConfigStyle.titleShadow()) ConfigIcons.LIST.draw(graphics, markX + 1, markY + 1, markIcon, ConfigStyle.shadowOf(markColor));
+        ConfigIcons.LIST.draw(graphics, markX, markY, markIcon, markColor);
         // "Mods" at 1.5x, its capitals (7 pixels tall) centered on the tile; the count sits on the same baseline.
         float titleScale = 1.5F;
         float titleTop = top + (mark - 7 * titleScale) / 2;
         GuiGraphicsExtractor.Pose pose = graphics.pose();
         pose.pushMatrix();
-        pose.translate(left + mark + 3, titleTop);
+        pose.translate(titleLeft + mark + 3, titleTop);
         pose.scale(titleScale, titleScale);
         GlazedBrand.text(graphics, this.font, this.title.getString(), 0, 0, TITLE_LIFT);
         pose.popMatrix();
-        int titleWidth = Math.round(this.font.width(this.title.copy().withStyle(ChatFormatting.BOLD)) * titleScale);
-        long total = ModCatalog.all().stream().filter(mod -> !ModCatalog.isChild(mod)).count();
-        Component count = Component.translatableWithFallback("glazedmenu.mods.count", "%s loaded", total);
         pose.pushMatrix();
-        pose.translate(left + mark + 3 + titleWidth + 6, titleTop + 7 * titleScale - 7);
-        // The header floats on the background itself: on the light scheme the dim text color is too faint there.
-        graphics.text(this.font, count, 0, 0, ConfigStyle.mode() == ConfigTheme.Mode.LIGHT ? ConfigStyle.colors().text() : ConfigStyle.colors().textDim(), false);
+        pose.translate(titleLeft + mark + 3 + titleWidth + 6, titleTop + 7 * titleScale - 7);
+        ConfigStyle.titleText(graphics, this.font, count, 0, 0, this.font.width(count), ConfigStyle.colors().textDim());
         pose.popMatrix();
         // How many mods have updates: a small green capsule (an arrow and the number) after the count, where it fits.
-        long updates = ModUpdates.count();
+        long updates = this.updates;
         if (updates > 0 && this.search != null) {
             String number = Long.toString(updates);
-            int capsuleX = left + mark + 3 + titleWidth + 6 + this.font.width(count) + 6;
+            int capsuleX = titleLeft + mark + 3 + titleWidth + 6 + this.font.width(count) + 6;
             int capsuleY = Math.round(titleTop + 7 * titleScale - 7) - 2;
             int capsuleWidth = 13 + this.font.width(number) + 4;
             if (capsuleX + capsuleWidth <= this.search.getX() - 24) {
@@ -1247,6 +1278,10 @@ public final class GlazedModsScreen extends StyledScreen {
     private final class Details extends CompatWidget {
         private static final int PADDING = 12;
         private final List<LinkChip> links = new ArrayList<>();
+        // The description as wrapped last, and what it was wrapped from and to: wrapped again only when either changes.
+        private @Nullable String wrappedText;
+        private int wrappedWidth;
+        private List<FormattedCharSequence> wrapped = List.of();
         // Auto-scroll: a long description drifts down by itself (after a moment, slowly), rests at the end, glides back
         // up and starts over. It waits while the mouse is over it, and stops for this mod once the player scrolls.
         private static final float AUTO_WAIT_MILLIS = 2500;
@@ -1430,8 +1465,14 @@ public final class GlazedModsScreen extends StyledScreen {
             int inner = width - PADDING * 2;
             String description = mod.description().isBlank()
                     ? Component.translatableWithFallback("glazedmenu.mods.no_description", "No description.").getString() : mod.description();
-            for (FormattedCharSequence wrapped : font.split(Component.literal(description), inner)) {
-                graphics.text(font, wrapped, x + PADDING, cursor, ConfigStyle.colors().text(), false);
+            if (!description.equals(this.wrappedText) || inner != this.wrappedWidth) {
+                this.wrappedText = description;
+                this.wrappedWidth = inner;
+                this.wrapped = font.split(Component.literal(description), inner);
+            }
+            for (FormattedCharSequence line : this.wrapped) {
+                // Only the lines inside the scissor show.
+                if (cursor + 10 > top - 4 && cursor < bottom) graphics.text(font, line, x + PADDING, cursor, ConfigStyle.colors().text(), false);
                 cursor += 10;
             }
             cursor += 8;

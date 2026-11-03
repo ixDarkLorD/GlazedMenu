@@ -29,6 +29,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -272,12 +273,12 @@ public final class GameOptionsSource extends ExternalSource {
             value(builder, key, name, ConfigTypes.BOOLEAN, (Boolean) initial, () -> (Boolean) option.get(), value -> set(option, value));
         } else if (initial instanceof Integer && values instanceof OptionInstance.IntRange range) {
             // A whole number between two ends the game says outright.
-            value(builder, key, name, ConfigTypes.intRange(range.minInclusive(), range.maxInclusive()).withSlider(true), (Integer) initial,
+            value(builder, key, name, ConfigTypes.intRange(range.minInclusive(), range.maxInclusive()).withSlider(true).withLabels(labels(accessor, name)), (Integer) initial,
                     () -> (Integer) option.get(), value -> set(option, value));
         } else if (initial instanceof Integer && values instanceof OptionInstance.ClampingLazyMaxIntRange range) {
             // The same, with a far end that depends on the window (the GUI scale): the one it has now.
             int low = range.minInclusive();
-            value(builder, key, name, ConfigTypes.intRange(low, Math.max(low, range.maxInclusive())).withSlider(true), (Integer) initial,
+            value(builder, key, name, ConfigTypes.intRange(low, Math.max(low, range.maxInclusive())).withSlider(true).withLabels(labels(accessor, name)), (Integer) initial,
                     () -> (Integer) option.get(), value -> set(option, value));
         } else if (initial instanceof Double && values == OptionInstance.UnitDouble.INSTANCE) {
             // A share of the whole, which the game shows as a percentage.
@@ -288,8 +289,11 @@ public final class GameOptionsSource extends ExternalSource {
             Object low = fromSlider(values, 0);
             Object high = fromSlider(values, 1);
             if (initial instanceof Integer && low instanceof Integer first && high instanceof Integer second) {
-                value(builder, key, name, ConfigTypes.intRange(Math.min(first, second), Math.max(first, second)).withSlider(true), (Integer) initial,
-                        () -> (Integer) option.get(), value -> set(option, value));
+                // In the game's own steps (Max Framerate's tens), each value written as the game writes it (its end as
+                // Unlimited).
+                value(builder, key, name, ConfigTypes.intRange(Math.min(first, second), Math.max(first, second)).withSlider(true)
+                                .withStep(step(fromSlider(values), values, Math.min(first, second), Math.max(first, second))).withLabels(labels(accessor, name)),
+                        (Integer) initial, () -> (Integer) option.get(), value -> set(option, value));
             } else if (initial instanceof Double && low instanceof Double first && high instanceof Double second) {
                 value(builder, key, name, ConfigTypes.doubleRange(Math.min(first, second), Math.max(first, second)).withSlider(true), (Double) initial,
                         () -> (Double) option.get(), value -> set(option, value));
@@ -379,5 +383,35 @@ public final class GameOptionsSource extends ExternalSource {
         Method method = fromSlider(values);
         if (method == null) throw new NoSuchMethodException("fromSliderValue");
         return method.invoke(values, at);
+    }
+
+    // The step a slider of whole numbers moves in: the gap between the values it can take, where they're evenly apart
+    // (1 where it takes every one).
+    private static @Nullable Integer step(Method fromSlider, Object values, int low, int high) throws ReflectiveOperationException {
+        TreeSet<Integer> taken = new TreeSet<>();
+        for (int i = 0; i <= 400; i++) {
+            if (fromSlider.invoke(values, i / 400.0) instanceof Integer number) taken.add(number);
+        }
+        if (taken.size() < 2 || taken.first() != low || taken.last() != high) return null;
+        int gap = taken.higher(taken.first()) - taken.first();
+        if (gap <= 1) return null;
+        for (int number : taken) if ((number - low) % gap != 0) return null;
+        return gap;
+    }
+
+    // Each of a slider's values written as the game writes it (Render Distance in chunks, Max Framerate's end as
+    // Unlimited), without the option's name before it.
+    @SuppressWarnings("unchecked")
+    private static Function<Integer, String> labels(OptionInstanceAccessor<?> accessor, String name) {
+        Function<Object, Component> caption = (Function<Object, Component>) (Object) accessor.glazedmenu$toStringFunction();
+        String prefix = name + ": ";
+        return number -> {
+            try {
+                String text = caption.apply(number).getString();
+                return text.startsWith(prefix) ? text.substring(prefix.length()) : text;
+            } catch (RuntimeException e) {
+                return null;
+            }
+        };
     }
 }

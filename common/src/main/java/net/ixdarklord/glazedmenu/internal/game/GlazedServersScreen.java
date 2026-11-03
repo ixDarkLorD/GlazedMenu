@@ -166,7 +166,7 @@ public final class GlazedServersScreen extends GameListScreen {
         for (ServerData server : this.all()) {
             if (ServerStates.of(server) == ServerStates.State.INITIAL) this.ping(server);
             // A failed ping leaves the server "being asked" for good, with only its message saying so.
-            else if (ServerStates.of(server) == ServerStates.State.PINGING && server.motd.getContents() instanceof TranslatableContents contents
+            else if (ServerStates.of(server) == ServerStates.State.PINGING && server.motd != null && server.motd.getContents() instanceof TranslatableContents contents
                     && contents.getKey().equals("multiplayer.status.cannot_connect")) ServerStates.set(server, ServerStates.State.UNREACHABLE);
         }
         if (this.lanList != null) {
@@ -211,7 +211,7 @@ public final class GlazedServersScreen extends GameListScreen {
 
     private boolean matches(ServerData server, String query) {
         return query.isEmpty() || server.name.toLowerCase(Locale.ROOT).contains(query) || server.ip.toLowerCase(Locale.ROOT).contains(query)
-                || server.motd.getString().toLowerCase(Locale.ROOT).contains(query);
+                || server.motd != null && server.motd.getString().toLowerCase(Locale.ROOT).contains(query);
     }
 
     @Override
@@ -586,7 +586,7 @@ public final class GlazedServersScreen extends GameListScreen {
         lineY += 17;
 
         // What the server says of itself: two lines of it, in a box.
-        List<FormattedCharSequence> message = this.font.split(server.motd, width - 10);
+        List<FormattedCharSequence> message = server.motd != null ? this.font.split(server.motd, width - 10) : List.of();
         if (!message.isEmpty() && lineY + 26 <= bottom) {
             int lines = Math.min(2, message.size());
             ConfigStyle.rect(graphics, x, lineY, width, lines * 10 + 6, ConfigStyle.withAlpha(ConfigStyle.colors().field(), 0xA0));
@@ -654,7 +654,9 @@ public final class GlazedServersScreen extends GameListScreen {
                 graphics.setTooltipForNextFrame(screen.font, tip.stream().map(Component::getVisualOrderText).toList(), mouseX, mouseY);
             }
             // How many play there; a server of another version says its version instead, in red.
-            Component status = ServerStates.of(server) == ServerStates.State.INCOMPATIBLE ? server.version.copy().withStyle(ChatFormatting.RED) : server.status;
+            // (A server not yet asked has neither status nor message.)
+            Component status = ServerStates.of(server) == ServerStates.State.INCOMPATIBLE ? server.version.copy().withStyle(ChatFormatting.RED)
+                    : server.status != null ? server.status : Component.empty();
             int statusWidth = Math.min(screen.font.width(status), width / 3);
             right -= 5 + statusWidth;
             ConfigStyle.text(graphics, screen.font, status, right, y + (height - 8) / 2, statusWidth, ConfigStyle.colors().textDim());
@@ -665,7 +667,7 @@ public final class GlazedServersScreen extends GameListScreen {
             int textX = x + 3 + ROW_ICON + 6;
             int textWidth = right - 5 - textX;
             ConfigStyle.text(graphics, screen.font, Component.literal(server.name).withStyle(ChatFormatting.BOLD), textX, y + 5, textWidth, ConfigStyle.colors().text());
-            List<FormattedCharSequence> message = screen.font.split(server.motd, Math.max(20, textWidth));
+            List<FormattedCharSequence> message = server.motd != null ? screen.font.split(server.motd, Math.max(20, textWidth)) : List.of();
             if (!message.isEmpty()) {
                 graphics.text(screen.font, message.get(0), textX, y + 16,
                         ServerStates.of(server) == ServerStates.State.UNREACHABLE ? ConfigStyle.colors().error() : ConfigStyle.colors().textDim(), false);

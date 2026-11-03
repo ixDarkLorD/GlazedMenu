@@ -561,7 +561,7 @@ public final class GlazedCreateWorldScreen extends GameListScreen {
             this.icon.draw(graphics, x + 4 + (box - 12) / 2, y + 5 + (box - 13) / 2, 12, ConfigStyle.readableOn(this.color));
             int textX = x + 4 + box + 7;
             int textWidth = x + width - 18 - textX;
-            ConfigStyle.text(graphics, font, this.title.copy().withStyle(ChatFormatting.BOLD), textX, y + 6, textWidth, ConfigStyle.colors().text());
+            ConfigStyle.titleText(graphics, font, this.title.copy().withStyle(ChatFormatting.BOLD), textX, y + 6, textWidth, ConfigStyle.colors().text());
             ConfigStyle.text(graphics, font, this.note, textX, y + 17, textWidth, ConfigStyle.colors().textDim());
             ConfigIcons.CHEVRON.draw(graphics, x + width - 15, y + (height - ConfigIcons.SIZE) / 2, hovered ? this.color : ConfigStyle.colors().textMuted());
         }

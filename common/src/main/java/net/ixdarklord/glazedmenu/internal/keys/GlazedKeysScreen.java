@@ -458,13 +458,17 @@ public final class GlazedKeysScreen extends StyledScreen {
     }
 
     private long count(Tab tab) {
-        return this.mappings.stream().filter(mapping -> this.inTab(mapping, tab)).count();
+        return this.counts.computeIfAbsent(tab, each -> this.mappings.stream().filter(mapping -> this.inTab(mapping, each)).count());
     }
+
+    // Each tab's count, counted as the rows are made (the key binds changed, or the conflicts), not in every frame.
+    private final Map<Tab, Long> counts = new HashMap<>();
 
     // The chosen tab's key binds (or, searching, every matching one), each category under its heading.
     private void rebuildEntries() {
         if (this.list == null) return;
         this.findConflicts();
+        this.counts.clear();
         String query = this.query.trim().toLowerCase(Locale.ROOT);
         Tab tab = this.sidebar && query.isEmpty() ? this.tabs.get(Math.min(this.selectedTab, this.tabs.size() - 1)) : this.tabs.get(0);
         List<KeyMapping> found = new ArrayList<>(this.mappings.stream()
