@@ -2,14 +2,17 @@ package net.ixdarklord.glazedmenu.api.config.type;
 
 import com.mojang.serialization.Codec;
 import net.minecraft.network.chat.Component;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.function.DoubleFunction;
 import java.util.function.Function;
 
 /**
  * An {@code int}, {@code long}, {@code float} or {@code double}, optionally within a range. Out-of-range values are
- * clamped when a file is read. A bounded number can be shown as a slider.
+ * clamped when a file is read. A bounded number can be shown as a slider, which can move in steps and name its values
+ * (as the game's Max Framerate slider says Unlimited at its end).
  */
 public final class NumberType<N extends Number & Comparable<N>> implements ConfigType<N> {
     public static final Kind<Integer> INT = new Kind<>("int", Codec.INT, Integer::parseInt, d -> (int) Math.round(d), Integer.MIN_VALUE, Integer.MAX_VALUE, true);
@@ -21,8 +24,14 @@ public final class NumberType<N extends Number & Comparable<N>> implements Confi
     private final N min;
     private final N max;
     private final boolean slider;
+    private final @Nullable N step;
+    private final @Nullable Function<N, String> labels;
 
     NumberType(Kind<N> kind, N min, N max, boolean slider) {
+        this(kind, min, max, slider, null, null);
+    }
+
+    private NumberType(Kind<N> kind, N min, N max, boolean slider, @Nullable N step, @Nullable Function<N, String> labels) {
         if (min.compareTo(max) > 0) throw new IllegalArgumentException("min " + min + " is greater than max " + max);
         if (slider && (min.equals(kind.lowest) || max.equals(kind.highest))) {
             throw new IllegalArgumentException("A slider needs a range");
@@ -31,6 +40,8 @@ public final class NumberType<N extends Number & Comparable<N>> implements Confi
         this.min = min;
         this.max = max;
         this.slider = slider;
+        this.step = step;
+        this.labels = labels;
     }
 
     public Kind<N> kind() {
@@ -60,15 +71,30 @@ public final class NumberType<N extends Number & Comparable<N>> implements Confi
     }
 
     public NumberType<N> withRange(N min, N max) {
-        return new NumberType<>(this.kind, min, max, this.slider);
+        return new NumberType<>(this.kind, min, max, this.slider, this.step, this.labels);
     }
 
     public NumberType<N> withSlider(boolean slider) {
-        return new NumberType<>(this.kind, this.min, this.max, slider);
+        return new NumberType<>(this.kind, this.min, this.max, slider, this.step, this.labels);
     }
 
-    /** The number nearest to a double, clamped into the range. */
+    /** A slider that moves in steps of this size from its minimum, rather than to any value in its range. */
+    public NumberType<N> withStep(@Nullable N step) {
+        return new NumberType<>(this.kind, this.min, this.max, this.slider, step, this.labels);
+    }
+
+    /** How each value is written (on its slider, and in what's said of it), in place of the number itself. */
+    public NumberType<N> withLabels(@Nullable Function<N, String> labels) {
+        return new NumberType<>(this.kind, this.min, this.max, this.slider, this.step, labels);
+    }
+
+    /** The number nearest to a double (and to a step, where it has steps), clamped into the range. */
     public N fromDouble(double value) {
+        if (this.step != null && this.step.doubleValue() > 0) {
+            double from = this.min.doubleValue();
+            double size = this.step.doubleValue();
+            value = from + Math.round((value - from) / size) * size;
+        }
         N number = this.kind.fromDouble.apply(value);
         if (number.compareTo(this.min) < 0) return this.min;
         if (number.compareTo(this.max) > 0) return this.max;
@@ -111,6 +137,10 @@ public final class NumberType<N extends Number & Comparable<N>> implements Confi
 
     @Override
     public String format(N value) {
+        if (this.labels != null) {
+            String label = this.labels.apply(value);
+            if (label != null) return label;
+        }
         return value.toString();
     }
 
@@ -124,7 +154,8 @@ public final class NumberType<N extends Number & Comparable<N>> implements Confi
 
     @Override
     public boolean equals(Object other) {
-        return other instanceof NumberType<?> type && type.kind == this.kind && type.min.equals(this.min) && type.max.equals(this.max) && type.slider == this.slider;
+        return other instanceof NumberType<?> type && type.kind == this.kind && type.min.equals(this.min) && type.max.equals(this.max) && type.slider == this.slider
+                && Objects.equals(type.step, this.step);
     }
 
     @Override

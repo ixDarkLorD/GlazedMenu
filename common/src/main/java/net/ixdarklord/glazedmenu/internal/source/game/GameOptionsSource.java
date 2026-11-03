@@ -37,6 +37,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -238,8 +239,21 @@ public final class GameOptionsSource extends ExternalSource {
             Object low = fromSlider.invoke(values, 0.0);
             Object high = fromSlider.invoke(values, 1.0);
             if (initial instanceof Integer && low instanceof Integer first && high instanceof Integer second) {
-                value(builder, key, name, ConfigTypes.intRange(Math.min(first, second), Math.max(first, second)).withSlider(true), (Integer) initial,
-                        () -> (Integer) option.get(), value -> set(option, value));
+                // In the game's own steps (Max Framerate's tens), each value written as the game writes it (its end as
+                // Unlimited, Render Distance in chunks).
+                Function<Object, Component> caption = (Function<Object, Component>) access.glazedmenu$toString();
+                String prefix = name + ": ";
+                Function<Integer, String> labels = number -> {
+                    try {
+                        String text = caption.apply(number).getString();
+                        return text.startsWith(prefix) ? text.substring(prefix.length()) : text;
+                    } catch (RuntimeException e) {
+                        return null;
+                    }
+                };
+                value(builder, key, name, ConfigTypes.intRange(Math.min(first, second), Math.max(first, second)).withSlider(true)
+                                .withStep(step(fromSlider, values, Math.min(first, second), Math.max(first, second))).withLabels(labels),
+                        (Integer) initial, () -> (Integer) option.get(), value -> set(option, value));
             } else if (initial instanceof Double && values == OptionInstance.UnitDouble.INSTANCE) {
                 // A share of the whole, which the game shows as a percentage.
                 value(builder, key, name, ConfigTypes.intRange(0, 100).withSlider(true), (int) Math.round((Double) initial * 100),
@@ -304,5 +318,19 @@ public final class GameOptionsSource extends ExternalSource {
             }
         }
         return null;
+    }
+
+    // The step a slider of whole numbers moves in: the gap between the values it can take, where they're evenly apart
+    // (1 where it takes every one).
+    private static @Nullable Integer step(Method fromSlider, Object values, int low, int high) throws ReflectiveOperationException {
+        TreeSet<Integer> taken = new TreeSet<>();
+        for (int i = 0; i <= 400; i++) {
+            if (fromSlider.invoke(values, i / 400.0) instanceof Integer number) taken.add(number);
+        }
+        if (taken.size() < 2 || taken.first() != low || taken.last() != high) return null;
+        int gap = taken.higher(taken.first()) - taken.first();
+        if (gap <= 1) return null;
+        for (int number : taken) if ((number - low) % gap != 0) return null;
+        return gap;
     }
 }

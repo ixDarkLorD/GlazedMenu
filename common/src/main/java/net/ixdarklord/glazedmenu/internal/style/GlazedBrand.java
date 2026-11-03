@@ -7,6 +7,9 @@ import net.ixdarklord.glazedmenu.internal.core.GlazedSettings;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.Font;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.FormattedText;
+import net.minecraft.network.chat.Style;
+import net.minecraft.util.FormattedCharSequence;
 
 /**
  * Glazed Menu's own colors (its logo's violets and blues, or another scheme the player chose): the theme of its mod list,
@@ -58,11 +61,16 @@ public final class GlazedBrand {
             this.light = light.toBuilder()
                     .panel(ConfigStyle.withAlpha(light.panel(), 0xA4))
                     .bar(ConfigStyle.withAlpha(light.bar(), 0xB0))
-                    .text(0xFF0E0A24).textDim(0xFF2C2750).textMuted(0xFF464170)
+                    .text(0xFF201A42).textDim(0xFF3D3768).textMuted(0xFF58538A)
                     .button(ConfigStyle.withAlpha(light.button(), 0xB4))
                     .buttonHover(ConfigStyle.withAlpha(light.buttonHover(), 0xCC))
                     .buttonDisabled(ConfigStyle.withAlpha(light.buttonDisabled(), 0xA0))
                     .build();
+        }
+
+        /** The scheme's accent, as its swatch in a choice of schemes. */
+        public int swatch() {
+            return this.stops[0];
         }
 
         ConfigColorScheme colors(ConfigTheme.Mode mode) {
@@ -168,13 +176,15 @@ public final class GlazedBrand {
         float phase = phase();
         // A column at a time; the outer columns stop short of the corners, which Glazed Menu's boxes leave out (ConfigStyle.rect).
         boolean cutCorners = width > 2 && height > 2;
+        FillBatch columns = FillBatch.start(graphics);
         for (int i = 0; i < width; i++) {
             int color = color(phase + i / (float) Math.max(1, width) * SPREAD);
             if (deepen > 0) color = ConfigStyle.mix(color, LIGHT_DEEPEN, deepen);
             color = ConfigStyle.withAlpha(color, alpha);
             boolean edge = cutCorners && (i == 0 || i == width - 1);
-            graphics.fill(x + i, y + (edge ? 1 : 0), x + i + 1, y + height - (edge ? 1 : 0), color);
+            columns.fill(x + i, y + (edge ? 1 : 0), x + i + 1, y + height - (edge ? 1 : 0), color);
         }
+        columns.submit();
     }
 
     /**
@@ -187,8 +197,9 @@ public final class GlazedBrand {
     }
 
     private static final int LIGHT_INK = 0xFF1A1438;
+    private static final Style BOLD = Style.EMPTY.withBold(true);
 
-    /** Bold text with the gradient running along it, flowing. Returns its width. */
+    /** Bold text with the gradient running along it, flowing, over a crisp drop shadow. Returns its width. */
     public static int text(GuiGraphicsExtractor graphics, Font font, String text, int x, int y) {
         return text(graphics, font, text, x, y, 0);
     }
@@ -196,16 +207,27 @@ public final class GlazedBrand {
     /** As {@link #text(GuiGraphicsExtractor, Font, String, int, int)}, its colors lifted toward white by {@code lift}. */
     public static int text(GuiGraphicsExtractor graphics, Font font, String text, int x, int y, float lift) {
         float phase = phase();
-        int total = font.width(Component.literal(text).withStyle(ChatFormatting.BOLD));
+        Component whole = Component.literal(text).withStyle(ChatFormatting.BOLD);
+        int total = font.width(whole);
+        // Each letter in its own color, all drawn as one line of text (not one text each): the colors ride on the
+        // letters' styles, and the line's own color gives them their alpha.
+        int[] codePoints = text.codePoints().toArray();
+        Style[] styles = new Style[codePoints.length];
         int cursor = 0;
-        for (int i = 0; i < text.length(); ) {
-            int codePoint = text.codePointAt(i);
-            Component glyph = Component.literal(new String(Character.toChars(codePoint))).withStyle(ChatFormatting.BOLD);
-            int color = lift(color(phase + (cursor + font.width(glyph) / 2F) / Math.max(1, total) * SPREAD), lift);
-            graphics.text(font, glyph, x + cursor, y, color, false);
-            cursor += font.width(glyph);
-            i += Character.charCount(codePoint);
+        for (int i = 0; i < codePoints.length; i++) {
+            int glyphWidth = font.width(FormattedText.of(Character.toString(codePoints[i]), BOLD));
+            int color = lift(color(phase + (cursor + glyphWidth / 2F) / Math.max(1, total) * SPREAD), lift);
+            styles[i] = BOLD.withColor(color & 0xFFFFFF);
+            cursor += glyphWidth;
         }
+        FormattedCharSequence line = sink -> {
+            for (int i = 0; i < codePoints.length; i++) {
+                if (!sink.accept(i, styles[i], codePoints[i])) return false;
+            }
+            return true;
+        };
+        // With the game's own shadow on the dark look: each letter's color, darkened, a pixel down and to the right.
+        graphics.text(font, line, x, y, 0xFFFFFFFF, ConfigStyle.titleShadow());
         return total;
     }
 }

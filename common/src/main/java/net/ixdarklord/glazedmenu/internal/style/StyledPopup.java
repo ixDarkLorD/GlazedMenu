@@ -144,7 +144,7 @@ public abstract class StyledPopup extends CompatScreen implements Overlay {
             ConfigStyle.text(graphics, this.font, note, this.contentLeft() + this.contentWidth() - noteWidth, this.panelY + PADDING, noteWidth,
                     ConfigStyle.colors().textMuted());
         }
-        ConfigStyle.text(graphics, this.font, this.title.copy().withStyle(ChatFormatting.BOLD), titleX, this.panelY + PADDING,
+        ConfigStyle.titleText(graphics, this.font, this.title.copy().withStyle(ChatFormatting.BOLD), titleX, this.panelY + PADDING,
                 this.contentLeft() + this.contentWidth() - titleX - noteWidth - (note == null ? 0 : 8), ConfigStyle.colors().text());
         this.extractPopup(graphics, mouseX, mouseY, a);
     }

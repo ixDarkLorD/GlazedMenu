@@ -19,6 +19,11 @@ public final class GuiFade {
         RenderSystem.setShaderColor(1, 1, 1, alpha);
     }
 
+    /** The fade now, for a part that fades further on its own (multiplied in, then put back). */
+    public static float get() {
+        return alpha;
+    }
+
     public static void reset() {
         set(1);
     }

@@ -246,7 +246,7 @@ public abstract class StyledScreen extends CompatScreen {
         }
         ConfigStyle.rect(graphics, x - 4, y - 1, 2, 10, ConfigStyle.accent());
         Component bold = title.copy().withStyle(ChatFormatting.BOLD);
-        ConfigStyle.text(graphics, this.font, bold, x + 2, y, maxWidth, ConfigStyle.colors().text());
+        ConfigStyle.titleText(graphics, this.font, bold, x + 2, y, maxWidth, ConfigStyle.colors().text());
         return x + 2 + Math.min(this.font.width(bold), maxWidth);
     }
 
