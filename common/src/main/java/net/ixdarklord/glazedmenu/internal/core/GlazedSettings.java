@@ -21,6 +21,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -76,6 +77,7 @@ public final class GlazedSettings {
         int starOpacity = 65;
         boolean themeEffects = true;
         boolean transitions = true;
+        boolean animatedWaves = true;
         boolean replaceMezzConfigScreens = false;
         boolean replaceFtbLibraryScreens = false;
         boolean replaceKeyBinds = true;
@@ -110,7 +112,7 @@ public final class GlazedSettings {
         boolean chatShowcase = true;
         boolean deathSounds = true;
         boolean replaceLoading = true;
-        boolean welcomePopup = true;
+        boolean firstRunSetup = true;
     }
 
     private static Path file() {
@@ -216,6 +218,15 @@ public final class GlazedSettings {
         return values.themeEffects && !fastGraphics();
     }
 
+    /** Whether the waves in the panels of Glazed Menu's own look drift and swell, or stand still. */
+    public static boolean animatedWaves() {
+        return values.animatedWaves && transitions();
+    }
+
+    public static void setAnimatedWaves(boolean on) {
+        values.animatedWaves = on;
+    }
+
     /** Whether pages animate into place: the player's choice, but never on Fast graphics. */
     public static boolean transitions() {
         return values.transitions && !fastGraphics();
@@ -305,15 +316,65 @@ public final class GlazedSettings {
         return values.replaceStats;
     }
 
-    /** Whether the welcome is shown over the title screen the next time the game starts. */
-    public static boolean welcomePopup() {
-        return values.welcomePopup;
+    /** Whether the setup opens over the title screen the next time the game starts. */
+    public static boolean firstRunSetup() {
+        return values.firstRunSetup;
     }
 
-    /** The welcome was read: it's turned off, and stays off until the player turns it on again. */
-    public static void dismissWelcome() {
-        values.welcomePopup = false;
+    /** The setup was gone through (or skipped): it's turned off, and stays off until the player turns it on again. */
+    public static void finishSetup() {
+        values.firstRunSetup = false;
         save();
+    }
+
+    /** One of the switches for the game's screens, by its key in the file: read and set by the setup. */
+    public record Switch(BooleanSupplier get, Consumer<Boolean> set) {}
+
+    /** The switch with this key in the file; the setup saves once it has set them. */
+    public static Switch screenSwitch(String key) {
+        return switch (key) {
+            case "replaceModList" -> new Switch(() -> values.replaceModList, value -> values.replaceModList = value);
+            case "replaceTitle" -> new Switch(() -> values.replaceTitle, value -> values.replaceTitle = value);
+            case "replacePause" -> new Switch(() -> values.replacePause, value -> values.replacePause = value);
+            case "replaceOptions" -> new Switch(() -> values.replaceOptions, value -> values.replaceOptions = value);
+            case "replaceControls" -> new Switch(() -> values.replaceControls, value -> values.replaceControls = value);
+            case "replaceKeyBinds" -> new Switch(() -> values.replaceKeyBinds, value -> values.replaceKeyBinds = value);
+            case "replaceWorlds" -> new Switch(() -> values.replaceWorlds, value -> values.replaceWorlds = value);
+            case "replaceCreateWorld" -> new Switch(() -> values.replaceCreateWorld, value -> values.replaceCreateWorld = value);
+            case "replaceEditWorld" -> new Switch(() -> values.replaceEditWorld, value -> values.replaceEditWorld = value);
+            case "replaceServers" -> new Switch(() -> values.replaceServers, value -> values.replaceServers = value);
+            case "replaceEditServer" -> new Switch(() -> values.replaceEditServer, value -> values.replaceEditServer = value);
+            case "replaceDirectConnect" -> new Switch(() -> values.replaceDirectConnect, value -> values.replaceDirectConnect = value);
+            case "replaceLoading" -> new Switch(() -> values.replaceLoading, value -> values.replaceLoading = value);
+            case "replaceChat" -> new Switch(() -> values.replaceChat, value -> values.replaceChat = value);
+            case "replaceDeath" -> new Switch(() -> values.replaceDeath, value -> values.replaceDeath = value);
+            case "replaceDisconnected" -> new Switch(() -> values.replaceDisconnected, value -> values.replaceDisconnected = value);
+            case "replaceAdvancements" -> new Switch(() -> values.replaceAdvancements, value -> values.replaceAdvancements = value);
+            case "replaceStats" -> new Switch(() -> values.replaceStats, value -> values.replaceStats = value);
+            case "replacePacks" -> new Switch(() -> values.replacePacks, value -> values.replacePacks = value);
+            case "replaceShaders" -> new Switch(() -> values.replaceShaders, value -> values.replaceShaders = value);
+            case "replaceLanguage" -> new Switch(() -> values.replaceLanguage, value -> values.replaceLanguage = value);
+            case "replaceGameRules" -> new Switch(() -> values.replaceGameRules, value -> values.replaceGameRules = value);
+            case "replaceWarnings" -> new Switch(() -> values.replaceWarnings, value -> values.replaceWarnings = value);
+            case "replaceSocial" -> new Switch(() -> values.replaceSocial, value -> values.replaceSocial = value);
+            default -> throw new IllegalArgumentException("No screen switch " + key);
+        };
+    }
+
+    public static void setTitleLayout(TitleLayout layout) {
+        values.titleLayout = layout;
+    }
+
+    public static void setPauseLayout(PauseLayout layout) {
+        values.pauseLayout = layout;
+    }
+
+    public static void setColorScheme(GlazedBrand.Scheme scheme) {
+        values.colorScheme = scheme;
+    }
+
+    public static void setThemeMode(ConfigTheme.Mode mode) {
+        values.themeMode = mode;
     }
 
     /** Whether the screens shown while a world or server is joined or left are drawn in Glazed Menu's look. */
@@ -447,9 +508,9 @@ public final class GlazedSettings {
                     .title(Component.translatableWithFallback(prefix + "title", "Glazed Menu"))
                     .file("glazedmenu.json", file());
             builder.push("general", prefix + "general", null, List.of("Glazed Menu itself"));
-            bool(builder, prefix + "general.", "welcomePopup",
-                    "Shows the welcome over the title screen the next time the game starts. It turns itself off once you press Continue.",
-                    () -> values.welcomePopup, value -> values.welcomePopup = value);
+            bool(builder, prefix + "general.", "firstRunSetup",
+                    "Opens the setup over the title screen the next time the game starts: each of the game's screens Glazed Menu can replace, one by one, with a preview, to keep or turn back into the game's own. It turns itself off once finished or skipped. A modpack can ship this off with its own choices.",
+                    () -> values.firstRunSetup, value -> values.firstRunSetup = value);
             builder.pop();
             builder.push("modList", prefix + "modList", null, List.of("Glazed Menu's mod list"));
             bool(builder, prefix + "modList.", "replaceModList", "Opens Glazed Menu's mod list where Mod Menu's or NeoForge's would open.",
@@ -496,6 +557,8 @@ public final class GlazedSettings {
                     () -> values.themeEffects, value -> values.themeEffects = value);
             bool(builder, prefix + "look.", "transitions", "Pages fading in and out as you open a screen or go back.",
                     () -> values.transitions, value -> values.transitions = value);
+            bool(builder, prefix + "look.", "animatedWaves", "The waves in the panels drifting and swelling. Turn off for them to stand still.",
+                    () -> values.animatedWaves, value -> values.animatedWaves = value);
             builder.pop();
             builder.push("otherScreens", prefix + "otherScreens", null, List.of("Config systems with screens of their own"));
             bool(builder, prefix + "otherScreens.", "replaceMezzConfigScreens", false,
