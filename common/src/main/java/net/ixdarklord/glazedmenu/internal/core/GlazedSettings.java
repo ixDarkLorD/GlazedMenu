@@ -1,21 +1,22 @@
 package net.ixdarklord.glazedmenu.internal.core;
 
-import net.minecraft.util.Mth;
-import net.ixdarklord.glazedmenu.internal.style.GlazedBrand;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonParseException;
 import net.ixdarklord.glazedmenu.api.config.ConfigScope;
 import net.ixdarklord.glazedmenu.api.config.ConfigTheme;
 import net.ixdarklord.glazedmenu.api.config.type.ConfigTypes;
+import net.ixdarklord.glazedmenu.api.config.type.NumberType;
 import net.ixdarklord.glazedmenu.internal.source.Access;
 import net.ixdarklord.glazedmenu.internal.source.external.ExternalConfig;
 import net.ixdarklord.glazedmenu.internal.source.external.ExternalConfigBuilder;
 import net.ixdarklord.glazedmenu.internal.source.external.ExternalSource;
 import net.ixdarklord.glazedmenu.internal.source.external.ExternalValue;
+import net.ixdarklord.glazedmenu.internal.style.GlazedBrand;
 import net.minecraft.client.GraphicsStatus;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
+import net.minecraft.util.Mth;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -62,8 +63,10 @@ public final class GlazedSettings {
         SIDEBAR
     }
 
-    // The file's contents; Gson fills them, keeping the defaults for anything missing.
+    // The file's contents; Gson fills them, keeping the defaults for anything missing. In the order the settings screen
+    // shows them, which is the order they're written to the file in.
     private static final class Values {
+        boolean firstRunSetup = true;
         boolean replaceModList = true;
         boolean modsButton = true;
         boolean showLibraries = false;
@@ -80,37 +83,36 @@ public final class GlazedSettings {
         boolean transitions = true;
         boolean animatedWaves = true;
         boolean replaceMezzConfigScreens = false;
-        boolean replaceKeyBinds = true;
+        boolean replaceTitle = true;
+        TitleLayout titleLayout = TitleLayout.SHELF;
+        boolean replaceWorlds = true;
+        boolean replaceCreateWorld = true;
+        boolean replaceGameRules = true;
+        boolean replaceEditWorld = true;
+        boolean replaceWarnings = true;
+        boolean replaceServers = true;
+        boolean replaceEditServer = true;
+        boolean replaceDirectConnect = true;
+        boolean replaceLoading = true;
+        boolean replaceDisconnected = true;
+        boolean replaceOptions = true;
         boolean gameOptions = true;
         boolean replaceControls = true;
-        boolean replaceOptions = true;
-        boolean replaceGameRules = true;
+        boolean replaceKeyBinds = true;
         boolean replaceLanguage = true;
         boolean replacePacks = true;
         boolean replaceShaders = true;
         boolean replacePause = true;
         PauseLayout pauseLayout = PauseLayout.DOCK;
-        boolean replaceWorlds = true;
-        boolean replaceServers = true;
-        boolean replaceAdvancements = true;
-        boolean replaceStats = true;
-        boolean replaceTitle = true;
-        TitleLayout titleLayout = TitleLayout.SHELF;
-        boolean replaceCreateWorld = true;
-        boolean replaceEditWorld = true;
-        boolean replaceEditServer = true;
-        boolean replaceDirectConnect = true;
-        boolean replaceDisconnected = true;
-        boolean replaceDeath = true;
-        boolean replaceWarnings = true;
-        boolean replaceSocial = true;
         boolean replaceChat = true;
         boolean chatTyping = true;
         boolean chatHideTyping = false;
         boolean chatShowcase = true;
+        boolean replaceSocial = true;
+        boolean replaceAdvancements = true;
+        boolean replaceStats = true;
+        boolean replaceDeath = true;
         boolean deathSounds = true;
-        boolean replaceLoading = true;
-        boolean firstRunSetup = true;
     }
 
     private static Path file() {
@@ -520,19 +522,19 @@ public final class GlazedSettings {
                             binding(() -> values.colorScheme, value -> values.colorScheme = value))
                     .translation(prefix + "look.colorScheme", null)
                     .comment(List.of("The colors of the mod list and of every config screen without a theme of its own: Glazed Menu's own, or another scheme.")).add();
-            builder.value("backgroundOpacity", ConfigTypes.intRange(0, 200).withSlider(true), 100,
+            builder.value("backgroundOpacity", percent(0, 200), 100,
                             binding(() -> values.backgroundOpacity, value -> values.backgroundOpacity = value))
                     .translation(prefix + "look.backgroundOpacity", null)
                     .comment(List.of("Scales how strongly each mod's backdrop color covers the background, in percent: 0 removes it, 200 doubles it.")).add();
-            builder.value("textureOpacity", ConfigTypes.intRange(0, 100).withSlider(true), 100,
+            builder.value("textureOpacity", percent(0, 100), 100,
                             binding(() -> values.textureOpacity, value -> values.textureOpacity = value))
                     .translation(prefix + "look.textureOpacity", null)
                     .comment(List.of("Scales the opacity of each mod's background texture, in percent; below 100 the panorama or world shows through it.")).add();
-            builder.value("panelOpacity", ConfigTypes.intRange(10, 100).withSlider(true), 100,
+            builder.value("panelOpacity", percent(10, 100), 100,
                             binding(() -> values.panelOpacity, value -> values.panelOpacity = value))
                     .translation(prefix + "look.panelOpacity", null)
                     .comment(List.of("How solid the screens' panels and bars are, in percent: lower lets more of the background show through them.")).add();
-            builder.value("starOpacity", ConfigTypes.intRange(0, 100).withSlider(true), 65,
+            builder.value("starOpacity", percent(0, 100), 65,
                             binding(() -> values.starOpacity, value -> values.starOpacity = value))
                     .translation(prefix + "look.starOpacity", null)
                     .comment(List.of("How bright the small falling stars behind the panels are, in percent: 0 hides them.")).add();
@@ -549,60 +551,69 @@ public final class GlazedSettings {
                     () -> values.replaceMezzConfigScreens, value -> values.replaceMezzConfigScreens = value);
             builder.pop();
             builder.push("game", prefix + "game", null, List.of("The game's own screens"));
-            bool(builder, prefix + "game.", "replaceKeyBinds",
-                    "Opens Glazed Menu's key binds screen where the game's would open: categories, search, and the key binds in conflict or changed.",
-                    () -> values.replaceKeyBinds, value -> values.replaceKeyBinds = value);
-            bool(builder, prefix + "game.", "replaceOptions",
-                    "Opens the game's Options screen in Glazed Menu's look: a ribbon of tabs for the categories of its options, each tab's settings as cards to change right there. The game's own screen stays under More. It needs the game's options listed.",
-                    () -> values.replaceOptions, value -> values.replaceOptions = value);
-            bool(builder, prefix + "game.", "replaceControls",
-                    "Opens the game's Controls screen as a map of the keyboard (and of the mouse): keys tinted where something is bound, red where key binds are in conflict, with each key's binds and the control settings under it.",
-                    () -> values.replaceControls, value -> values.replaceControls = value);
-            bool(builder, prefix + "game.", "replacePacks",
-                    "Opens Glazed Menu's packs screen where the game's would open, for resource packs and for a new world's data packs: the packs in use as a stack to reorder, beside the packs to choose from as tiles, with a search.",
-                    () -> values.replacePacks, value -> values.replacePacks = value);
-            bool(builder, prefix + "game.", "replaceShaders",
-                    "With Iris: opens Glazed Menu's shader packs screen where Iris's would open. A pack's own settings stay in Iris's screen, a button away.",
-                    () -> values.replaceShaders, value -> values.replaceShaders = value);
-            bool(builder, prefix + "game.", "replaceLanguage",
-                    "Opens Glazed Menu's language screen where the game's would open: a search by name, region or code, with the language in use marked.",
-                    () -> values.replaceLanguage, value -> values.replaceLanguage = value);
-            bool(builder, prefix + "game.", "replaceGameRules",
-                    "Opens a new world's game rules in Glazed Menu's config screen: categories, search, and the rules changed from their defaults marked.",
-                    () -> values.replaceGameRules, value -> values.replaceGameRules = value);
             bool(builder, prefix + "game.", "replaceTitle",
                     "Opens Glazed Menu's title screen where the game's would open: the logo at the top left, and along the bottom Continue (the world played last) beside Singleplayer, Multiplayer and Realms, over a bar of the options, the mods, the language, accessibility and Quit.",
                     () -> values.replaceTitle, value -> values.replaceTitle = value);
             builder.value("titleLayout", ConfigTypes.enumOf(TitleLayout.class), TitleLayout.SHELF, binding(() -> values.titleLayout, value -> values.titleLayout = value))
                     .translation(prefix + "game.titleLayout", null)
                     .comment(List.of("How Glazed Menu's title screen is laid out: Shelf (the logo at the top, and cards along the bottom over a bar of the rest) or Sidebar (the logo and the menu as a list down the left side, the panorama open beside it).")).add();
+            bool(builder, prefix + "game.", "replaceWorlds",
+                    "Opens Glazed Menu's list of worlds where the game's singleplayer screen would open: a search, sorting, and the chosen world's details beside the list.",
+                    () -> values.replaceWorlds, value -> values.replaceWorlds = value);
+            bool(builder, prefix + "game.", "replaceCreateWorld",
+                    "Opens Glazed Menu's screen for making a world where the game's would open: its three tabs as a ribbon, the game mode as cards, and what the world will be made with beside them. The game's own screen stays a button away.",
+                    () -> values.replaceCreateWorld, value -> values.replaceCreateWorld = value);
+            bool(builder, prefix + "game.", "replaceGameRules",
+                    "Opens a new world's game rules in Glazed Menu's config screen: categories, search, and the rules changed from their defaults marked.",
+                    () -> values.replaceGameRules, value -> values.replaceGameRules = value);
+            bool(builder, prefix + "game.", "replaceEditWorld",
+                    "Opens Glazed Menu's screen for editing a world where the game's would open: the world's name, its files, backups and upkeep as cards, and the world itself beside them. The game's own screen stays a button away.",
+                    () -> values.replaceEditWorld, value -> values.replaceEditWorld = value);
+            bool(builder, prefix + "game.", "replaceWarnings",
+                    "Opens Glazed Menu's popup where the game's warnings about a world would open: that it uses experimental settings, and the question of a backup before one is opened that might not open well.",
+                    () -> values.replaceWarnings, value -> values.replaceWarnings = value);
+            bool(builder, prefix + "game.", "replaceServers",
+                    "Opens Glazed Menu's list of servers where the game's multiplayer screen would open: a search, the games on your network apart from the servers, and the chosen server's details beside the list.",
+                    () -> values.replaceServers, value -> values.replaceServers = value);
+            bool(builder, prefix + "game.", "replaceEditServer",
+                    "Opens Glazed Menu's screen for adding or editing a server where the game's would open: the server's name, address and resource packs' choice, beside the server as it answers at the address typed. The game's own screen stays a button away.",
+                    () -> values.replaceEditServer, value -> values.replaceEditServer = value);
+            bool(builder, prefix + "game.", "replaceDirectConnect",
+                    "Opens Glazed Menu's popup where the game's Direct Connection screen would open: the address, and the server at it as it answers, before you join.",
+                    () -> values.replaceDirectConnect, value -> values.replaceDirectConnect = value);
+            bool(builder, prefix + "game.", "replaceLoading",
+                    "Draws the screens shown while a world or a server is joined or left (reading the world, connecting, loading the terrain, saving) in Glazed Menu's look: the world's icon in a ring of the steps, with each step named and timed under it, over the game's panorama.",
+                    () -> values.replaceLoading, value -> values.replaceLoading = value);
+            bool(builder, prefix + "game.", "replaceDisconnected",
+                    "Opens Glazed Menu's card where the game's disconnected screen would open: what happened and why, the server as it answers now, how long you played, and buttons to copy the reason and to reconnect.",
+                    () -> values.replaceDisconnected, value -> values.replaceDisconnected = value);
+            bool(builder, prefix + "game.", "replaceOptions",
+                    "Opens the game's Options screen in Glazed Menu's look: a ribbon of tabs for the categories of its options, each tab's settings as cards to change right there. The game's own screen stays under More. It needs the game's options listed.",
+                    () -> values.replaceOptions, value -> values.replaceOptions = value);
+            bool(builder, prefix + "game.", "gameOptions",
+                    "Lists the game's own options as a config among the mods', so the search, the changed settings and profiles cover them too. The game's options screens stay as they are.",
+                    () -> values.gameOptions, value -> values.gameOptions = value);
+            bool(builder, prefix + "game.", "replaceControls",
+                    "Opens the game's Controls screen as a map of the keyboard (and of the mouse): keys tinted where something is bound, red where key binds are in conflict, with each key's binds and the control settings under it.",
+                    () -> values.replaceControls, value -> values.replaceControls = value);
+            bool(builder, prefix + "game.", "replaceKeyBinds",
+                    "Opens Glazed Menu's key binds screen where the game's would open: categories, search, and the key binds in conflict or changed.",
+                    () -> values.replaceKeyBinds, value -> values.replaceKeyBinds = value);
+            bool(builder, prefix + "game.", "replaceLanguage",
+                    "Opens Glazed Menu's language screen where the game's would open: a search by name, region or code, with the language in use marked.",
+                    () -> values.replaceLanguage, value -> values.replaceLanguage = value);
+            bool(builder, prefix + "game.", "replacePacks",
+                    "Opens Glazed Menu's packs screen where the game's would open, for resource packs and for a new world's data packs: the packs in use as a stack to reorder, beside the packs to choose from as tiles, with a search.",
+                    () -> values.replacePacks, value -> values.replacePacks = value);
+            bool(builder, prefix + "game.", "replaceShaders",
+                    "With Iris: opens Glazed Menu's shader packs screen where Iris's would open. A pack's own settings stay in Iris's screen, a button away.",
+                    () -> values.replaceShaders, value -> values.replaceShaders = value);
             bool(builder, prefix + "game.", "replacePause",
                     "Opens Glazed Menu's pause screen where the game's would open: Back to Game, the screens a pause leads to as tiles, a few quick settings, and Save and Quit set apart.",
                     () -> values.replacePause, value -> values.replacePause = value);
             builder.value("pauseLayout", ConfigTypes.enumOf(PauseLayout.class), PauseLayout.DOCK, binding(() -> values.pauseLayout, value -> values.pauseLayout = value))
                     .translation(prefix + "game.pauseLayout", null)
                     .comment(List.of("How Glazed Menu's pause screen is laid out: Dock (a bar across the top and tiles along the bottom, the world open between), Cards (a frame in the middle) or Sidebar (a list down the left side).")).add();
-            bool(builder, prefix + "game.", "replaceWorlds",
-                    "Opens Glazed Menu's list of worlds where the game's singleplayer screen would open: a search, sorting, and the chosen world's details beside the list.",
-                    () -> values.replaceWorlds, value -> values.replaceWorlds = value);
-            bool(builder, prefix + "game.", "replaceServers",
-                    "Opens Glazed Menu's list of servers where the game's multiplayer screen would open: a search, the games on your network apart from the servers, and the chosen server's details beside the list.",
-                    () -> values.replaceServers, value -> values.replaceServers = value);
-            bool(builder, prefix + "game.", "replaceCreateWorld",
-                    "Opens Glazed Menu's screen for making a world where the game's would open: its three tabs as a ribbon, the game mode as cards, and what the world will be made with beside them. The game's own screen stays a button away.",
-                    () -> values.replaceCreateWorld, value -> values.replaceCreateWorld = value);
-            bool(builder, prefix + "game.", "replaceEditWorld",
-                    "Opens Glazed Menu's screen for editing a world where the game's would open: the world's name, its files, backups and upkeep as cards, and the world itself beside them. The game's own screen stays a button away.",
-                    () -> values.replaceEditWorld, value -> values.replaceEditWorld = value);
-            bool(builder, prefix + "game.", "replaceEditServer",
-                    "Opens Glazed Menu's screen for adding or editing a server where the game's would open: the server's name, address and resource packs' choice, beside the server as it answers at the address typed. The game's own screen stays a button away.",
-                    () -> values.replaceEditServer, value -> values.replaceEditServer = value);
-            bool(builder, prefix + "game.", "replaceLoading",
-                    "Draws the screens shown while a world or a server is joined or left (reading the world, connecting, loading the terrain, saving) in Glazed Menu's look: the world's icon in a ring of the steps, with each step named and timed under it, over the game's panorama.",
-                    () -> values.replaceLoading, value -> values.replaceLoading = value);
-            bool(builder, prefix + "game.", "replaceDirectConnect",
-                    "Opens Glazed Menu's popup where the game's Direct Connection screen would open: the address, and the server at it as it answers, before you join.",
-                    () -> values.replaceDirectConnect, value -> values.replaceDirectConnect = value);
             bool(builder, prefix + "game.", "replaceChat",
                     "Opens Glazed Menu's chat where the game's would open: every message on a row of its own with the sender's face, tabs for players' messages, the system's and the ones naming you, buttons for things done in one click, and the line in a bar at the bottom.",
                     () -> values.replaceChat, value -> values.replaceChat = value);
@@ -615,34 +626,30 @@ public final class GlazedSettings {
             bool(builder, prefix + "game.", "chatShowcase",
                     "Adds a button to the chat that shows the item in your hand to everyone: its name in the chat, the item itself on its hover (on a server with Glazed Menu; elsewhere its name is written into your message).",
                     () -> values.chatShowcase, value -> values.chatShowcase = value);
-            bool(builder, prefix + "game.", "replaceWarnings",
-                    "Opens Glazed Menu's popup where the game's warnings about a world would open: that it uses experimental settings, and the question of a backup before one is opened that might not open well.",
-                    () -> values.replaceWarnings, value -> values.replaceWarnings = value);
             bool(builder, prefix + "game.", "replaceSocial",
                     "Opens Glazed Menu's popup where the game's Social Interactions screen would open: the players with their faces and what they said last, tabs for the hidden and the blocked, a search, and buttons to write to a player, to hide their messages and to report them.",
                     () -> values.replaceSocial, value -> values.replaceSocial = value);
-            bool(builder, prefix + "game.", "replaceDeath",
-                    "Opens Glazed Menu's death screen where the game's would open: a band drawn across the reddened world with how you died and the ways on, and under it your score, the level lost, how long you lasted and where you died.",
-                    () -> values.replaceDeath, value -> values.replaceDeath = value);
-            bool(builder, prefix + "game.", "deathSounds",
-                    "Plays a sound as each part of Glazed Menu's death screen arrives, and one as its buttons can be pressed.",
-                    () -> values.deathSounds, value -> values.deathSounds = value);
-            bool(builder, prefix + "game.", "replaceDisconnected",
-                    "Opens Glazed Menu's card where the game's disconnected screen would open: what happened and why, the server as it answers now, how long you played, and buttons to copy the reason and to reconnect.",
-                    () -> values.replaceDisconnected, value -> values.replaceDisconnected = value);
             bool(builder, prefix + "game.", "replaceAdvancements",
                     "Opens Glazed Menu's advancements screen where the game's would open: its tabs as a ribbon, the advancements as a list with their steps, a search, and the game's tree a button away.",
                     () -> values.replaceAdvancements, value -> values.replaceAdvancements = value);
             bool(builder, prefix + "game.", "replaceStats",
                     "Opens Glazed Menu's statistics screen where the game's would open: tabs for general numbers, blocks, items and mobs, each a table sorted by the column you click, with a search.",
                     () -> values.replaceStats, value -> values.replaceStats = value);
-            bool(builder, prefix + "game.", "gameOptions",
-                    "Lists the game's own options as a config among the mods', so the search, the changed settings and profiles cover them too. The game's options screens stay as they are.",
-                    () -> values.gameOptions, value -> values.gameOptions = value);
+            bool(builder, prefix + "game.", "replaceDeath",
+                    "Opens Glazed Menu's death screen where the game's would open: a band drawn across the reddened world with how you died and the ways on, and under it your score, the level lost, how long you lasted and where you died.",
+                    () -> values.replaceDeath, value -> values.replaceDeath = value);
+            bool(builder, prefix + "game.", "deathSounds",
+                    "Plays a sound as each part of Glazed Menu's death screen arrives, and one as its buttons can be pressed.",
+                    () -> values.deathSounds, value -> values.deathSounds = value);
             builder.pop();
             return List.of(builder.build(() -> Access.LOCAL, GlazedSettings::save));
         }
     };
+
+    // A percentage on a slider, in steps of 5.
+    private static NumberType<Integer> percent(int min, int max) {
+        return ConfigTypes.intRange(min, max).withSlider(true).withStep(5).withLabels(value -> value + "%");
+    }
 
     private static void bool(ExternalConfigBuilder builder, String prefix, String key, String comment, Supplier<Boolean> get, Consumer<Boolean> set) {
         bool(builder, prefix, key, true, comment, get, set);

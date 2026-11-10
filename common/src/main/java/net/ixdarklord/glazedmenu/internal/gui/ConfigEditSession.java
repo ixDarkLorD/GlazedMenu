@@ -1,18 +1,18 @@
 package net.ixdarklord.glazedmenu.internal.gui;
 
-import net.ixdarklord.glazedmenu.internal.core.GlazedClient;
-import net.ixdarklord.glazedmenu.internal.source.Access;
+import net.ixdarklord.glazedmenu.api.config.Config;
 import net.ixdarklord.glazedmenu.api.config.ConfigDependency;
 import net.ixdarklord.glazedmenu.api.config.ConfigPreset;
 import net.ixdarklord.glazedmenu.api.config.ConfigValue;
 import net.ixdarklord.glazedmenu.api.config.RestartRequirement;
-import net.ixdarklord.glazedmenu.api.editor.EditSlot;
 import net.ixdarklord.glazedmenu.api.config.type.ConfigType;
 import net.ixdarklord.glazedmenu.api.config.type.ValidationResult;
-import net.ixdarklord.glazedmenu.api.config.Config;
+import net.ixdarklord.glazedmenu.api.editor.EditSlot;
+import net.ixdarklord.glazedmenu.internal.core.GlazedClient;
+import net.ixdarklord.glazedmenu.internal.source.Access;
 import net.ixdarklord.glazedmenu.internal.source.ConfigSources;
-import net.ixdarklord.glazedmenu.internal.source.game.GameOptionsSource;
 import net.ixdarklord.glazedmenu.internal.source.Values;
+import net.ixdarklord.glazedmenu.internal.source.game.GameOptionsSource;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
@@ -39,6 +39,8 @@ public final class ConfigEditSession {
     private final Map<ConfigValue<?>, Component> errors = new HashMap<>();
     private final Deque<Edit> undo = new ArrayDeque<>();
     private final Deque<Edit> redo = new ArrayDeque<>();
+    // Goes up with every change to what's pending or invalid, for counts the screens keep between frames.
+    private int revision;
 
     public ConfigEditSession(Config config) {
         this.config = config;
@@ -56,7 +58,9 @@ public final class ConfigEditSession {
     // --- Values ---
 
     public Object get(ConfigValue<?> value) {
-        return this.pending.getOrDefault(value, value.getStored());
+        // The stored value is only read when nothing is pending: reading it can go through another config system.
+        Object pending = this.pending.get(value);
+        return pending != null || this.pending.containsKey(value) ? pending : value.getStored();
     }
 
     public boolean isModified(ConfigValue<?> value) {
@@ -73,6 +77,11 @@ public final class ConfigEditSession {
 
     public int modifiedCount() {
         return this.pending.size();
+    }
+
+    /** A number that changes whenever what's pending or invalid does. */
+    public int revision() {
+        return this.revision;
     }
 
     public boolean hasErrors() {
@@ -112,9 +121,10 @@ public final class ConfigEditSession {
         ValidationResult<?> result = Values.validate(value, newValue);
         if (!result.isOk()) {
             this.errors.put(value, result.message().orElse(Component.empty()));
+            this.revision++;
             return;
         }
-        this.errors.remove(value);
+        if (this.errors.remove(value) != null) this.revision++;
         Object before = this.get(value);
         if (Values.same(value, before, newValue)) return;
         this.record(new Edit(List.of(new Change(value, before, newValue)), System.currentTimeMillis()));
@@ -123,13 +133,14 @@ public final class ConfigEditSession {
 
     public void setError(ConfigValue<?> value, Component error) {
         this.errors.put(value, error);
+        this.revision++;
     }
 
     /** Sets several pending values as one undoable step. */
     public void setAll(Map<ConfigValue<?>, Object> values) {
         List<Change> changes = new ArrayList<>();
         values.forEach((value, newValue) -> {
-            this.errors.remove(value);
+            if (this.errors.remove(value) != null) this.revision++;
             Object before = this.get(value);
             if (!Values.same(value, before, newValue)) changes.add(new Change(value, before, newValue));
         });
@@ -150,7 +161,7 @@ public final class ConfigEditSession {
     public void discard(Collection<ConfigValue<?>> values) {
         Map<ConfigValue<?>, Object> current = new LinkedHashMap<>();
         for (ConfigValue<?> value : values) {
-            this.errors.remove(value);
+            if (this.errors.remove(value) != null) this.revision++;
             current.put(value, value.getStored());
         }
         this.setAll(current);
@@ -178,6 +189,7 @@ public final class ConfigEditSession {
     }
 
     private void store(ConfigValue<?> value, Object newValue) {
+        this.revision++;
         if (Values.same(value, newValue, value.getStored())) this.pending.remove(value);
         else this.pending.put(value, newValue);
     }
@@ -212,7 +224,7 @@ public final class ConfigEditSession {
 
     /** Drops pending values that the config now holds anyway (after the server's values arrived). */
     public void onConfigChanged() {
-        this.pending.entrySet().removeIf(entry -> Values.same(entry.getKey(), entry.getValue(), entry.getKey().getStored()));
+        if (this.pending.entrySet().removeIf(entry -> Values.same(entry.getKey(), entry.getValue(), entry.getKey().getStored()))) this.revision++;
     }
 
     /**
@@ -227,6 +239,7 @@ public final class ConfigEditSession {
             ConfigSources.apply(this.config, new LinkedHashMap<>(this.pending));
         }
         this.pending.clear();
+        this.revision++;
         this.undo.clear();
         this.redo.clear();
         return restart;

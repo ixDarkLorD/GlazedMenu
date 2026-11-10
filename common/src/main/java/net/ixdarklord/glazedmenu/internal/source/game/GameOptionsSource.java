@@ -281,9 +281,9 @@ public final class GameOptionsSource extends ExternalSource {
             value(builder, key, name, ConfigTypes.intRange(low, Math.max(low, range.maxInclusive())).withSlider(true).withLabels(labels(accessor, name)), (Integer) initial,
                     () -> (Integer) option.get(), value -> set(option, value));
         } else if (initial instanceof Double && values == OptionInstance.UnitDouble.INSTANCE) {
-            // A share of the whole, which the game shows as a percentage.
-            value(builder, key, name, ConfigTypes.intRange(0, 100).withSlider(true), (int) Math.round((Double) initial * 100),
-                    () -> (int) Math.round((Double) option.get() * 100), value -> set(option, value / 100.0));
+            // A share of the whole, which the game shows as a percentage: edited in whole percents.
+            value(builder, key, name, ConfigTypes.intRange(0, 100).withSlider(true).withLabels(labels(accessor, name, percent -> percent / 100.0)),
+                    (int) Math.round((Double) initial * 100), () -> (int) Math.round((Double) option.get() * 100), value -> set(option, value / 100.0));
         } else if (isSlider(values)) {
             // A slider over values worked out from another range (the frame rate in tens, the chat delay in tenths).
             Object low = fromSlider(values, 0);
@@ -295,8 +295,9 @@ public final class GameOptionsSource extends ExternalSource {
                                 .withStep(step(fromSlider(values), values, Math.min(first, second), Math.max(first, second))).withLabels(labels(accessor, name)),
                         (Integer) initial, () -> (Integer) option.get(), value -> set(option, value));
             } else if (initial instanceof Double && low instanceof Double first && high instanceof Double second) {
-                value(builder, key, name, ConfigTypes.doubleRange(Math.min(first, second), Math.max(first, second)).withSlider(true), (Double) initial,
-                        () -> (Double) option.get(), value -> set(option, value));
+                value(builder, key, name, ConfigTypes.doubleRange(Math.min(first, second), Math.max(first, second)).withSlider(true)
+                                .withLabels(labels(accessor, name, number -> number)),
+                        (Double) initial, () -> (Double) option.get(), value -> set(option, value));
             }
         } else if (initial instanceof Enum<?> constant) {
             addEnum(builder, key, name, option, constant, (Function<Object, Component>) (Object) accessor.glazedmenu$toStringFunction());
@@ -400,14 +401,19 @@ public final class GameOptionsSource extends ExternalSource {
     }
 
     // Each of a slider's values written as the game writes it (Render Distance in chunks, Max Framerate's end as
-    // Unlimited), without the option's name before it.
-    @SuppressWarnings("unchecked")
+    // Unlimited, a volume at 0 as Off), without the option's name before it; null (the number itself) where the game
+    // can't write it.
     private static Function<Integer, String> labels(OptionInstanceAccessor<?> accessor, String name) {
+        return labels(accessor, name, number -> number);
+    }
+
+    @SuppressWarnings("unchecked")
+    private static <N> Function<N, String> labels(OptionInstanceAccessor<?> accessor, String name, Function<N, Object> toOption) {
         Function<Object, Component> caption = (Function<Object, Component>) (Object) accessor.glazedmenu$toStringFunction();
         String prefix = name + ": ";
         return number -> {
             try {
-                String text = caption.apply(number).getString();
+                String text = caption.apply(toOption.apply(number)).getString();
                 return text.startsWith(prefix) ? text.substring(prefix.length()) : text;
             } catch (RuntimeException e) {
                 return null;

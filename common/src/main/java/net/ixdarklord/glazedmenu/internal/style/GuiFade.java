@@ -1,22 +1,34 @@
 package net.ixdarklord.glazedmenu.internal.style;
 
-import net.minecraft.util.Mth;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.Minecraft;
+import net.minecraft.util.Mth;
 
 // A fade for whatever the GUI draws while it's set: 1.21.1 draws each shape as it's called, tinted by the shader color,
 // so the fade is that color's alpha (and GuiFadeMixin keeps it when a widget sets its own tint). Screens set it around
 // the parts that fade and put it back after.
 public final class GuiFade {
     private static float alpha = 1;
+    // What every fade is set within: below 1 while something already fading (a page sliding in) draws a part that sets
+    // fades of its own (a screen drawn as a preview).
+    private static float base = 1;
 
     private GuiFade() {}
 
     public static void set(float value) {
-        float clamped = Mth.clamp(value, 0, 1);
-        if (clamped == alpha) return;
+        change(Mth.clamp(value, 0, 1) * base);
+    }
+
+    /** Sets what every fade is set within, until it's set back to 1. */
+    public static void setBase(float value) {
+        base = Mth.clamp(value, 0, 1);
+        change(base);
+    }
+
+    private static void change(float value) {
+        if (value == alpha) return;
         flush();
-        alpha = clamped;
+        alpha = value;
         RenderSystem.setShaderColor(1, 1, 1, alpha);
     }
 
@@ -26,7 +38,7 @@ public final class GuiFade {
     }
 
     public static void reset() {
-        set(1);
+        change(base);
     }
 
     public static float alpha() {
