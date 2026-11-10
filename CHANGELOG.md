@@ -1,7 +1,7 @@
 # Changelog
 This file is for listing all the changes to this project
 
-## v1.2.1 Release | Unreleased
+## v1.2.1 Release | 2026-11-10
 ### ✨ New Features
 - **Setup**, in place of the welcome popup, the first time the game runs with Glazed Menu: pick which of the game's screens Glazed Menu redraws, each with a live preview of both looks (the screen itself, drawn small; a drawn picture for the screens that need a world).
   - Start screen by screen, with every screen, or with the game's own.
