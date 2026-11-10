@@ -1,9 +1,9 @@
 package net.ixdarklord.glazedmenu.internal.style;
 
-import net.ixdarklord.glazedmenu.internal.core.GlazedSettings;
 import net.ixdarklord.glazedmenu.api.config.ConfigTheme;
 import net.ixdarklord.glazedmenu.api.theme.ConfigEffect;
 import net.ixdarklord.glazedmenu.internal.core.GlazedMenu;
+import net.ixdarklord.glazedmenu.internal.core.GlazedSettings;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.resources.Identifier;
@@ -71,8 +71,11 @@ final class StarfallEffect implements ConfigEffect {
         }
 
         // The stars, falling and swaying, wrapping back to the top; all behind the panels.
+        // (None at all with the player's star opacity at 0.)
+        float strength = GlazedSettings.starOpacity() / 100F;
+        if (strength <= 0) return;
         int starColor = starColor(accent, light);
-        for (Star star : this.stars) this.extractStar(graphics, star, context, starColor, 1);
+        for (Star star : this.stars) this.extractStar(graphics, star, context, starColor, strength);
     }
 
     private void extractStar(GuiGraphicsExtractor graphics, Star star, Context context, int color, float strength) {
@@ -85,7 +88,7 @@ final class StarfallEffect implements ConfigEffect {
         // Fainter near the top so they appear softly, and a slow flicker.
         float fadeIn = Math.min(1, (y + 4) / (height * 0.15F));
         float flicker = 0.6F + 0.4F * (float) Math.sin(time * star.twinkle + star.phase);
-        float alpha = (0.35F + 0.5F * star.depth) * flicker * Math.max(0, fadeIn) * strength * GlazedSettings.starOpacity() / 100F;
+        float alpha = (0.35F + 0.5F * star.depth) * flicker * Math.max(0, fadeIn) * strength;
         if (alpha <= 0.01F) return;
         float size = star.depth >= 1 ? 2 : 1;
         float centerX = x + size / 2;

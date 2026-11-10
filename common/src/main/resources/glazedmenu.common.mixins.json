@@ -24,6 +24,7 @@
     "MinecraftMixin",
     "MultiplayerOptionsScreenAccessor",
     "PauseScreenMixin",
+    "ScreenPreviewMixin",
     "SuggestionsListAccessor",
     "TitleScreenMixin",
     "WorldOpenFlowsMixin"

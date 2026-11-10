@@ -1,18 +1,18 @@
 package net.ixdarklord.glazedmenu.internal.gui;
 
-import net.ixdarklord.glazedmenu.internal.source.Access;
 import net.ixdarklord.glazedmenu.api.config.Config;
+import net.ixdarklord.glazedmenu.api.config.ConfigGroup;
 import net.ixdarklord.glazedmenu.api.config.ConfigNode;
 import net.ixdarklord.glazedmenu.api.config.ConfigScope;
-import net.ixdarklord.glazedmenu.api.config.ConfigGroup;
 import net.ixdarklord.glazedmenu.api.config.ConfigValue;
+import net.ixdarklord.glazedmenu.internal.gui.style.ThemeResources;
+import net.ixdarklord.glazedmenu.internal.source.Access;
 import net.ixdarklord.glazedmenu.internal.style.ConfigIcons;
 import net.ixdarklord.glazedmenu.internal.style.ConfigStyle;
 import net.ixdarklord.glazedmenu.internal.style.ConfirmPopup;
 import net.ixdarklord.glazedmenu.internal.style.FlatButton;
 import net.ixdarklord.glazedmenu.internal.style.StyledEditBox;
 import net.ixdarklord.glazedmenu.internal.style.StyledScreen;
-import net.ixdarklord.glazedmenu.internal.gui.style.ThemeResources;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -24,8 +24,10 @@ import net.minecraft.client.gui.narration.NarratableEntry;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
+import net.minecraft.sounds.SoundEvents;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -555,10 +557,24 @@ public final class ConfigScreen extends StyledScreen {
 
     // A category: highlighted with an accent bar when chosen, with a count of its unsaved changes.
     private final class TabEntry extends ContainerObjectSelectionList.Entry<TabEntry> {
+        // The tab's changed values, counted again only once the session changes (a big config has thousands).
+        private int countedAt = -1;
+        private long counted;
+
         private final int index;
 
         TabEntry(int index) {
             this.index = index;
+        }
+
+        private long modified(Tab tab) {
+            ConfigEditSession session = ConfigScreen.this.session;
+            if (session.revision() == this.countedAt) return this.counted;
+            this.countedAt = session.revision();
+            this.counted = session.modifiedCount() == 0 && !session.hasErrors() ? 0 : (tab.rootOnly
+                    ? tab.group.children().stream().filter(node -> node instanceof ConfigValue<?> value && session.isModified(value))
+                    : tab.group.values().filter(session::isModified)).count();
+            return this.counted;
         }
 
         @Override
@@ -577,9 +593,7 @@ public final class ConfigScreen extends StyledScreen {
             } else if (hovered) {
                 ConfigStyle.rect(graphics, x, y, width, height, ConfigStyle.colors().rowHover());
             }
-            long modified = (tab.rootOnly
-                    ? tab.group.children().stream().filter(node -> node instanceof ConfigValue<?> value && screen.session.isModified(value))
-                    : tab.group.values().filter(value -> screen.session.isModified(value))).count();
+            long modified = this.modified(tab);
             int textWidth = width - 16;
             if (modified > 0) {
                 Component count = Component.literal(Long.toString(modified));
@@ -596,8 +610,8 @@ public final class ConfigScreen extends StyledScreen {
 
         @Override
         public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
-            ConfigScreen.this.minecraft.getSoundManager().play(net.minecraft.client.resources.sounds.SimpleSoundInstance.forUI(
-                    net.minecraft.sounds.SoundEvents.UI_BUTTON_CLICK, 1.0F));
+            ConfigScreen.this.minecraft.getSoundManager().play(SimpleSoundInstance.forUI(
+                    SoundEvents.UI_BUTTON_CLICK, 1.0F));
             ConfigScreen.this.selectTab(this.index);
             return true;
         }

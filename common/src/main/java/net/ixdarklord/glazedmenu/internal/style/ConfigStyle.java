@@ -1,8 +1,9 @@
 package net.ixdarklord.glazedmenu.internal.style;
 
-import net.ixdarklord.glazedmenu.internal.core.GlazedSettings;
 import net.ixdarklord.glazedmenu.api.config.ConfigColorScheme;
 import net.ixdarklord.glazedmenu.api.config.ConfigTheme;
+import net.ixdarklord.glazedmenu.internal.core.GlazedSettings;
+import net.ixdarklord.glazedmenu.internal.gui.setup.LivePreview;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -452,7 +453,8 @@ public final class ConfigStyle {
         // What shows through: the panorama or the world, blurred.
         if (textureOpacity < 1) {
             if (minecraft.level == null) panorama.run();
-            if (minecraft.options.getMenuBackgroundBlurriness() >= 1) graphics.blurBeforeThisStratum();
+            // (Not for a screen drawn as the setup's preview: the blur would cover the whole window.)
+            if (minecraft.options.getMenuBackgroundBlurriness() >= 1 && !LivePreview.drawing()) graphics.blurBeforeThisStratum();
         }
         if (textured && textureOpacity > 0) {
             texture(graphics, texture, current, width, height, withAlpha(0xFFFFFFFF, Math.round(255 * textureOpacity)));
