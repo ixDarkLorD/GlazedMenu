@@ -21,6 +21,7 @@
     "LevelLoadingScreenMixin",
     "MinecraftMixin",
     "PauseScreenMixin",
+    "ScreenPreviewMixin",
     "SuggestionsListAccessor",
     "TitleScreenMixin",
     "WorldOpenFlowsMixin"

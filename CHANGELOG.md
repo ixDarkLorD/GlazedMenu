@@ -3,16 +3,17 @@ This file is for listing all the changes to this project
 
 ## v1.2.1 Release | Unreleased
 ### ✨ New Features
-- **Setup**, in place of the welcome popup, the first time the game runs with Glazed Menu: pick which of the game's screens Glazed Menu redraws, each with a photo of both looks.
+- **Setup**, in place of the welcome popup, the first time the game runs with Glazed Menu: pick which of the game's screens Glazed Menu redraws, each with a live preview of both looks (the screen itself, drawn small; a drawn picture for the screens that need a world).
   - Start screen by screen, with every screen, or with the game's own.
   - Colors: the color scheme, dark or light, and moving or still waves.
   - A page for each screen seen all the time, with the title and pause screens' layouts.
-  - Last, every screen as a small photo with its switch.
+  - Last, every screen as a small preview with its switch.
   - `/glazedmenu setup` opens it again; a modpack can ship it turned off (General, Setup at Start).
 - **Advancements map**: a Map view beside the list, the tab as a tree of nodes to drag and zoom, with the paths to the ones done in green.
 - **Still waves**: the background waves can stand still (Look, Animated Waves).
 
 ### 🐛 Bug Fixes
+- The game no longer crashes while loading with newer NeoForge 26.3 builds, which moved NeoForge's update check.
 - The CoolCatLib integrations work with CoolCatLib 5 and later, now one mod; CoolCatLib: Core and Canvas still work.
 - The multiplayer list no longer crashes on a server that hasn't answered yet.
 - The game's Max Framerate slider reaches Unlimited again, and the game's sliders move in its own steps with its own labels.
@@ -23,6 +24,9 @@ This file is for listing all the changes to this project
 - Advancements list: tree lines join each advancement to the one before it, green where done. The button to the game's own screen is gone.
 - Titles have a crisp drop shadow on the dark look, the mod list's header sits on a glass bar, and the light look's text is a step lighter.
 - Changing the game's options no longer shows a "Config saved" toast.
+- Glazed Menu's settings are written to `glazedmenu.json` in the order the settings screen shows them, and the Game Screens list goes in the order you meet the screens: the menus and worlds, then the options, then the screens while playing.
+- The opacity sliders move in steps of 5 and show a percent sign; the game's percentage and decimal options show the game's own labels (a volume at 0 as Off).
+- Config screens: searching through every config is quicker as you type, and the tabs no longer count the changed settings again in every frame.
 
 ## v1.2 Release | 2026-10-12
 

@@ -1,20 +1,27 @@
 package net.ixdarklord.glazedmenu.internal.core.neoforge;
 
+import com.mojang.blaze3d.platform.InputConstants;
 import net.ixdarklord.glazedmenu.internal.core.GlazedMenu;
 import net.ixdarklord.glazedmenu.internal.core.GlazedPlatform;
 import net.ixdarklord.glazedmenu.internal.modlist.ModEntry;
+import net.ixdarklord.glazedmenu.internal.modlist.ModUpdates;
+import net.minecraft.client.KeyMapping;
 import net.minecraft.client.gui.screens.Screen;
 import net.neoforged.fml.ModList;
 import net.neoforged.fml.loading.FMLPaths;
 import net.neoforged.neoforge.client.gui.IConfigScreenFactory;
+import net.neoforged.neoforge.client.settings.KeyModifier;
 import net.neoforged.neoforgespi.language.IModFileInfo;
 import net.neoforged.neoforgespi.language.IModInfo;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Method;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.CodeSource;
 import java.util.ArrayList;
@@ -53,6 +60,8 @@ final class NeoForgeGlazedPlatform implements GlazedPlatform {
 
     // The game and the loader count as libraries.
     private static final Set<String> SYSTEM = Set.of("minecraft", "neoforge");
+    private static @Nullable Method versionChecker;
+    private static boolean versionCheckerFound;
 
     @Override
     public List<ModEntry> mods() {
@@ -116,7 +125,7 @@ final class NeoForgeGlazedPlatform implements GlazedPlatform {
         IModFileInfo file = ModList.get().getModFileById(modId);
         if (file == null) return Optional.empty();
         Path path = file.getFile().getFilePath();
-        boolean onDisk = path.getFileSystem() == java.nio.file.FileSystems.getDefault() && java.nio.file.Files.isRegularFile(path)
+        boolean onDisk = path.getFileSystem() == FileSystems.getDefault() && Files.isRegularFile(path)
                 && path.getFileName().toString().endsWith(".jar");
         return onDisk ? Optional.of(path) : Optional.empty();
     }
@@ -131,33 +140,61 @@ final class NeoForgeGlazedPlatform implements GlazedPlatform {
         return true;
     }
 
-    // NeoForge's own check of mods' update JSONs (when its version check is on).
+    // NeoForge's own check of mods' update JSONs (when its version check is on). Its checker moved from FML
+    // (net.neoforged.fml.VersionChecker, the early 26.3 builds) into NeoForge (net.neoforged.neoforge.common), so it's
+    // found by name: whichever this NeoForge has, or none (no result from it, rather than a crash as the game loads).
     @Override
-    public Optional<net.ixdarklord.glazedmenu.internal.modlist.ModUpdates.Update> loaderUpdate(String modId) {
+    public Optional<ModUpdates.Update> loaderUpdate(String modId) {
+        Method getResult = versionChecker();
+        if (getResult == null) return Optional.empty();
         return ModList.get().getModContainerById(modId).flatMap(container -> {
-            var result = net.neoforged.fml.VersionChecker.getResult(container.getModInfo());
-            boolean outdated = result.status() == net.neoforged.fml.VersionChecker.Status.OUTDATED
-                    || result.status() == net.neoforged.fml.VersionChecker.Status.BETA_OUTDATED;
-            if (!outdated || result.target() == null) return Optional.empty();
-            String url = result.url() != null ? result.url() : container.getModInfo().getModURL().map(Object::toString).orElse("");
-            return Optional.of(new net.ixdarklord.glazedmenu.internal.modlist.ModUpdates.Update(result.target().toString(), url));
+            try {
+                Object result = getResult.invoke(null, container.getModInfo());
+                if (result == null) return Optional.empty();
+                Object status = result.getClass().getMethod("status").invoke(result);
+                Object target = result.getClass().getMethod("target").invoke(result);
+                Object found = result.getClass().getMethod("url").invoke(result);
+                String name = status instanceof Enum<?> constant ? constant.name() : "";
+                if (!name.equals("OUTDATED") && !name.equals("BETA_OUTDATED") || target == null) return Optional.empty();
+                String url = found != null ? found.toString() : container.getModInfo().getModURL().map(Object::toString).orElse("");
+                return Optional.of(new ModUpdates.Update(target.toString(), url));
+            } catch (ReflectiveOperationException | RuntimeException e) {
+                GlazedMenu.LOGGER.debug("Couldn't read NeoForge's update check of {}", modId, e);
+                return Optional.empty();
+            }
         });
+    }
+
+    // VersionChecker.getResult(IModInfo), wherever this NeoForge keeps it; null where it has none.
+    private static @Nullable Method versionChecker() {
+        if (!versionCheckerFound) {
+            versionCheckerFound = true;
+            for (String name : List.of("net.neoforged.neoforge.common.VersionChecker", "net.neoforged.fml.VersionChecker")) {
+                try {
+                    versionChecker = Class.forName(name).getMethod("getResult", IModInfo.class);
+                    break;
+                } catch (ReflectiveOperationException | LinkageError e) {
+                    GlazedMenu.LOGGER.debug("No NeoForge version checker at {}", name);
+                }
+            }
+        }
+        return versionChecker;
     }
 
     // NeoForge's key binds can need Ctrl, Shift or Alt held.
     @Override
-    public boolean isKeyModifier(com.mojang.blaze3d.platform.InputConstants.Key key) {
-        return net.neoforged.neoforge.client.settings.KeyModifier.isKeyCodeModifier(key);
+    public boolean isKeyModifier(InputConstants.Key key) {
+        return KeyModifier.isKeyCodeModifier(key);
     }
 
     @Override
-    public void bindKey(net.minecraft.client.KeyMapping mapping, com.mojang.blaze3d.platform.InputConstants.Key modifier,
-                        com.mojang.blaze3d.platform.InputConstants.Key key) {
-        mapping.setKeyModifierAndCode(net.neoforged.neoforge.client.settings.KeyModifier.getKeyModifier(modifier), key);
+    public void bindKey(KeyMapping mapping, InputConstants.Key modifier,
+                        InputConstants.Key key) {
+        mapping.setKeyModifierAndCode(KeyModifier.getKeyModifier(modifier), key);
     }
 
     @Override
-    public void resetKey(net.minecraft.client.KeyMapping mapping) {
+    public void resetKey(KeyMapping mapping) {
         mapping.setToDefault();
     }
 
