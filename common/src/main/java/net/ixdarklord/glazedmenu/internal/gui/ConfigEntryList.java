@@ -1,18 +1,18 @@
 package net.ixdarklord.glazedmenu.internal.gui;
 
-import net.ixdarklord.glazedmenu.internal.compat.Compat;
-import net.ixdarklord.glazedmenu.internal.compat.CompatList;
-import net.ixdarklord.glazedmenu.internal.compat.GuiGraphicsExtractor;
-import net.ixdarklord.glazedmenu.internal.source.Values;
 import net.ixdarklord.glazedmenu.api.config.ConfigDependency;
+import net.ixdarklord.glazedmenu.api.config.ConfigGroup;
 import net.ixdarklord.glazedmenu.api.config.ConfigNode;
 import net.ixdarklord.glazedmenu.api.config.ConfigTheme;
+import net.ixdarklord.glazedmenu.api.config.ConfigValue;
 import net.ixdarklord.glazedmenu.api.config.RestartRequirement;
 import net.ixdarklord.glazedmenu.api.editor.ConfigEditors;
 import net.ixdarklord.glazedmenu.api.editor.ValueEditor;
-import net.ixdarklord.glazedmenu.api.config.ConfigGroup;
-import net.ixdarklord.glazedmenu.api.config.Config;
-import net.ixdarklord.glazedmenu.api.config.ConfigValue;
+import net.ixdarklord.glazedmenu.internal.compat.Compat;
+import net.ixdarklord.glazedmenu.internal.compat.CompatList;
+import net.ixdarklord.glazedmenu.internal.compat.GuiGraphicsExtractor;
+import net.ixdarklord.glazedmenu.internal.compat.MouseButtonEvent;
+import net.ixdarklord.glazedmenu.internal.source.Values;
 import net.ixdarklord.glazedmenu.internal.style.ConfigIcons;
 import net.ixdarklord.glazedmenu.internal.style.ConfigStyle;
 import net.ixdarklord.glazedmenu.internal.style.FlatButton;
@@ -20,10 +20,8 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.components.AbstractWidget;
-import net.minecraft.client.gui.components.ContainerObjectSelectionList;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.narration.NarratableEntry;
-import net.ixdarklord.glazedmenu.internal.compat.MouseButtonEvent;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.locale.Language;
 import net.minecraft.network.chat.Component;
@@ -35,13 +33,17 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Optional;
+import java.util.WeakHashMap;
 
 // The rows of a config page: settings (name, description, editor, reset), section headers and notices. The list
 // draws no background of its own; it sits on the screen's panel.
 public final class ConfigEntryList extends CompatList<ConfigEntryList.Entry> {
     private static final int TOOLTIP_WIDTH = 260;
     private static final int STATUS_ICON = 11;
+    private static final Map<ConfigValue<?>, String> SEARCH_TEXT = new WeakHashMap<>();
+    private static @Nullable Language searchLanguage;
 
     public ConfigEntryList(Minecraft minecraft, int width, int height, int y) {
         super(minecraft, width, height, y, 26);
@@ -392,13 +394,27 @@ public final class ConfigEntryList extends CompatList<ConfigEntryList.Entry> {
 
     /** Whether a search finds a setting: by its name, its key or path, its comment, a group it's in, or its value. */
     public static boolean matches(ConfigValue<?> value, String query) {
-        if (value.displayName().getString().toLowerCase(Locale.ROOT).contains(query)) return true;
-        if (value.path().toLowerCase(Locale.ROOT).contains(query)) return true;
-        if (value.comment().stream().anyMatch(line -> line.toLowerCase(Locale.ROOT).contains(query))) return true;
-        for (ConfigNode group = value.parent(); group != null && group.parent() != null; group = group.parent()) {
-            if (group.displayName().getString().toLowerCase(Locale.ROOT).contains(query)) return true;
+        return searchText(value).contains(query) || format(value).toLowerCase(Locale.ROOT).contains(query);
+    }
+
+    // What a search looks through besides the value itself: its name, path, comment and groups' names, lower-cased and
+    // one to a line. Worked out once per value, and again after the language or the resource packs change (the names
+    // are translated); a search runs through every value of every config at each key typed.
+    private static String searchText(ConfigValue<?> value) {
+        if (searchLanguage != Language.getInstance()) {
+            searchLanguage = Language.getInstance();
+            SEARCH_TEXT.clear();
         }
-        return format(value).toLowerCase(Locale.ROOT).contains(query);
+        return SEARCH_TEXT.computeIfAbsent(value, ConfigEntryList::readSearchText);
+    }
+
+    private static String readSearchText(ConfigValue<?> value) {
+        StringBuilder text = new StringBuilder(value.displayName().getString()).append('\n').append(value.path());
+        for (String line : value.comment()) text.append('\n').append(line);
+        for (ConfigNode group = value.parent(); group != null && group.parent() != null; group = group.parent()) {
+            text.append('\n').append(group.displayName().getString());
+        }
+        return text.toString().toLowerCase(Locale.ROOT);
     }
 
     private static <T> String format(ConfigValue<T> value) {

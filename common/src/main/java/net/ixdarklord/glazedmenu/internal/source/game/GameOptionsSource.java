@@ -1,20 +1,18 @@
 package net.ixdarklord.glazedmenu.internal.source.game;
 
-import java.util.TreeMap;
-import net.minecraft.network.chat.contents.TranslatableContents;
-import net.ixdarklord.glazedmenu.internal.mixin.VideoOptionsInvoker;
-import net.ixdarklord.glazedmenu.internal.mixin.OptionInstanceAccessor;
-import net.ixdarklord.glazedmenu.internal.mixin.MouseOptionsInvoker;
-import net.ixdarklord.glazedmenu.internal.mixin.FontOptionsInvoker;
-import net.ixdarklord.glazedmenu.internal.mixin.ControlsOptionsInvoker;
-import net.ixdarklord.glazedmenu.internal.mixin.ChatOptionsInvoker;
-import net.ixdarklord.glazedmenu.internal.mixin.AccessibilityOptionsInvoker;
 import net.ixdarklord.glazedmenu.api.config.ConfigScope;
 import net.ixdarklord.glazedmenu.api.config.type.ConfigType;
 import net.ixdarklord.glazedmenu.api.config.type.ConfigTypes;
 import net.ixdarklord.glazedmenu.api.config.type.EnumType;
 import net.ixdarklord.glazedmenu.internal.core.GlazedMenu;
 import net.ixdarklord.glazedmenu.internal.core.GlazedSettings;
+import net.ixdarklord.glazedmenu.internal.mixin.AccessibilityOptionsInvoker;
+import net.ixdarklord.glazedmenu.internal.mixin.ChatOptionsInvoker;
+import net.ixdarklord.glazedmenu.internal.mixin.ControlsOptionsInvoker;
+import net.ixdarklord.glazedmenu.internal.mixin.FontOptionsInvoker;
+import net.ixdarklord.glazedmenu.internal.mixin.MouseOptionsInvoker;
+import net.ixdarklord.glazedmenu.internal.mixin.OptionInstanceAccessor;
+import net.ixdarklord.glazedmenu.internal.mixin.VideoOptionsInvoker;
 import net.ixdarklord.glazedmenu.internal.source.Access;
 import net.ixdarklord.glazedmenu.internal.source.external.ExternalConfig;
 import net.ixdarklord.glazedmenu.internal.source.external.ExternalConfigBuilder;
@@ -24,6 +22,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.OptionInstance;
 import net.minecraft.client.Options;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.contents.TranslatableContents;
 import net.minecraft.sounds.SoundSource;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,6 +36,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
@@ -238,33 +238,40 @@ public final class GameOptionsSource extends ExternalSource {
         } else if (fromSlider != null) {
             Object low = fromSlider.invoke(values, 0.0);
             Object high = fromSlider.invoke(values, 1.0);
+            // Each value written as the game writes it (Max Framerate's end as Unlimited, Render Distance in chunks, a
+            // volume at 0 as Off).
+            Function<Object, Component> caption = (Function<Object, Component>) access.glazedmenu$toString();
             if (initial instanceof Integer && low instanceof Integer first && high instanceof Integer second) {
-                // In the game's own steps (Max Framerate's tens), each value written as the game writes it (its end as
-                // Unlimited, Render Distance in chunks).
-                Function<Object, Component> caption = (Function<Object, Component>) access.glazedmenu$toString();
-                String prefix = name + ": ";
-                Function<Integer, String> labels = number -> {
-                    try {
-                        String text = caption.apply(number).getString();
-                        return text.startsWith(prefix) ? text.substring(prefix.length()) : text;
-                    } catch (RuntimeException e) {
-                        return null;
-                    }
-                };
+                // In the game's own steps (Max Framerate's tens).
                 value(builder, key, name, ConfigTypes.intRange(Math.min(first, second), Math.max(first, second)).withSlider(true)
-                                .withStep(step(fromSlider, values, Math.min(first, second), Math.max(first, second))).withLabels(labels),
+                                .withStep(step(fromSlider, values, Math.min(first, second), Math.max(first, second))).withLabels(labels(name, caption, number -> number)),
                         (Integer) initial, () -> (Integer) option.get(), value -> set(option, value));
             } else if (initial instanceof Double && values == OptionInstance.UnitDouble.INSTANCE) {
-                // A share of the whole, which the game shows as a percentage.
-                value(builder, key, name, ConfigTypes.intRange(0, 100).withSlider(true), (int) Math.round((Double) initial * 100),
-                        () -> (int) Math.round((Double) option.get() * 100), value -> set(option, value / 100.0));
+                // A share of the whole, which the game shows as a percentage: edited in whole percents.
+                value(builder, key, name, ConfigTypes.intRange(0, 100).withSlider(true).withLabels(labels(name, caption, percent -> percent / 100.0)),
+                        (int) Math.round((Double) initial * 100), () -> (int) Math.round((Double) option.get() * 100), value -> set(option, value / 100.0));
             } else if (initial instanceof Double && low instanceof Double first && high instanceof Double second) {
-                value(builder, key, name, ConfigTypes.doubleRange(Math.min(first, second), Math.max(first, second)).withSlider(true), (Double) initial,
-                        () -> (Double) option.get(), value -> set(option, value));
+                value(builder, key, name, ConfigTypes.doubleRange(Math.min(first, second), Math.max(first, second)).withSlider(true)
+                                .withLabels(labels(name, caption, number -> number)),
+                        (Double) initial, () -> (Double) option.get(), value -> set(option, value));
             }
         } else if (initial instanceof Enum<?> constant) {
             addEnum(builder, key, name, option, constant, (Function<Object, Component>) access.glazedmenu$toString());
         }
+    }
+
+    // How the game writes a slider's value, without the option's name it puts first; null (the number itself) where the
+    // game can't write it.
+    private static <N> Function<N, String> labels(String name, Function<Object, Component> caption, Function<N, Object> toOption) {
+        String prefix = name + ": ";
+        return number -> {
+            try {
+                String text = caption.apply(toOption.apply(number)).getString();
+                return text.startsWith(prefix) ? text.substring(prefix.length()) : text;
+            } catch (RuntimeException e) {
+                return null;
+            }
+        };
     }
 
     @SuppressWarnings("unchecked")

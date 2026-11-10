@@ -8,14 +8,26 @@ import net.minecraft.client.Minecraft;
 // the parts that fade and put it back after.
 public final class GuiFade {
     private static float alpha = 1;
+    // What every fade is set within: below 1 while something already fading (a page sliding in) draws a part that sets
+    // fades of its own (a screen drawn as a preview).
+    private static float base = 1;
 
     private GuiFade() {}
 
     public static void set(float value) {
-        float clamped = Math.clamp(value, 0, 1);
-        if (clamped == alpha) return;
+        change(Math.clamp(value, 0, 1) * base);
+    }
+
+    /** Sets what every fade is set within, until it's set back to 1. */
+    public static void setBase(float value) {
+        base = Math.clamp(value, 0, 1);
+        change(base);
+    }
+
+    private static void change(float value) {
+        if (value == alpha) return;
         flush();
-        alpha = clamped;
+        alpha = value;
         RenderSystem.setShaderColor(1, 1, 1, alpha);
     }
 
@@ -25,7 +37,7 @@ public final class GuiFade {
     }
 
     public static void reset() {
-        set(1);
+        change(base);
     }
 
     public static float alpha() {

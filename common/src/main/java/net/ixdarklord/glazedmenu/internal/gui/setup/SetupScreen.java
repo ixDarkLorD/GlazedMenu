@@ -1,6 +1,9 @@
 package net.ixdarklord.glazedmenu.internal.gui.setup;
 
 import net.ixdarklord.glazedmenu.api.config.ConfigTheme;
+import net.ixdarklord.glazedmenu.internal.compat.GuiGraphicsExtractor;
+import net.ixdarklord.glazedmenu.internal.compat.KeyEvent;
+import net.ixdarklord.glazedmenu.internal.compat.MouseButtonEvent;
 import net.ixdarklord.glazedmenu.internal.core.GlazedMenu;
 import net.ixdarklord.glazedmenu.internal.core.GlazedPlatform;
 import net.ixdarklord.glazedmenu.internal.core.GlazedSettings;
@@ -13,36 +16,30 @@ import net.ixdarklord.glazedmenu.internal.style.GuiFade;
 import net.ixdarklord.glazedmenu.internal.style.StyledScreen;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
-import net.ixdarklord.glazedmenu.internal.compat.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.TitleScreen;
-import net.ixdarklord.glazedmenu.internal.compat.KeyEvent;
-import net.ixdarklord.glazedmenu.internal.compat.MouseButtonEvent;
-import net.ixdarklord.glazedmenu.internal.compat.RenderPipelines;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.FormattedCharSequence;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
-import java.util.Set;
 import java.util.function.BooleanSupplier;
 
 /**
  * The setup, over the title screen the first time the game runs with Glazed Menu: a welcome, the look (color scheme,
- * dark or light), a page for each of the screens a player sees all the time, with a photo of it in Glazed Menu's look
+ * dark or light), a page for each of the screens a player sees all the time, with a picture of it in Glazed Menu's look
  * and in the game's own to choose between (and its layouts, for the title and pause screens), and last every screen
- * Glazed Menu can replace, each a small photo with its switch. A modpack can ship it turned off ({@code firstRunSetup} in
+ * Glazed Menu can replace, each a small picture with its switch. A modpack can ship it turned off ({@code firstRunSetup} in
  * {@code glazedmenu.json}) with its own choices; {@code /glazedmenu setup} opens it again.
  *
- * <p>The photos are textures under {@code textures/gui/setup/}, loaded the first time they're shown and released when
- * the setup closes; a screen without one is drawn from boxes instead (SetupPreview), as is the look's picture, which
- * follows the colors chosen. The animations (pages sliding in, a photo wiping from one choice to the other) are a few
+ * <p>The pictures are the screens themselves, drawn live and scaled down (LivePreview), made the first time they're
+ * shown and let go of when the setup closes; a screen that needs a world is drawn from boxes instead (SetupPreview).
+ * The look's picture is the mod list, which follows the colors chosen. The animations (pages sliding in, a picture
+ * wiping from one choice to the other) are a few
  * eased numbers per frame; with animations turned off, all of it holds still.
  */
 public final class SetupScreen extends StyledScreen {
@@ -62,11 +59,7 @@ public final class SetupScreen extends StyledScreen {
     private static final int RAIL_HEIGHT = 3;
     private static final int OPTION_GAP = 4;
     private static final int SWATCH = 18;
-    // The photos' size: the large ones on a screen's page, the small ones on the last page's cards.
-    private static final int PHOTO_WIDTH = 800;
-    private static final int PHOTO_HEIGHT = 450;
-    private static final int SMALL_WIDTH = 240;
-    private static final int SMALL_HEIGHT = 135;
+    // The pictures' shape: 16 by 9, as most windows are.
     private static final float PHOTO_RATIO = 16 / 9F;
     private static final int CARD_GAP = 6;
     private static final int CARD_LABEL = 17;
@@ -77,7 +70,7 @@ public final class SetupScreen extends StyledScreen {
     private final List<Page> pages = new ArrayList<>();
     private final List<Page> screens = new ArrayList<>();
     private final List<Page> featured = new ArrayList<>();
-    private final Set<ResourceLocation> shown = new HashSet<>();
+    private final LivePreview live = new LivePreview(this);
     private final long openedAt = System.nanoTime();
     private final float[] hover = new float[64];
     private int index;
@@ -162,16 +155,13 @@ public final class SetupScreen extends StyledScreen {
     /** A choice on a page; {@code variant} is the picture it shows (0 the game's own, 1 and on Glazed Menu's layouts). */
     private record Option(Component name, @Nullable Component note, int variant, BooleanSupplier chosen, Runnable choose) {}
 
-    /** Draws a screen from boxes, for one without a photo. */
+    /** Draws a screen from boxes, for one that can't be drawn live (it needs a world). */
     @FunctionalInterface
     private interface Preview {
         void draw(SetupPreview.Mock mock, int variant);
     }
 
-    /**
-     * A page, or (for the screens) a card on the last page too. A screen's photos are {@code textures/gui/setup/<shot>_<variant>.png}
-     * and {@code ..._small.png}; whether each is there is looked up once.
-     */
+    /** A page, or (for the screens) a card on the last page too; {@code shot} names its screen for the live preview. */
     private static final class Page {
         final Kind kind;
         final GlazedSettings.@Nullable Switch toggle;
@@ -183,9 +173,7 @@ public final class SetupScreen extends StyledScreen {
         final Component description;
         final List<Option> options;
         final Preview preview;
-        final ResourceLocation @Nullable [] photos;
-        final ResourceLocation @Nullable [] smallPhotos;
-        final byte[] present;
+        final @Nullable String shot;
 
         Page(Kind kind, GlazedSettings.@Nullable Switch toggle, ConfigIcons.Icon icon, Component group, Component title, Component description,
              List<Option> options, Preview preview, @Nullable String shot) {
@@ -199,30 +187,7 @@ public final class SetupScreen extends StyledScreen {
             this.description = description;
             this.options = options;
             this.preview = preview;
-            int variants = Math.max(2, options.size());
-            if (shot == null) {
-                this.photos = null;
-                this.smallPhotos = null;
-            } else {
-                this.photos = new ResourceLocation[variants];
-                this.smallPhotos = new ResourceLocation[variants];
-                for (int i = 0; i < variants; i++) {
-                    this.photos[i] = GlazedMenu.rl("textures/gui/setup/" + shot + "_" + i + ".png");
-                    this.smallPhotos[i] = GlazedMenu.rl("textures/gui/setup/" + shot + "_" + i + "_small.png");
-                }
-            }
-            // Per photo: 0 not looked up yet, 1 there, 2 missing.
-            this.present = new byte[variants * 2];
-        }
-
-        @Nullable ResourceLocation photo(int variant, boolean small) {
-            ResourceLocation[] photos = small ? this.smallPhotos : this.photos;
-            if (photos == null || variant < 0 || variant >= photos.length) return null;
-            int slot = variant * 2 + (small ? 1 : 0);
-            if (this.present[slot] == 0) {
-                this.present[slot] = (byte) (Minecraft.getInstance().getResourceManager().getResource(photos[variant]).isPresent() ? 1 : 2);
-            }
-            return this.present[slot] == 1 ? photos[variant] : null;
+            this.shot = shot;
         }
     }
 
@@ -526,12 +491,17 @@ public final class SetupScreen extends StyledScreen {
         this.finish();
     }
 
-    // The photos are only needed here: they're let go of once the setup closes.
+    // The previews are only needed here: they're let go of once the setup closes.
     @Override
     public void removed() {
         super.removed();
-        for (ResourceLocation photo : this.shown) this.minecraft.getTextureManager().release(photo);
-        this.shown.clear();
+        this.live.clear();
+    }
+
+    @Override
+    public void tick() {
+        super.tick();
+        this.live.tick();
     }
 
     @Override
@@ -593,7 +563,7 @@ public final class SetupScreen extends StyledScreen {
         this.optionsTop = this.baseOptionsTop;
         this.columnButtons.clear();
 
-        // The photo: as large as fits, 16 by 9, with room under it for its caption.
+        // The picture: as large as fits, 16 by 9, with room under it for its caption.
         int room = bottom - top - 26;
         this.previewWidth = Math.min(this.areaWidth, Math.round(room * PHOTO_RATIO));
         this.previewHeight = Math.round(this.previewWidth / PHOTO_RATIO);
@@ -952,29 +922,29 @@ public final class SetupScreen extends StyledScreen {
         return Component.translatableWithFallback("glazedmenu.setup.scheme." + scheme.name().toLowerCase(Locale.ROOT), name);
     }
 
-    // A screen's picture of a variant: its photo, or (with none) the screen drawn from boxes.
-    private void extractShot(GuiGraphicsExtractor graphics, Page page, int variant, int x, int y, int width, int height, boolean small) {
-        ResourceLocation photo = page.photo(variant, small);
-        if (photo != null) {
-            this.shown.add(photo);
-            int textureWidth = small ? SMALL_WIDTH : PHOTO_WIDTH;
-            int textureHeight = small ? SMALL_HEIGHT : PHOTO_HEIGHT;
-            graphics.blit(RenderPipelines.GUI_TEXTURED, photo, x, y, 0, 0, width, height, textureWidth, textureHeight, textureWidth, textureHeight, 0xFFFFFFFF);
-        } else {
-            SetupPreview.Mock mock = new SetupPreview.Mock(graphics, x, y, width, height, this.seconds());
-            page.preview.draw(mock, variant);
-            mock.flush();
+    // A screen's picture of a variant: the screen itself, drawn live, or (for one needing a world) drawn from boxes. The
+    // look's page shows the mod list, which follows the colors chosen.
+    private void extractShot(GuiGraphicsExtractor graphics, Page page, int variant, int x, int y, int width, int height) {
+        String shot = page.kind == Kind.LOOK ? "mod_list" : page.shot;
+        int shown = page.kind == Kind.LOOK ? 1 : variant;
+        if (shot != null && this.live.draw(graphics, shot, shown, x, y, width, height, 1)) {
+            // The setup's own colors again, after the screen's.
+            ConfigStyle.use(this.theme);
+            return;
         }
+        SetupPreview.Mock mock = new SetupPreview.Mock(graphics, x, y, width, height, this.seconds());
+        page.preview.draw(mock, variant);
+        mock.flush();
     }
 
     // A picture that wipes from one variant to another (from the left, with a bright seam), or shows one when {@code to} is -1.
     private void extractWipe(GuiGraphicsExtractor graphics, Page page, int from, int to, float wipe, int x, int y, int width, int height, boolean small) {
         graphics.enableScissor(x, y, x + width, y + height);
-        this.extractShot(graphics, page, from, x, y, width, height, small);
+        this.extractShot(graphics, page, from, x, y, width, height);
         if (to >= 0) {
             int edge = x + Math.round(width * wipe);
             graphics.enableScissor(x, y, edge, y + height);
-            this.extractShot(graphics, page, to, x, y, width, height, small);
+            this.extractShot(graphics, page, to, x, y, width, height);
             graphics.disableScissor();
             int glow = GlazedBrand.lift(ConfigStyle.accent(), 0.4F);
             int spread = small ? 3 : 6;
@@ -1048,8 +1018,8 @@ public final class SetupScreen extends StyledScreen {
         this.extractCaption(graphics, caption, wipe >= 1);
     }
 
-    // The last page: a card for every screen, its small photo in the look it will have, its name and its switch. Only
-    // the cards in view are drawn, and only their photos loaded.
+    // The last page: a card for every screen, its small picture in the look it will have, its name and its switch.
+    // Only the cards in view are drawn, and only their screens made.
     private void extractCards(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
         int left = this.areaX;
         int top = this.gridTop;

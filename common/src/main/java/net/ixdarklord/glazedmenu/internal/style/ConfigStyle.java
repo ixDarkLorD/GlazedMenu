@@ -1,12 +1,15 @@
 package net.ixdarklord.glazedmenu.internal.style;
 
+import com.mojang.blaze3d.platform.NativeImage;
+import net.ixdarklord.glazedmenu.api.config.ConfigColorScheme;
+import net.ixdarklord.glazedmenu.api.config.ConfigTheme;
 import net.ixdarklord.glazedmenu.internal.compat.GuiGraphicsExtractor;
 import net.ixdarklord.glazedmenu.internal.compat.RenderPipelines;
 import net.ixdarklord.glazedmenu.internal.core.GlazedSettings;
-import net.ixdarklord.glazedmenu.api.config.ConfigColorScheme;
-import net.ixdarklord.glazedmenu.api.config.ConfigTheme;
+import net.ixdarklord.glazedmenu.internal.gui.setup.LivePreview;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
+import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.locale.Language;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.FormattedText;
@@ -14,6 +17,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.FormattedCharSequence;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -452,7 +456,8 @@ public final class ConfigStyle {
         // What shows through: the panorama or the world, blurred.
         if (textureOpacity < 1) {
             if (minecraft.level == null) panorama.run();
-            if (minecraft.options.getMenuBackgroundBlurriness() >= 1) graphics.blurBeforeThisStratum();
+            // (Not for a screen drawn as the setup's preview: the blur would cover the whole window.)
+            if (minecraft.options.getMenuBackgroundBlurriness() >= 1 && !LivePreview.drawing()) graphics.blurBeforeThisStratum();
         }
         if (textured && textureOpacity > 0) {
             texture(graphics, texture, current, width, height, withAlpha(0xFFFFFFFF, Math.round(255 * textureOpacity)));
@@ -733,13 +738,13 @@ public final class ConfigStyle {
             try {
                 // 1.21.1's textures don't know their size: a generated one has its image, a file is read for it.
                 Minecraft minecraft = Minecraft.getInstance();
-                if (minecraft.getTextureManager().getTexture(id) instanceof net.minecraft.client.renderer.texture.DynamicTexture dynamic && dynamic.getPixels() != null) {
+                if (minecraft.getTextureManager().getTexture(id) instanceof DynamicTexture dynamic && dynamic.getPixels() != null) {
                     return new int[]{Math.max(1, dynamic.getPixels().getWidth()), Math.max(1, dynamic.getPixels().getHeight())};
                 }
-                try (var stream = minecraft.getResourceManager().open(id); var image = com.mojang.blaze3d.platform.NativeImage.read(stream)) {
+                try (var stream = minecraft.getResourceManager().open(id); var image = NativeImage.read(stream)) {
                     return new int[]{Math.max(1, image.getWidth()), Math.max(1, image.getHeight())};
                 }
-            } catch (java.io.IOException e) {
+            } catch (IOException e) {
                 return new int[]{256, 256};
             } catch (RuntimeException e) {
                 return new int[]{256, 256};
