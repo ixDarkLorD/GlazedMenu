@@ -10,12 +10,14 @@
 </p>
 
 <p align="center">
-  <a href="https://modrinth.com/mod/glazedmenu"><img src="https://raw.githubusercontent.com/ixDarkLorD/ModResources/main/badges/glazed-menu/modrinth.svg" alt="Modrinth" height="26"></a>
-  <a href="https://www.curseforge.com/minecraft/mc-mods/glazed-menu"><img src="https://raw.githubusercontent.com/ixDarkLorD/ModResources/main/badges/glazed-menu/curseforge.svg" alt="CurseForge" height="26"></a>
+  <a href="https://modrinth.com/mod/glazedmenu"><img src="https://ixdarklord.github.io/ModResources/badges/glazed-menu/modrinth-downloads.svg" alt="Modrinth downloads" height="26"></a>
+  <a href="https://www.curseforge.com/minecraft/mc-mods/glazed-menu"><img src="https://ixdarklord.github.io/ModResources/badges/glazed-menu/curseforge-downloads.svg" alt="CurseForge downloads" height="26"></a>
   <a href="https://ixdarklord.github.io/GlazedMenu/"><img src="https://raw.githubusercontent.com/ixDarkLorD/ModResources/main/badges/glazed-menu/docs.svg" alt="Docs" height="26"></a>
   <a href="https://discord.gg/ZapGEPqm2V"><img src="https://img.shields.io/discord/1173075408556654592?style=flat&logo=discord&logoColor=white&label=&labelColor=6f52dd&color=3A3F58" alt="Discord" width="110" height="26"></a>
 </p>
 <p align="center">
+  <img src="https://ixdarklord.github.io/ModResources/badges/glazed-menu/version.svg" alt="Version" height="26">
+  <img src="https://ixdarklord.github.io/ModResources/badges/glazed-menu/minecraft.svg" alt="Minecraft versions" height="26">
   <img src="https://raw.githubusercontent.com/ixDarkLorD/ModResources/main/badges/glazed-menu/fabric.svg" alt="Fabric" height="26">
   <img src="https://raw.githubusercontent.com/ixDarkLorD/ModResources/main/badges/glazed-menu/neoforge.svg" alt="NeoForge" height="26">
   <img src="https://raw.githubusercontent.com/ixDarkLorD/ModResources/main/badges/glazed-menu/forge.svg" alt="Forge" height="26">
