@@ -3,7 +3,7 @@ This file is for listing all the changes to this project
 
 ## v1.2.2 Release | Unreleased
 ### 🛠️ Changes
-- Works with CoolCatLib 8.3.0, where the config screen effects are CoolCatLib's own and its visuals (CoolCatLib Canvas) are a mod nested inside it. Glazed Menu now needs CoolCatLib 8.3.0 or newer when CoolCatLib is installed.
+- Works with CoolCatLib 9.0.0, where the config screen effects are CoolCatLib's own and its visuals (CoolCatLib Canvas) are a mod nested inside it. Glazed Menu now needs CoolCatLib 9.0.0 or newer when CoolCatLib is installed.
 - No longer looks for CoolCatLib: Core and CoolCatLib: Canvas, the two mods CoolCatLib was before its version 5.
 
 ## v1.2.1 Release | 2026-11-10
