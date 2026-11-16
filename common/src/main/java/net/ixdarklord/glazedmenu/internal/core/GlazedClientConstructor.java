@@ -1,15 +1,20 @@
 package net.ixdarklord.glazedmenu.internal.core;
 
+import net.ixdarklord.glazedmenu.api.config.ConfigTheme;
+import net.ixdarklord.glazedmenu.internal.game.GameRulesSource;
 import net.ixdarklord.glazedmenu.internal.integration.canvas.CanvasEffects;
 import net.ixdarklord.glazedmenu.internal.integration.coolcat.CoolCatIntegration;
+import net.ixdarklord.glazedmenu.internal.modlist.ModUpdates;
 import net.ixdarklord.glazedmenu.internal.source.ConfigSources;
 import net.ixdarklord.glazedmenu.internal.source.cloth.ClothSource;
 import net.ixdarklord.glazedmenu.internal.source.external.ExternalSource;
 import net.ixdarklord.glazedmenu.internal.source.ftb.FtbSource;
+import net.ixdarklord.glazedmenu.internal.source.game.GameOptionsSource;
 import net.ixdarklord.glazedmenu.internal.source.mezz.MezzSource;
 import net.ixdarklord.glazedmenu.internal.source.midnight.MidnightSource;
 import net.ixdarklord.glazedmenu.internal.source.spec.ModConfigSource;
 import net.ixdarklord.glazedmenu.internal.source.yacl.YaclSource;
+import net.ixdarklord.glazedmenu.internal.style.GlazedBrand;
 import net.ixdarklord.glazedmenu.internal.style.ThemeEffects;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
@@ -28,14 +33,14 @@ public final class GlazedClientConstructor {
     public static void init() {
         GlazedPlatform platform = GlazedPlatform.get();
         GlazedSettings.init();
-        net.ixdarklord.glazedmenu.internal.style.GlazedBrand.init();
+        GlazedBrand.init();
         // Glazed Menu's own screens in its logo's colors.
-        net.ixdarklord.glazedmenu.api.config.ConfigTheme.setForMod(GlazedMenu.MOD_ID, net.ixdarklord.glazedmenu.internal.style.GlazedBrand.THEME);
+        ConfigTheme.setForMod(GlazedMenu.MOD_ID, GlazedBrand.THEME);
         ThemeEffects.init();
         ConfigSources.register(GlazedSettings.SOURCE);
-        ConfigSources.register(net.ixdarklord.glazedmenu.internal.source.game.GameOptionsSource.INSTANCE);
-        ConfigSources.register(net.ixdarklord.glazedmenu.internal.game.GameRulesSource.INSTANCE);
-        // CoolCatLib (8.3.0 or newer): its configs, and the config screen effects mods register with it.
+        ConfigSources.register(GameOptionsSource.INSTANCE);
+        ConfigSources.register(GameRulesSource.INSTANCE);
+        // CoolCatLib (9.0.0 or newer): its configs, and the config screen effects mods register with it.
         if (platform.isModLoaded("coolcatlib")) {
             CoolCatIntegration.init();
             CanvasEffects.init();
@@ -59,7 +64,7 @@ public final class GlazedClientConstructor {
         if (ready) return;
         ready = true;
         ExternalSource.markReady();
-        net.ixdarklord.glazedmenu.internal.modlist.ModUpdates.start();
+        ModUpdates.start();
         for (Map.Entry<String, UnaryOperator<Screen>> screen : GlazedPlatform.get().nativeScreens().entrySet()) {
             if (!screen.getKey().equals(GlazedMenu.MOD_ID)) ConfigSources.registerNativeScreen(screen.getKey(), screen.getValue());
         }

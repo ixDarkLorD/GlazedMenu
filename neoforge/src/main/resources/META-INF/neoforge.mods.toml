@@ -17,7 +17,7 @@ updateJSONURL = "${mod_neoforge_update_url}"
 config = "${modid}.common.mixins.json"
 
 # Not needed: with CoolCatLib installed, Glazed Menu shows its configs and its config screen effects, so it sets up after
-# it (8.3.0 or newer, where the effects are CoolCatLib's own).
+# it (9.0.0 or newer, where the effects are CoolCatLib's own).
 [[dependencies.${modid}]]
 modId = "coolcatlib"
 type = "optional"
