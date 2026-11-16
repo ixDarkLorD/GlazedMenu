@@ -48,5 +48,8 @@
   },
   "suggests": {
     "coolcatlib": ">=${coolcatlib_version}"
+  },
+  "breaks": {
+    "coolcatlib": "<8.3.0"
   }
 }

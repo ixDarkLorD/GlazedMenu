@@ -19,10 +19,6 @@ classes/
 .settings
 *.launch
 
-# Claude Code project notes (local only), in any folder
-CLAUDE.md
-CLAUDE.local.md
-
 logs/
 
 # Page text, logo and screenshots for the mod's pages: kept locally, not in the repo
